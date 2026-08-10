@@ -1,0 +1,11 @@
+{
+  "name": "pauls-skills",
+  "owner": { "name": "Paul Ivers" },
+  "plugins": [
+    {
+      "name": "pauls-skills",
+      "source": "./",
+      "description": "Paul Ivers' personal global skills — planning, triage, handoff, and workflow tools."
+    }
+  ]
+}
