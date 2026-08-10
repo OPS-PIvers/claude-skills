@@ -1,6 +1,6 @@
 {
   "name": "pauls-skills",
   "description": "Paul Ivers' personal global skills — planning, triage, handoff, and workflow tools shared across machines and claude.ai.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": { "name": "Paul Ivers" }
 }
