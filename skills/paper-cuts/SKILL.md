@@ -1,6 +1,7 @@
 ---
 name: paper-cuts
-description: "Fix a batch of small UI/UX \"paper cut\" issues from user-annotated screenshots (red markings with numbers), using subagents to preserve the orchestrator's context window, then commit and push directly to the user-specified branch with no PR. Optimized for minimal diffs and low cost — subagents run only scoped lint and scoped tests; the orchestrator owns full verification and drives remote CI to green. Requires Claude Code (subagents, git, AskUserQuestion, gh). disable-model-invocation: true"
+description: "Fix a batch of small UI/UX \"paper cut\" issues from user-annotated screenshots (red markings with numbers), using subagents to preserve the orchestrator's context window, then commit and push directly to the user-specified branch with no PR. Optimized for minimal diffs and low cost — subagents run only scoped lint and scoped tests; the orchestrator owns full verification and drives remote CI to green. Requires Claude Code (subagents, git, AskUserQuestion, gh)."
+disable-model-invocation: true
 ---
 
 # Paper Cuts
