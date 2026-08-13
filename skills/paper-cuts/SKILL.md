@@ -17,11 +17,11 @@ Two constraints govern every decision in this workflow:
 
 ## Roles
 
-| Actor | Owns |
-|---|---|
-| **Orchestrator** (main session agent) | Intake, branch confirmation, test-command detection, batching, dispatch, diff review, full local gates, commit, push, CI-to-green |
-| **Recon subagent** (fast model, one only) | Mapping cut numbers → file paths and line ranges. Nothing else. |
-| **Implementation subagents** | One scoped fix batch each. Scoped lint + scoped tests. Report back. |
+| Actor | Owns | Model |
+|---|---|---|
+| **Orchestrator** (main session agent) | Intake, branch confirmation, test-command detection, batching, dispatch, diff review, full local gates, commit, push, CI-to-green | session model |
+| **Recon subagent**, one only) | Mapping cut numbers → file paths and line ranges. Nothing else. | Sonnet, low effort |
+| **Implementation subagents** | One scoped fix batch each. Scoped lint + scoped tests. Report back. | Sonnet (medium or high) or Opus (medium or high) |
 
 Escalations from a subagent go to the **orchestrator**, not the user. The orchestrator decides whether to fix it, re-dispatch, or surface it to the user.
 
