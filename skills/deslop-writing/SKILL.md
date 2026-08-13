@@ -1,6 +1,6 @@
 ---
 name: deslop-writing
-description: "Rewrite text so it stops sounding like a model wrote it, judged by whether a competent person would say the sentence out loud to its actual audience. Enforces a zero-tolerance ban list (em dashes, colons and semicolons inside sentences, antithesis and \"isn't just X, it's Y\", ranking moves, three-beat rhythm, stock metaphors like load-bearing, empty preamble, fragments wearing periods) and edits toward a saved per-person style profile rather than toward any voice it finds in the text. Use when the user says deslop, de-slop, \"this reads like AI wrote it\", \"sounds like ChatGPT\", \"make it sound human\", \"remove the AI tells\", or asks for a cleanup of slide copy, a memo, a newsletter, or an email. Also run it as a final pass on prose you just drafted. For editing text that already exists, not for drafting new content."
+description: "Rewrite text so it stops sounding like a model wrote it, judged by whether a competent person would say the sentence out loud to its actual audience. Enforces a zero-tolerance ban list and edits toward a saved per-person style profile rather than toward any voice it finds in the text. Use when the user says deslop, de-slop, \"this reads like AI wrote it\", \"sounds like ChatGPT\", \"make it sound human\", \"remove the AI tells\", or asks for a cleanup of slide copy, a memo, a newsletter, or an email. Also run it as a final pass on prose you just drafted. For editing text that already exists, not for drafting new content."
 ---
 
 # Deslop Writing
