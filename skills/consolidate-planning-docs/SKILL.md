@@ -13,8 +13,8 @@ One assessor agent per doc, cost-tiered so the orchestrator's context stays clea
 
 | Doc kind | Model | Effort |
 |---|---|---|
-| Plans/audits needing real code+git verification | `sonnet` | `low` |
-| Derivative docs (README indexes, self-marked-historical summaries) — just confirm superseded + extract stragglers | `haiku` | `low` |
+| Plans/audits needing real code+git verification | `sonnet` | `medium` |
+| Derivative docs (README indexes, self-marked-historical summaries) — just confirm superseded + extract stragglers | `haiku` | `medium` |
 | Orchestrator (you) | session model — you only see structured verdicts, never doc contents |
 
 Do NOT read the planning docs yourself. Your context is for: building the inventory (paths + one-line hints), assembling the shared git context, launching the sweep, and synthesizing the results.
