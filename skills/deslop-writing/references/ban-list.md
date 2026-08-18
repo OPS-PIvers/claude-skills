@@ -52,6 +52,19 @@ Every form of it.
 
 The second fix keeps a contrast while killing the construction, which is fine. What is banned is the two-beat setup-and-reveal shape, not the existence of contrast.
 
+### Paraprosdokians
+
+Strictly prohibited. A paraprosdokian is a sentence whose ending cancels the expectation its opening set up, forcing the reader back to the start.
+
+- "I've had a perfectly wonderful evening, but this wasn't it."
+- "The migration went exactly as planned, if the plan was to lose a week."
+- "Everyone signed off on the doc, which is how we know nobody read it."
+
+It is a comedian's shape. The first half exists only to be thrown away, so the sentence has to be read twice to yield one claim. Antithesis at least keeps both halves.
+
+> **Before:** The rollout was flawless, right up until anyone used it.
+> **After:** The rollout broke the first time someone used it.
+
 ### Ranking moves
 
 "The X matters more than the Y." "The timing matters more than the number." "The hard part isn't A, it's B."
@@ -80,11 +93,38 @@ Convert to a statement. "Nothing changed."
 
 Noun phrase, comma, and, claim. Recast as a full sentence. "Both positions are honest and defensible."
 
+### The teaser clause
+
+Announce a topic, then append a clause advertising why the topic deserves attention. The tell is that the second clause is **about** the first rather than continuing it, so it promises a payoff in the spot where the payoff belongs.
+
+- "What I changed, and why the first one was likely dead:"
+- "Three things I did, and why the second is worth your attention."
+- "This is the truth, and knowing it will set you free."
+
+Banned in headings and lead-ins too, where it does the most damage, because the reader has to keep going to find out what was claimed. Deliver the payoff, or cut the second clause and let the content land on its own.
+
+> **Before:** What I changed, and why the first one was likely dead:
+> **After:** I changed three things, and the first was already dead because nothing calls that handler.
+
+An ordinary compound sentence is fine. "We cut the retry loop, and latency dropped by half" adds a second fact instead of advertising the first.
+
 ### Hedge stacking and weasel attribution
 
 "It's possible that this may sometimes indicate." One hedge per claim.
 
 "Many experts argue", "studies have shown", "it's widely believed". Name the source or drop the claim. Vague attribution is a factual problem, not a style problem.
+
+### Self-attestation
+
+Zero self-attestation. Never praise your own credibility or narrate your own virtue, and strip it out when the source does it.
+
+- "To be honest", "I'll be straight with you", "I won't sugarcoat this".
+- "I've thought carefully about this", "I did the work here", "this is a rigorous analysis".
+- "Full transparency", "speaking candidly", "I'm not going to pretend otherwise".
+
+The sentence asserts a quality instead of demonstrating it, and a reader who needed convincing is not convinced by the writer's say-so. Delete it, which costs nothing because it carried no information.
+
+**This binds your report and your escalation questions.** "I checked every instance", "I was careful to preserve the meaning", and "I resisted the urge to restructure" describe your own diligence rather than the text. Show the before and after pair and let it stand.
 
 ## 3. Fragments wearing periods
 
@@ -101,7 +141,7 @@ Delete or collapse to the plain claim underneath.
 
 The phrase announces that something is about to be said, then says it.
 
-"It's worth stating plainly", "it's worth noting that", "it bears mentioning", "it's important to note", "here's the thing", "let's be clear", "the reality is that", "at the end of the day", "make no mistake", "to be clear".
+"It's worth stating plainly", "it's worth noting that", "it bears mentioning", "it's important to note", "here's the thing", "let's be clear", "the reality is that", "at the end of the day", "make no mistake", "to be clear", "in plain language", "in plain English", "put simply", "simply put".
 
 > **Before:** It's worth stating plainly, the migration will take two quarters.
 > **After:** The migration will take two quarters.
@@ -111,6 +151,7 @@ The phrase announces that something is about to be said, then says it.
 | Phrase | Fix |
 |---|---|
 | load-bearing | Name the actual dependency. The flagship tell, and almost never about a wall. |
+| handwaving, hand-wavy | Name the step the argument skips. |
 | carry the argument | "These numbers are the argument", or cut. |
 | double-edged sword | Name both edges. |
 | a tapestry of | Cut. |
@@ -143,7 +184,9 @@ Cutting these is worse than leaving the slop.
 
 **Labels and headers are not fragments.** "Home", "The research", and a section heading never claimed to be sentences, so the fragment rule does not reach them.
 
-**Literal uses.** "Load-bearing" about an actual beam. "Full stop" meaning the punctuation mark or a vehicle stopping.
+**Literal uses.** "Load-bearing" about an actual beam. "Full stop" meaning the punctuation mark or a vehicle stopping. "Handwaving" describing an actual gesture.
+
+**Verifiable statements about what you did, and real credentials.** "I re-ran the sweep and found two more" is a fact and stays. "I was careful" is an attestation and goes. "She has run the program for eleven years" is specificity and survives absolutely, while "she is deeply committed to this work" is decoration.
 
 **Domain terms.** "Robust" in statistics, "leverage" in finance, "utilization" in operations. Check whether a word is technical before flagging it.
 
@@ -169,7 +212,7 @@ Cutting these is worse than leaving the slop.
 A first mechanical sweep for the phrase bans only. Everything in sections 1 through 3 needs reading.
 
 ```bash
-rg -in -e "load.bearing" -e "worth (stating|noting)" -e "bears mentioning" -e "important to note" -e "here'?s the thing" -e "at the end of the day" -e "make no mistake" -e "full stop" -e "carry the argument" -e "double.edged sword" -e "tapestry" -e "navigate the complexities" -e "in the (landscape|realm) of" -e "testament to" -e "underscore[sd]" -e "delve" -e "showcase" -e "seamless" -e "leverag" -e "utiliz" -e "facilitat" -e "robust" -e "myriad" -e "in order to" -e "fast.paced world" -e "in an era where" -e "let'?s dive in" -e "in conclusion" -e "isn'?t just" -e "is not just" -e "many experts" -e "studies have shown" .
+rg -in -e "load.bearing" -e "worth (stating|noting)" -e "bears mentioning" -e "important to note" -e "here'?s the thing" -e "at the end of the day" -e "make no mistake" -e "full stop" -e "carry the argument" -e "double.edged sword" -e "tapestry" -e "navigate the complexities" -e "in the (landscape|realm) of" -e "testament to" -e "underscore[sd]" -e "delve" -e "showcase" -e "seamless" -e "leverag" -e "utiliz" -e "facilitat" -e "robust" -e "myriad" -e "in order to" -e "fast.paced world" -e "in an era where" -e "let'?s dive in" -e "in conclusion" -e "isn'?t just" -e "is not just" -e "many experts" -e "studies have shown" -e "in plain (language|english)" -e "(put|stated) (simply|plainly)" -e "simply put" -e "hand.?wav" -e "to be honest" -e "i'?ll be (honest|straight|direct)" -e "sugarcoat" -e "full transparency" -e "speaking candidly" -e "thought carefully" .
 ```
 
 Locate the banned punctuation, then read each hit in context to confirm it is inside a prose sentence rather than a label.

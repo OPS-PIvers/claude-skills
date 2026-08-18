@@ -115,7 +115,7 @@ Deliver the edited text, then:
 
 - **Changes.** A compact before and after pair for every rewritten sentence, no commentary.
 - **Escalated.** The items you asked about and what was chosen.
-- **Left alone.** Anything you could not fix without changing meaning, and why.
+- **Left alone.** Anything you could not fix without changing meaning, with the reason.
 - **Profile.** One line naming what changed in it.
 
 No counts, no percentages, no word-count targets. There is no numeric goal, and any number becomes something to optimize instead of listening to the sentence.
@@ -129,6 +129,7 @@ No counts, no percentages, no word-count targets. There is no numeric goal, and 
 - **Specificity is untouchable.** Concrete nouns, numbers, names, dates, and claims survive every rewrite. Abstraction and decoration are fair game.
 - **Do not protect voice you find in the text.** Register comes from the profile. What is on the page has no authority.
 - **The ban list binds your own output**, including the report you write and the questions you ask.
+- **Zero self-attestation.** Never praise your own credibility or narrate your own virtue, in the text you edit or in the report you write. The ban list has the specifics.
 - **Getting longer is fine.** Rejoining stubs into one cohesive clause often adds words, and that is the correct outcome.
 - **Never restructure** unless the user turned structure work on.
 
