@@ -1,4 +1,4 @@
-# Register and style profiles
+# Writing register and style profiles
 
 Register is supplied, never inferred from the document being edited. Text that needs deslopping has no register worth trusting, so reading one out of it just launders the model's cadence into the target.
 
@@ -8,7 +8,7 @@ Register is supplied, never inferred from the document being edited. Text that n
 
 This directory is private to the machine. It is deliberately outside the plugin repo, because the repo publishes to GitHub and syncs to everyone who installs the plugin, and colleagues' writing profiles should not become shared artifacts by accident.
 
-**Promoting a profile to the team** is an explicit, per-person decision the user makes out loud. When they ask, copy the file to `skills/deslop-writing/resources/styles/<slug>-style.md` in this repo and tell them it will be published and synced to everyone on the next marketplace update. Never promote a profile without being asked.
+**Promoting a profile to the team** is an explicit, per-person decision the user makes out loud. When they ask, copy the file to `skills/deslop/resources/styles/<slug>-style.md` in this repo and tell them it will be published and synced to everyone on the next marketplace update. Never promote a profile without being asked.
 
 At intake, check the private directory first and the repo `resources/styles/` second.
 

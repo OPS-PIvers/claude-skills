@@ -1,4 +1,4 @@
-# Ban list
+# Writing ban list
 
 Zero tolerance. No carve-outs, no budgets, no "once per section is fine." Density is not the question, because the first instance is as bad as the fourth.
 
