@@ -223,9 +223,11 @@ Produce a **severity-ranked flat list**, worst first. Every finding carries the 
 
 | Tier | What lands here |
 |---|---|
-| **1** | The four house-style tells from `references/ui-ban-list.md`, and any accessibility defect caused by a slop choice |
-| **2** | Systemic defects such as missing states, off-token values, unhandled overflow, and inconsistent shape language between siblings |
+| **1** | The house-style tells in section 1 of `references/ui-ban-list.md`, any section 2 interaction default that fails its earn test, and any accessibility defect caused by a slop choice |
+| **2** | Systemic defects such as missing states, dead controls, off-token values, unhandled overflow, and inconsistent shape language between siblings |
 | **3** | Craft, meaning alignment, optical centering, line length, and contrast on secondary text |
+
+A section 2 pattern that **meets** its earn test is not a finding and needs no exception entry. Record the verdict either way, because "skeleton on `RosterList`, no async behind it" is actionable and "skeleton loader" is not.
 
 Findings you will not fix go in the list too, with the reason. A finding whose fix would change behavior is reported and left alone.
 
