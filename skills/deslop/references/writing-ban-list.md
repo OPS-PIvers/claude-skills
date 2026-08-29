@@ -43,6 +43,8 @@ Every form of it.
 - "X isn't merely Y, it's Z."
 - "This is less about X than about Y."
 - "Not a detail. A design decision."
+- "Not just X, but also Y."
+- "Not only X, but Y."
 
 > **Before:** This isn't just faster, it's cheaper.
 > **After:** It's faster and cheaper.
@@ -121,6 +123,8 @@ Zero self-attestation. Never praise your own credibility or narrate your own vir
 - "To be honest", "I'll be straight with you", "I won't sugarcoat this".
 - "I've thought carefully about this", "I did the work here", "this is a rigorous analysis".
 - "Full transparency", "speaking candidly", "I'm not going to pretend otherwise".
+- "I won't pretend", "let's be honest", "if I'm being honest", "the honest truth is".
+- Sentence-initial "Honestly," and sentence-initial "Look,".
 
 The sentence asserts a quality instead of demonstrating it, and a reader who needed convincing is not convinced by the writer's say-so. Delete it, which costs nothing because it carried no information.
 
@@ -180,6 +184,112 @@ An ordinary sentence that happens to start with a conjunction and carries a full
 
 Flattery standing in for a reason to keep reading, and when the reader does not in fact know, it reads as a bluff. Delete the clause. If the shared knowledge is load-bearing, state it as a fact rather than as an assumption about the reader.
 
+### Negation chains
+
+Two or more negated items in a row, whatever the negator. "No fluff, no filler, no jargon." "It didn't ask for a login, didn't phone home, didn't cache anything."
+
+The chain sounds like a specification and contains none, because a list of absences never says what the thing is. Write what is there. "It reads the roster and writes a CSV."
+
+> **Before:** No dashboards, no exports, no admin panel.
+> **After:** The only screen is the roster, and it prints.
+
+### The negated-verb echo
+
+"Don't call it a migration. Call it a rewrite." A negated verb with "it", then the same verb again with the replacement.
+
+The first half is a strawman the writer built to knock down, and the reader never held the position being corrected. Assert the second half alone. "It's a rewrite."
+
+### The whole-point closer
+
+Every form of it, and all of them are the same move.
+
+- "That's the whole point." "This is the whole game." "That's the whole thing."
+- "The simplicity is the whole trick." "Owning the data is the entire business model."
+- "The entire point is that nobody has to ask."
+- "Here's the whole pitch."
+
+The sentence announces that what preceded it was significant instead of making it significant. Delete it, or replace it with the claim it was gesturing at.
+
+> **Before:** Teachers never retype a name. That's the whole point.
+> **After:** Teachers never retype a name.
+
+### The stage-managed reveal
+
+"Here's the twist." "Here's the catch." "Here's the kicker." "Here's the rub." "The punchline is." "The punchline?" "Here's the first example:"
+
+The writer stepping in front of the content to promise that the next sentence is worth it. "Here's the thing" is banned under empty preamble for the same reason. Cut the announcement and let the next sentence arrive on its own.
+
+> **Before:** Here's the kicker, the vendor had shipped the fix in March.
+> **After:** The vendor had shipped the fix in March.
+
+### "Turns out"
+
+"Turns out the index was never used." "It turns out that nobody read the report."
+
+A casual-revelation opener bolted to a tidy conclusion, and it fakes the feeling of an investigation the reader did not watch. State the finding, and say how you found it when that matters.
+
+> **Before:** Turns out nobody reads the Friday email.
+> **After:** Six of forty staff opened the Friday email last month.
+
+### Gesturing instead of stating
+
+The writer points at a favoured detail rather than naming it.
+
+- "That's the part a counter can't reach." "The part that makes me trust the rest."
+- "My favourite part of this is the queue."
+- "The only marketing I trust." "The only thing it needs." "The only X that matters."
+
+Both shapes ask the reader to accept a ranking on the writer's enthusiasm. Say what the part is and what it does.
+
+> **Before:** That's the part that makes me trust the rest of it.
+> **After:** Every write is logged with the row it changed, so a wrong number is traceable to a click.
+
+### "Don't take my word for it"
+
+"You don't have to take my word for it." "Don't take my word for any of this."
+
+A stock invitation to verify that almost never comes with a way to verify. Give the reader the artifact instead, meaning the log, the file, the number, or the repository, and skip the invitation.
+
+### The therapist's register
+
+Reflective-voice moves that perform care in place of saying something.
+
+- "Sit with that." "Sit with this for a moment." "Sit with the discomfort."
+- "You already know what to do." "You already know."
+- "That loss is real, and it's worth naming." "It's worth naming that the timeline slipped." "Worth naming:"
+- "The frustration is real, and it isn't the whole story."
+- "That's not nothing." "Which is not nothing."
+
+The register belongs to a counselling session and imports its authority into writing that has not earned it. Name the thing directly and let the reader decide how to feel about it. "The timeline slipped by five weeks."
+
+Skips: "real estate", "real time", "naming names", and any literal instruction to sit.
+
+### "That's why X mattered"
+
+"That's why being able to open the environment mattered." "This is why preserving every conversation mattered."
+
+Significance assigned to an earlier passage retroactively, which is the whole-point closer wearing a past tense. Make the argument where the thing appears, or cut the sentence.
+
+### Stranded auxiliary contrast
+
+A clause that lands on a bare auxiliary so the reversal snaps. "The tool died, the data didn't." "Reading mostly passed. Writing didn't." "Maybe it wouldn't have."
+
+It is antithesis compressed into a stub, and the semicolon version breaks the punctuation ban as well. Finish the verb.
+
+> **Before:** The tool died; the data didn't.
+> **After:** The tool died, and the data outlived it by four years.
+
+### Participle sentence tails
+
+A comma and a present participle bolted to the end of a sentence to supply commentary. "..., highlighting the need for oversight." Also underscoring, showcasing, reflecting, demonstrating, illustrating, emphasizing, and "further cementing".
+
+The tail restates the sentence at a higher altitude and adds nothing checkable. Delete it, or make the observation a sentence with a subject that can be argued with.
+
+> **Before:** Only six of forty staff opened it, highlighting the challenges of internal communication.
+> **After:** Only six of forty staff opened it, so the policy change never reached the people it binds.
+
+A participle that adds a new fact is fine. "..., taking the total to eleven" continues the sentence rather than summarizing it.
+
 ## 3. Texture
 
 Defects in how the prose is set rather than in what it says. All of these apply with structure work off, because none of them is structure.
@@ -202,6 +312,38 @@ The profile's audience decides. Student-facing material and deliberately playful
 Bold applied to a phrase every few sentences so the paragraph can be skimmed, with no rule about what earns it. The reader learns that bold means nothing, so the emphasis that matters stops landing.
 
 Keep bolding where it is systematic, meaning a defined term, a bullet's lead-in label, or a UI element the reader has to find. Strip it everywhere it is decoration. If the paragraph genuinely needs to be skimmable, that is a structure problem and it waits for structure work.
+
+### Echoing sentence runs
+
+Consecutive sentences built on the same skeleton with the nouns swapped. "A shopping cart is an object in the system. A chat room is an object in the system."
+
+Deliberate anaphora is a real device and this is not it, because the repetition here is a template being filled rather than a point being pressed. Collapse the run into one sentence with a list, or rewrite each sentence to say the different thing it actually knows.
+
+> **Before:** A shopping cart is an object in the system. A chat room is an object in the system.
+> **After:** Carts and chat rooms are both objects in the system.
+
+### Repeated sentence openers
+
+Three or more consecutive sentences starting on the same word. "Maybe nobody needed it. Maybe it introduced a bug. Maybe a small convenience wasn't worth the dependency."
+
+Pronouns and articles do not count, since "The server restarts" and "The queue drains" share nothing but grammar. Any other repeated opener is a rhythm the text fell into rather than chose. Vary the openers, or fold the run into one sentence.
+
+### Stacked rhetorical questions
+
+Two or more questions in a row, usually fragments after the first. "Do I know how it works? Where it breaks? Which corners it cut?"
+
+Section 2 bans the single rhetorical one-word question, and a stack of them is the same defect performing harder. Convert the stack to the statement it is standing in for. "I know what it does and nothing about how it fails."
+
+Real questions to a real reader survive, meaning a survey, an interview, an FAQ heading, and a question you go on to answer with facts.
+
+### Colon into a triple
+
+A colon opening onto three or more comma-separated items. "It needs three things: separate ports, processes, and local state."
+
+The most common shape machine prose uses to sound concrete, and the colon is already banned inside prose sentences for its own reasons. Rejoin it, or set the items as a real list where the colon is a structural lead-in rather than a drum roll.
+
+> **Before:** Each tenant gets the same three things: a port, a process, and local state.
+> **After:** Each tenant gets its own port, process, and local state.
 
 ## 4. Phrases
 
@@ -258,6 +400,73 @@ The verb asserts that something big happened without saying what. Name the chang
 
 "In today's fast-paced world", "in an era where", "let's dive in", "in conclusion", "ultimately" as a final-paragraph opener, "it's a reminder that", and any closing paragraph that restates the piece.
 
+### AI vocabulary
+
+Words machine prose leans on far harder than people do. One is a coincidence and several is a signature.
+
+delve, tapestry, meticulous, pivotal, intricate, interplay, underscore, garner, bolster, vibrant, bustling, multifaceted, seamless, ever-evolving, myriad, realm, testament, showcase.
+
+Replace with the plain word or the specific fact. Meticulous becomes what was actually checked. Pivotal becomes what changed because of it. Interplay becomes the relationship, named.
+
+Domain uses survive per section 5, meaning interplay in physics and garner in a quoted source.
+
+### Significance inflation
+
+"Stands as a testament to." "Serves as a testament." "Serves as a reminder that." "Is a testament to." "Plays a crucial role in." Also plays a pivotal, vital, key, or significant role.
+
+The sentence rates the importance of a thing instead of saying what the thing did. Say what it did.
+
+> **Before:** The pilot plays a crucial role in the district's technology plan.
+> **After:** The pilot decides whether the other eleven schools get Chromebooks in the fall.
+
+### Scene-setting boilerplate
+
+"In the ever-evolving landscape of." Also ever-changing and ever-shifting. "In today's fast-paced world." "In an era where." "As technology continues to advance."
+
+A paragraph of throat-clearing before the subject arrives. Delete it and start with the subject.
+
+### The challenges-and-outlook formula
+
+"Despite these challenges." "The project faces several challenges." "Challenges remain." "It remains to be seen." "Only time will tell." "As the field continues to evolve."
+
+The stock closing movement of a machine-written article, and it commits to nothing while sounding balanced. Name the specific obstacle and who has to clear it, or end the piece.
+
+> **Before:** Challenges remain, but the outlook is promising.
+> **After:** Nothing ships until the SSO vendor supports SAML, which they have promised for January.
+
+### Promotional boilerplate
+
+Travel-brochure tone in prose that is not a brochure. "Nestled in." "In the heart of." "A rich tapestry of." "Rich heritage." "A hidden gem." "Boasts a." "Breathtaking." "Stunning views." "A must-see."
+
+Replace the adjective with the fact that would have produced it. Boasts becomes has. Hidden gem becomes what makes it good and who has not heard of it.
+
+### Dev-blog boilerplate
+
+"Small enough to fit in your head." "Small enough to hold in your head." "Batteries included." "It just works." "Zero config." "Sane defaults." "Blazing fast."
+
+Claims about simplicity that carry no measurement, and every one of them appears in the README of software that does not deliver it. Give the number or the shape. "One file, no config file, and one command to run it."
+
+### The obituary headline
+
+"Peer code review is dead." "The resume is dead." Plus the sequel, "BOTD is dead, long live BOTD."
+
+A prediction dressed as an announcement, and the piece underneath it always argues something narrower. Write the narrower claim as the headline.
+
+> **Before:** Peer code review is dead.
+> **After:** We stopped requiring a second approver on dependency bumps.
+
+Literal uses survive. A dead process, a dead battery, and a dead link are all fine.
+
+### Chatbot leftovers
+
+Artifacts pasted straight out of a chat window, and every one is a hard delete rather than a rewrite.
+
+- "As an AI language model." "As of my last update." "My knowledge cutoff." "I hope this helps!" "Certainly! Here's."
+- Markup debris such as `oaicite`, `contentReference`, `turn0search`, and citation brackets that point at nothing.
+- Tracking parameters on pasted links, meaning `utm_source=` and everything after it.
+
+Their presence means the text was not read before it was shipped, so re-read the whole document rather than only deleting the marker.
+
 ## 5. Not banned
 
 Cutting these is worse than leaving the slop.
@@ -277,6 +486,16 @@ Cutting these is worse than leaving the slop.
 **Systematic bolding.** A defined term, a bullet's lead-in label, or a UI element the reader has to locate. The ban is on bolding with no rule behind it.
 
 **Conjunction openers that carry a full thought.** "But the vendor never shipped it" is a sentence. The ban is on the one-clause stinger.
+
+**Literal and domain uses of the tic bans.** "Real estate" and "real time". "Naming names". A dead process, a dead battery, or a dead link. "Interplay" in physics and "garner" inside a quotation. An instruction to actually sit somewhere.
+
+**Real questions.** A survey item, an interview question, an FAQ heading, and a question you answer with facts in the next sentence. The ban in section 3 is on questions asked to nobody.
+
+**Colons that lead into a real list.** A lead-in above bulleted items is a structural position, so it keeps its colon. The ban is on the colon that opens onto three comma-separated items inside a sentence.
+
+**Participles that add a fact.** "..., taking the total to eleven" continues the sentence. The ban is on the tail that summarizes the sentence it hangs off.
+
+**Deliberate anaphora that argues.** Repetition survives when each repeated opener carries a different claim and the repetition is the argument. A template with the nouns swapped is not that, and section 3 catches it.
 
 **Locked content, never edited under any circumstances.** Direct quotes and block quotes, citations, code and identifiers and error strings, API names, legal and compliance language, license text, accessibility statements, and grant boilerplate. A quoted source's slop belongs to them.
 
@@ -313,4 +532,16 @@ Texture, meaning emoji in prose, scattered bolding, and one-clause stingers. Eve
 ```bash
 rg -n "[\x{1F300}-\x{1FAFF}\x{2600}-\x{27BF}]" .
 rg -n -e "\*\*[^*]{1,40}\*\*" -e "^(And|But|Or|So) [^,]{1,40}\.$" .
+```
+
+The rhetorical tics and the Wikipedia tells. Chains, echoes, and repeated openers are not greppable, so this block finds the fixed phrases only and sections 2 and 3 are read.
+
+```bash
+rg -in -e "that'?s the whole" -e "is the (whole|entire) (point|game|thing|trick|pitch|idea|story|business model)" -e "the (whole|entire) (point|game|pitch) is" -e "here'?s the whole" -e "sit with (that|this|it|the)" -e "you already know" -e "worth naming" -e "is real,? (and|but|not)" -e "not nothing" -e "the punchline" -e "here'?s the (twist|catch|kicker|rub|first)" -e "turns out" -e "that'?s the part" -e "favou?rite part" -e "the only .{1,20} (i trust|that matters|it needs)" -e "take my word for" -e "why .{1,30} mattered" -e "fit(s)? in your head" -e "hold in your head" -e "batteries included" -e "it just works" -e "zero.config" -e "sane defaults" -e "blazing fast" -e "is dead" -e "long live" -e "meticulous" -e "pivotal" -e "intricate" -e "interplay" -e "garner" -e "bolster" -e "vibrant" -e "bustling" -e "multifaceted" -e "ever.(evolving|changing|shifting)" -e "stands as a" -e "serves as a (testament|reminder)" -e "plays a (crucial|pivotal|vital|key|significant) role" -e "despite these challenges" -e "challenges remain" -e "faces several challenges" -e "remains to be seen" -e "time will tell" -e "continues to evolve" -e "nestled in" -e "in the heart of" -e "rich (tapestry|heritage)" -e "hidden gem" -e "boasts a" -e "breathtaking" -e "stunning views" -e "must.see" -e "as an ai (language )?model" -e "as of my last update" -e "knowledge cutoff" -e "i hope this helps" -e "oaicite" -e "contentReference" -e "turn0search" -e "utm_source=" -e ", (highlighting|underscoring|showcasing|reflecting|demonstrating|illustrating|emphasi[sz]ing)" -e "\b(don'?t|do not|never) (call|treat|think of) it\b" -e "^(no [a-z]+, ){1,}no " -e "(didn'?t|did not) [a-z]+,? (and )?(didn'?t|did not)" .
+```
+
+Negation chains, echoing runs, repeated openers, stacked questions, and colon triples need reading rather than grepping, since all five are shapes across sentences.
+
+```bash
+rg -n -e ": [^,\n]+, [^,\n]+, (and )?[^,\n]+" -e "\? [A-Z][^.?!]{0,60}\?" .
 ```
