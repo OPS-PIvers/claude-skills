@@ -1,6 +1,6 @@
 {
   "name": "pauls-skills",
   "description": "Paul Ivers' personal global skills for auditing codebases, planning and implementing roadmaps, writing, and building on-brand Orono materials, shared across machines and claude.ai.",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "author": { "name": "Paul Ivers" }
 }
