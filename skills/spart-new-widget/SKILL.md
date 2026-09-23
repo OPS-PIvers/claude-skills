@@ -15,8 +15,9 @@ description: >-
 
 ## The Complete Checklist (do these in order)
 
-Every new widget touches **8 locations**. Missing any one causes TypeScript
-errors, broken dock entries, invisible gear buttons, or scaling failures.
+Every new widget touches **10 locations**. Missing any one causes TypeScript
+errors, broken dock entries, invisible gear buttons, scaling failures, a red
+CI run, or student data in a tour recording.
 
 | # | File | What to add |
 |---|------|-------------|
@@ -28,6 +29,8 @@ errors, broken dock entries, invisible gear buttons, or scaling failures.
 | 6 | `config/widgetGradeLevels.ts` | Entry in `WIDGET_GRADE_LEVELS` |
 | 7 | `components/admin/` | Admin config panel or modal (see spart-widget-admin-config skill) |
 | 8 | `components/admin/FeaturePermissionsManager.tsx` | Wire admin config modal if using dedicated modal path |
+| 9 | `config/tourAnchors.ts` | Tag primary actions with `tourAttr` and register each id in `TOUR_ANCHORS` (Step 8) |
+| 10 | `components/widgets/YourWidget/` | `data-pii` on elements showing student faces, photos or free-form content (Step 8) |
 
 ---
 
@@ -313,6 +316,36 @@ Settings → Feature Permissions renders something instead of the
 For widgets with meaningful building-level defaults (fonts, preloaded content,
 feature flags), invest in a proper config panel using the specialist-schedule
 modal as the gold standard.
+
+---
+
+## Step 8 — Tour Anchors and PII Tags
+
+These come from Guided Learning live tours (P3-1) and recording redaction
+(P3-7) in `docs/plans/GUIDED_LEARNING_STUDIO.md`. Both have landed on
+`dev-paul`; on an older branch without `config/tourAnchors.ts`, skip this step.
+
+**Tour anchors.** Tag the widget's primary actions (add item, start, reset,
+main settings toggles) with `tourAttr('<widgetType>.<action>')` from
+`config/tourAnchors.ts`, and register each id in `TOUR_ANCHORS`. A board can
+hold several copies of a widget, so pass the instance id and mark the entry
+`perWidget: true`:
+```tsx
+// config/tourAnchors.ts
+'your-widget.start': { label: 'Start button in Your Widget', perWidget: true },
+
+// Widget.tsx
+<button {...tourAttr('your-widget.start', widget.id)} onClick={start}>
+```
+`tests/tourAnchors.test.ts` fails CI if a registered anchor isn't rendered in
+source, or if a `data-tour` literal isn't registered. It finds uses by
+grepping, so always pass the id as a string literal.
+
+**PII.** Tag elements that show student faces, photos or free-form student
+content with `data-pii` (`<div data-pii="">`) so the Guided Learning recorder
+blurs them. Roster names in DOM text are matched automatically; `data-pii`
+covers what text matching can't see, like `<video>`, `<img>` and drawing
+`<canvas>` elements. See `components/widgets/ActivityWall/Widget.tsx`.
 
 ---
 
