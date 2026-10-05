@@ -59,7 +59,7 @@ Tours run only from the building library or the Help Center, which is where this
 
 In 3–5 lines:
 - what was saved, and `where_to_find_it`
-- the next steps: in Admin Settings > Help Center, open the item and edit its activity, run it live from the Studio, publish it, then make the item visible (test on the dev site first if it's available). The item's row shows "Live tour · Draft", "Hidden" or "Live", so the admin can see which step is left
+- the next steps: in Admin Settings > Help Center, open the item and edit its activity, run it live from the Studio, then press Publish tour and, right below it, Show in Help (test on the dev site first if it's available). The item's row shows "Live tour · Draft", "Hidden" or "Live", so the admin can see which step is left
 - where to find it without the Help Center: in the Guided Learning library, set Type to "Live tours". That view lists Help Center tours as well, each marked Published or Draft
 - any `fallback`-only steps, and any step whose anchor you weren't sure of
 - that you can edit it with `update_guided_learning`, and that every edit can be undone for 30 days
