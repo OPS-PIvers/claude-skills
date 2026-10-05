@@ -53,11 +53,14 @@ Every step needs a `tour` binding. The server refuses a step without one.
 
 One `create_live_tour` call with every step. With `help_center: { category_id, widget_types }` the tour is filed in the Help Center, and each widget's ? button offers it. It always saves as a **hidden draft**. Teachers see nothing until an admin publishes it.
 
+Tours run only from the building library or the Help Center, which is where this tool saves them. A tour in someone's personal library can't run live. If an admin has one there, tell them to use "Copy to building to run live" from its menu in the Guided Learning library.
+
 ## Hand back
 
 In 3–5 lines:
 - what was saved, and `where_to_find_it`
-- the next steps: in Admin Settings > Help Center, open the item and edit its activity, run it live from the Studio, publish it, then make the item visible (test on the dev site first if it's available)
+- the next steps: in Admin Settings > Help Center, open the item and edit its activity, run it live from the Studio, publish it, then make the item visible (test on the dev site first if it's available). The item's row shows "Live tour · Draft", "Hidden" or "Live", so the admin can see which step is left
+- where to find it without the Help Center: in the Guided Learning library, set Type to "Live tours". That view lists Help Center tours as well, each marked Published or Draft
 - any `fallback`-only steps, and any step whose anchor you weren't sure of
 - that you can edit it with `update_guided_learning`, and that every edit can be undone for 30 days
 
