@@ -1,6 +1,6 @@
 ---
-name: emil-design-eng
-description: This skill encodes Emil Kowalski's philosophy on UI polish, component design, animation decisions, and the invisible details that make software feel great.
+name: design-engineering
+description: "UI polish and design engineering craft: component design, animation decisions, easing and timing, springs, gestures, transforms, performance, accessibility, and the invisible details that make software feel great. Based on Emil Kowalski's design engineering philosophy. Use when building or critiquing a component or screen for feel and polish, or reviewing UI code for craft. For worst-case data use break-ui; for motion-only reviews use review-animations."
 ---
 
 # Design Engineering
