@@ -1,6 +1,6 @@
 ---
 name: create-verification-skill
-description: Generate a project-local verification skill (`.claude/skills/verify-<app>/`) that launches this repo's app, drives it the way a user does, and captures evidence that a feature works. Works for any language, framework, or platform: web UI, CLI/TUI, desktop, API, mobile. Use for /create-verification-skill, "make a verify skill for this repo", "make a control skill", or when a project has no scripted way to prove UI, CLI, or service behavior.
+description: Generate a project-local verification skill (`.claude/skills/verify-{app}/`) that launches this repo's app, drives it the way a user does, and captures evidence that a feature works. Works for any language, framework, or platform: web UI, CLI/TUI, desktop, API, mobile. Use for /create-verification-skill, "make a verify skill for this repo", "make a control skill", or when a project has no scripted way to prove UI, CLI, or service behavior.
 disable-model-invocation: true
 ---
 

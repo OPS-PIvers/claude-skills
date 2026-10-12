@@ -1,6 +1,6 @@
 ---
 name: maintain-verification-skill
-description: Periodic pass that keeps a project's verification skill (`.claude/skills/verify-<app>/`) and its feature map honest. Runs one read-only subagent per feature to check the map against source, then one live session that drives every feature, then ships at most one PR of proven corrections. Use for /maintain-verification-skill, "audit the verify skill", "refresh the feature map", or after a stretch of app changes when the verify skill may have drifted.
+description: Periodic pass that keeps a project's verification skill (`.claude/skills/verify-{app}/`) and its feature map honest. Runs one read-only subagent per feature to check the map against source, then one live session that drives every feature, then ships at most one PR of proven corrections. Use for /maintain-verification-skill, "audit the verify skill", "refresh the feature map", or after a stretch of app changes when the verify skill may have drifted.
 disable-model-invocation: true
 ---
 
