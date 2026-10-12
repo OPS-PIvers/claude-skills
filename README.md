@@ -21,6 +21,16 @@ Edit a skill in `skills/<name>/SKILL.md`, commit, push, then on each machine:
 claude plugin marketplace update pauls-skills
 ```
 
+### Pre-commit check
+
+claude.ai drops a skill on sync if its `description` contains XML-like tags (`<app>`). A pre-commit hook blocks that. Turn it on once per clone:
+
+```
+git config core.hooksPath .githooks
+```
+
+Run it by hand on every skill with `sh scripts/check-skill-descriptions.sh`.
+
 ## `spartboard` skill: org rollout for Claude for Teachers
 
 `skills/spartboard` teaches Claude how to use the SpartBoard connector: plan first, save once, and hand back for review. It also covers research-based item writing and MN standards alignment through Learning Commons. Teachers get it from the org, not from this plugin.
