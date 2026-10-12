@@ -31,3 +31,7 @@ claude plugin marketplace update pauls-skills
 3. Check it: in a teacher chat with the SpartBoard connector on, "make a 5 question quiz on the water cycle" should reply with a plan and wait for your OK.
 
 **Updating:** edit the files here, merge, re-zip, and upload the new zip over the old one. Keep tool names in step with the connector (`functions/src/mcp/` in SpartBoard).
+
+## Credits
+
+`architect`, `blast-radius`, `correct`, `create-verification-skill`, `engineering-principles`, `how`, `maintain-verification-skill`, `reflect`, `teach`, `typescript-best-practices`, and `why` are adapted for Claude Code from [pstack](https://github.com/cursor/plugins/tree/main/pstack) by Lauren Tan, under the MIT License ([licenses/pstack-MIT.txt](licenses/pstack-MIT.txt)).
