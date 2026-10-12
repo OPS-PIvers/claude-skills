@@ -17,6 +17,7 @@ Tools: `list_video_activities`, `get_video_activity`, `create_video_activity`, `
 | `choose_all` | `correct_answers` and `incorrect_answers` |
 | `fill_in_blank` | `correct_answer`, `accepted_alternates` |
 
+- Every type also takes `standards` and `learning_targets` (`references/standards.md`).
 - `time_limit_seconds` defaults to 30 for a new question; 0 means no limit.
 - The item-writing rules in `quizzes.md` apply. Keep stems short, since students just watched rather than read.
 
