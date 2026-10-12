@@ -1,6 +1,6 @@
 ---
 name: spartboard
-description: "Make and edit classroom materials in a teacher's SpartBoard library through the SpartBoard connector: quizzes, question banks, video activities, flashcard sets, rubrics, Activity Walls and mini-apps, read class-level quiz and video results, and (for admins) make live tours of SpartBoard for the Help Center. Use whenever a teacher asks to create, build, write, generate, revise or fix a quiz, test, assessment, exit ticket, flashcards, vocab set, video questions, rubric, discussion wall, or classroom app for SpartBoard, asks to align to Minnesota standards or tag learning targets, or asks how a class did on a SpartBoard quiz or video activity, or an admin asks for a live tour, walkthrough or Help Center guide of SpartBoard."
+description: "Make and edit classroom materials in a teacher's SpartBoard library through the SpartBoard connector: quizzes, question banks, video activities, flashcard sets, rubrics, Activity Walls and mini-apps, read class-level quiz and video results, and (for admins) make live tours of SpartBoard for the Help Center. Use whenever a teacher asks to create, build, write, generate, revise or fix a quiz, test, assessment, exit ticket, flashcards, vocab set, video questions, rubric, discussion wall, or classroom app for SpartBoard, asks to align to or tag Minnesota state standards or learning targets, or asks how a class did on a SpartBoard quiz or video activity, or an admin asks for a live tour, walkthrough or Help Center guide of SpartBoard."
 ---
 
 # SpartBoard
@@ -21,7 +21,7 @@ Help a teacher make materials that are accurate, grounded in their own content, 
    >
    > OK to create, or change anything?
 
-   For a quiz, question bank, video activity or Guided Learning set, always include the standards line, already filled in: look the codes up yourself before you write the plan (`references/standards.md`). You have SpartBoard's own `search_standards` tool and, in most chats, the Learning Commons connector for Minnesota standards, so never ask the teacher whether you can look standards up. If the grade or subject is unknown, ask for it with the other missing details. The teacher can say "no standards" to drop the line.
+   For a quiz, question bank, video activity or Guided Learning set, always include the standards line, already filled in: look the codes up yourself before you write the plan (`references/standards.md`). You have SpartBoard's own `search_standards` tool and, in most chats, the Learning Commons connector for Minnesota standards, so never ask the teacher whether you can look standards up. If the grade or subject is unknown, ask for it with the other missing details. The teacher can say "no standards" to drop the line. Don't add a learning targets line or ask about learning targets unless the teacher brings them up.
 3. **Wait for OK.** Don't write any questions before the plan is approved.
 4. **Save once.** Write the whole item in a single `create_*` call. Don't show it in chat first.
 5. **Hand it back** in 3–5 lines:
