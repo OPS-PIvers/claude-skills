@@ -1,6 +1,6 @@
 ---
 name: spartboard
-description: "Make and edit classroom materials in a teacher's SpartBoard library through the SpartBoard connector: quizzes, question banks, video activities, flashcard sets, rubrics, Activity Walls and mini-apps, read class-level quiz and video results, and (for admins) make live tours of SpartBoard for the Help Center. Use whenever a teacher asks to create, build, write, generate, revise or fix a quiz, test, assessment, exit ticket, flashcards, vocab set, video questions, rubric, discussion wall, or classroom app for SpartBoard, asks to align to Minnesota standards, or asks how a class did on a SpartBoard quiz or video activity, or an admin asks for a live tour, walkthrough or Help Center guide of SpartBoard."
+description: "Make and edit classroom materials in a teacher's SpartBoard library through the SpartBoard connector: quizzes, question banks, video activities, flashcard sets, rubrics, Activity Walls and mini-apps, read class-level quiz, video and mini-app results, and (for admins) make live tours of SpartBoard for the Help Center. Use whenever a teacher asks to create, build, write, generate, revise or fix a quiz, test, assessment, exit ticket, flashcards, vocab set, video questions, rubric, discussion wall, or classroom app for SpartBoard, asks to align to Minnesota standards, or asks how a class did on a SpartBoard quiz, video activity or mini-app, or an admin asks for a live tour, walkthrough or Help Center guide of SpartBoard."
 ---
 
 # SpartBoard
