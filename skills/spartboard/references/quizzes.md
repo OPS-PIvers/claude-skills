@@ -13,7 +13,7 @@ Tools: `list_quizzes`, `get_quiz`, `create_quiz`, `update_quiz`, and the same fo
 | `ordering` | sequences, steps, timelines | 2–12 `items_in_order` |
 | `free_response` | explanation or argument | `placeholder`, `min_words`, `max_words`, with no key |
 
-Other fields: `points` defaults to 1, and `time_limit_seconds` of 0 means no limit. Choices can't contain `|`, and matching terms can't contain `:`.
+Every type also takes `standards` and `learning_targets`, which fill the question's Learning Targets field (`references/standards.md`). Other fields: `points` defaults to 1, and `time_limit_seconds` of 0 means no limit. Choices can't contain `|`, and matching terms can't contain `:`.
 
 ## Writing good items (research-based item-writing rules)
 
