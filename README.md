@@ -2,8 +2,8 @@
 
 Claude skills marketplace with two plugins:
 
-- `ops-staff`: skills for Orono staff (`spartboard`, `ops-brand-guidelines`, `deslop`, `grill-me`, `to-questionnaire`). Enable this one for the org.
-- `pauls-skills`: personal engineering, planning, design and animation skills. Install it on your own machines only.
+- `ops-staff`: skills for Orono staff (`spartboard`, `grill-me`, `to-questionnaire`). Enable this one for the org.
+- `pauls-skills`: personal and tech-department skills: engineering, planning, design and animation, plus `ops-brand-guidelines` and `deslop`. Install it on your own machines only.
 
 Skills live in `plugins/<plugin>/skills/<name>/SKILL.md`.
 

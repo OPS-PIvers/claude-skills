@@ -8,12 +8,12 @@
     {
       "name": "ops-staff",
       "source": "./plugins/ops-staff",
-      "description": "Skills for Orono staff: SpartBoard classroom materials, on-brand Orono documents and decks, de-sloping writing, and decision questionnaires."
+      "description": "Skills for Orono staff: SpartBoard classroom materials, sharpening a plan or decision, and turning open decisions into questionnaires."
     },
     {
       "name": "pauls-skills",
       "source": "./plugins/pauls-skills",
-      "description": "Paul Ivers' personal engineering, planning, UI design and animation skills."
+      "description": "Paul Ivers' personal and tech-department skills: engineering, planning, UI design and animation, Orono brand guidelines, and writing cleanup."
     }
   ]
 }
