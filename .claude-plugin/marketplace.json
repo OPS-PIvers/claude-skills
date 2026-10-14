@@ -2,13 +2,18 @@
   "name": "pauls-skills",
   "owner": { "name": "Paul Ivers" },
   "metadata": {
-    "description": "Paul Ivers' personal Claude skills for planning, UI design and animation, classroom materials, and on-brand Orono district work."
+    "description": "Claude skills for Orono Public Schools staff (ops-staff) and Paul Ivers' personal engineering and design skills (pauls-skills)."
   },
   "plugins": [
     {
+      "name": "ops-staff",
+      "source": "./plugins/ops-staff",
+      "description": "Skills for Orono staff: SpartBoard classroom materials, on-brand Orono documents and decks, de-sloping writing, and decision questionnaires."
+    },
+    {
       "name": "pauls-skills",
-      "source": "./",
-      "description": "Paul Ivers' personal global skills — planning, triage, handoff, and workflow tools."
+      "source": "./plugins/pauls-skills",
+      "description": "Paul Ivers' personal engineering, planning, UI design and animation skills."
     }
   ]
 }

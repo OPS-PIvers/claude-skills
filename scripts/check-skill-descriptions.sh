@@ -3,11 +3,11 @@
 # claude.ai rejects XML-like tags in skill descriptions and drops the skill on sync.
 # Usage: check-skill-descriptions.sh [--staged] [files...]
 #   --staged  read file contents from the git index (used by the pre-commit hook)
-#   no files  checks every skills/*/SKILL.md
+#   no files  checks every plugins/*/skills/*/SKILL.md
 
 staged=0
 if [ "$1" = "--staged" ]; then staged=1; shift; fi
-[ $# -eq 0 ] && set -- skills/*/SKILL.md
+[ $# -eq 0 ] && set -- plugins/*/skills/*/SKILL.md
 
 status=0
 for f in "$@"; do

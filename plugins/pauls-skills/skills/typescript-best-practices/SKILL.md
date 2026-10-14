@@ -1,6 +1,7 @@
 ---
 name: typescript-best-practices
-description: TypeScript type-design rules that make illegal states unrepresentable: discriminated unions, branded IDs, no `as` casts, `unknown` at boundaries, schema-derived types, exhaustive switches, `satisfies`. Use when writing, editing, or reviewing any .ts or .tsx file, designing types or props, or fixing type errors.
+description: >-
+  TypeScript type-design rules that make illegal states unrepresentable: discriminated unions, branded IDs, no `as` casts, `unknown` at boundaries, schema-derived types, exhaustive switches, `satisfies`. Use when writing, editing, or reviewing any .ts or .tsx file, designing types or props, or fixing type errors.
 paths: ["**/*.ts", "**/*.tsx"]
 ---
 
