@@ -39,16 +39,13 @@ git config core.hooksPath .githooks
 
 Run it by hand on every skill with `sh scripts/check-skill-descriptions.sh`.
 
-## `spartboard` skill: org rollout for Claude for Teachers
+## `spartboard` skill
 
-`plugins/ops-staff/skills/spartboard` teaches Claude how to use the SpartBoard connector: plan first, save once, and hand back for review. It also covers research-based item writing and MN standards alignment through Learning Commons. Teachers can also get it from the org Skills upload below, instead of the plugin.
+`plugins/ops-staff/skills/spartboard` teaches Claude how to use the SpartBoard connector: plan first, save once, and hand back for review. It also covers research-based item writing and MN standards alignment through Learning Commons. Teachers get it through the `ops-staff` plugin, so there is no separate zip upload.
 
-**First upload**
-1. Zip the folder so that `spartboard/SKILL.md` sits at the root of the zip: `cd plugins/ops-staff/skills && zip -r spartboard.zip spartboard`.
-2. In the Claude for Teachers org, open Organization settings > Skills (org admin only), upload `spartboard.zip`, and turn it on for everyone.
-3. Check it: in a teacher chat with the SpartBoard connector on, "make a 5 question quiz on the water cycle" should reply with a plan and wait for your OK.
+**Check it:** in a teacher chat with the SpartBoard connector on, "make a 5 question quiz on the water cycle" should reply with a plan and wait for your OK.
 
-**Updating:** edit the files here, merge, re-zip, and upload the new zip over the old one. Keep tool names in step with the connector (`functions/src/mcp/` in SpartBoard).
+**Updating:** edit the files here, bump `ops-staff` in `plugins/ops-staff/.claude-plugin/plugin.json`, push, then run `claude plugin marketplace update pauls-skills`. Keep tool names in step with the connector (`functions/src/mcp/` in SpartBoard).
 
 ## Credits
 
