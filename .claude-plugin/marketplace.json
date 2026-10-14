@@ -1,6 +1,9 @@
 {
   "name": "pauls-skills",
   "owner": { "name": "Paul Ivers" },
+  "metadata": {
+    "description": "Paul Ivers' personal Claude skills for planning, UI design and animation, classroom materials, and on-brand Orono district work."
+  },
   "plugins": [
     {
       "name": "pauls-skills",
