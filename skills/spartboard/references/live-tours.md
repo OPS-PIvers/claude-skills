@@ -26,16 +26,8 @@ Use the live tour tools, never `get_guided_learning` or `update_guided_learning`
    - Adding, removing, reordering or rebinding steps: `update_live_tour` with the full `steps` list, every step to keep with its `id`. Check it with `dry_run: true` first, as the guide says.
 5. **Steps with no anchor.** A step with `anchor: ""` plays from its English fallback name only. If it shows `anchor_ready`, that control has been tagged since. Offer to bind it, which means sending the full `steps` with `tour.anchor` set to that value. Without `anchor_ready`, leave the step as it is and list it in the hand-back.
 
-A draft saves straight away. A published tour keeps playing its old steps until an admin publishes the changes in the Studio (Guided Learning library > Edit). Say so after any edit.
-
-## Hand-back additions
-
-Give the hand-back the guide describes, plus these:
-
-- **Publishing.** In Admin Settings > Help Center, open the item and edit its activity, run it live, then press Publish tour and, right below it, Show in Help. Test on the dev site first if it's available. The item's row shows "Live tour · Draft", "Hidden" or "Live", so the admin can see which step is left.
-- **Finding it outside the Help Center.** In the Guided Learning library, set Type to "Live tours". That view lists Help Center tours too, each marked Published or Draft.
-- **Undo.** You can edit it with `update_live_tour`, and every edit can be undone for 30 days.
+A draft saves straight away. A published tour keeps playing its old steps until an admin publishes the changes: Guided Learning library, Type set to Live tours, Edit, then Publish tour. Say so after any edit.
 
 ## claude.ai vs Claude Code
 
-The guide's browser run needs Claude Code inside a SpartBoard checkout. In claude.ai, or in Claude Code outside that repo, skip it and say the tour was dry-run only, so the admin knows to run it live before publishing.
+The guide's browser run needs Claude Code inside a SpartBoard checkout, because it runs that repo's dev server and script. In claude.ai, or in Claude Code outside that repo, skip it and say the tour was dry-run only, so the admin knows to run it live before publishing.
