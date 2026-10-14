@@ -26,7 +26,7 @@ Use the live tour tools, never `get_guided_learning` or `update_guided_learning`
    - Adding, removing, reordering or rebinding steps: `update_live_tour` with the full `steps` list, every step to keep with its `id`. Check it with `dry_run: true` first, as the guide says.
 5. **Steps with no anchor.** A step with `anchor: ""` plays from its English fallback name only. If it shows `anchor_ready`, that control has been tagged since. Offer to bind it, which means sending the full `steps` with `tour.anchor` set to that value. Without `anchor_ready`, leave the step as it is and list it in the hand-back.
 
-A draft saves straight away. A published tour keeps playing its old steps until an admin publishes the changes: Guided Learning library, Type set to Live tours, Edit, then Publish tour. Say so after any edit.
+A draft saves straight away. A published tour keeps playing its old steps until an admin publishes the changes: Guided Learning library, Type set to Live tours, Edit, then Publish changes. Show in Help stays on, so that's the only button. Say so after any edit.
 
 ## claude.ai vs Claude Code
 
