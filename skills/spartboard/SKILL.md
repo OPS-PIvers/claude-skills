@@ -68,4 +68,4 @@ Help a teacher make materials that are accurate, grounded in their own content, 
 | Mini-app (HTML) | `references/mini-apps.md` |
 | "How did my class do?" | `references/results.md` |
 | Standards and learning targets | `references/standards.md` |
-| Live tour of SpartBoard (admins only) | `references/live-tours.md` |
+| Live tour of SpartBoard (admins only, no plan step) | `references/live-tours.md` |
