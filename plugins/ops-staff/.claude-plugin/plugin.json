@@ -1,6 +1,6 @@
 {
   "name": "ops-staff",
   "description": "Claude skills for Orono Public Schools staff: SpartBoard classroom materials and sharpening a plan or decision.",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "author": { "name": "Paul Ivers" }
 }
