@@ -41,17 +41,13 @@ Define how we'll know it worked using something other than your own judgment: te
 
 ## Phase 2: Grill
 
-Phase 1 is a proposal, not a plan. Turn it into a **design tree** of the decisions it raises and interview the user until every branch is settled. The root decisions usually include:
+Phase 1 is a proposal, not a plan. Invoke the `grilling` skill with the Skill tool on the Phase 1 proposal and follow it until every decision is settled. If `grilling` isn't available, run the same kind of interview directly: a design tree worked in rounds with AskUserQuestion, a recommended answer on every question, and facts looked up rather than asked. The root decisions usually include:
 
 - Which version to pursue: the literal ask, the ambitious version, or something between.
 - Which access and setup the user will grant, and what to do instead where they won't.
 - The target, and whether it's the right one.
 - Which outside-field techniques and practitioner methods are in scope.
 - The verification checks and their thresholds.
-
-Work the tree in **rounds** with the AskUserQuestion tool (up to 4 questions per call; use more calls in the same round if the frontier is bigger). The **frontier** is every decision whose prerequisites are already settled. Ask the whole frontier each round, give each question a labeled recommended answer, and wait. Recommend the best and most sustainable option, not the easiest. A question that depends on another one still open belongs to a later round.
-
-Facts are your job, decisions are the user's. Never ask the user for something you can look up; dispatch a sub-agent and ask the rest of the frontier while it runs. When answers reshape the tree, recompute the frontier and go again.
 
 The grill phase ends when the frontier is empty. Then give a short summary of the agreed plan: the outcome, scope, target, techniques, adversarial check, and verification thresholds. Wait for the user's go-ahead before you start.
 
