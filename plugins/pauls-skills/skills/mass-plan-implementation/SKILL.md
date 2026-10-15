@@ -36,7 +36,7 @@ Preserve the orchestrator's context and spend expensive tokens only where the ta
 Identify which plan/backlog document is being implemented (ask if ambiguous). Verify each item is **self-contained**: description + implementation notes + key files, implementable without conversation context. If items aren't at that bar, fix the doc first (e.g. via `feature-roadmap-discovery`).
 
 ### 2. Grill the plan with the user
-Run a `/grill-me`-style interrogation session BEFORE any agent is dispatched (invoke the grill-me skill if available; otherwise conduct it directly). Walk the item list and extract, per item: priority twists, scope boundaries, "check if already shipped first" flags, product decisions an agent would otherwise guess at, and explicit go/no-go. The output is the per-item `notes` field in the implement batch — every answer here is one less mid-run blocker.
+Run a `/grill-me`-style interrogation session BEFORE any agent is dispatched (invoke the `grilling` skill if available; otherwise conduct it directly). Walk the item list and extract, per item: priority twists, scope boundaries, "check if already shipped first" flags, product decisions an agent would otherwise guess at, and explicit go/no-go. The output is the per-item `notes` field in the implement batch — every answer here is one less mid-run blocker.
 
 ### 3. Select the MAXIMUM slice — anti-underestimation rule
 Agents chronically underestimate what they can handle, self-selecting ~25% of a plan as "manageable." Do not let that happen:
