@@ -1,10 +1,11 @@
 # "How did my class do?"
 
-Tools: `get_quiz_results_summary(quiz_id)` and `get_video_activity_results_summary(activity_id)`. Find the id with `list_quizzes` or `list_video_activities` and `search`. Results cover the teacher's own newest 5 assignments, or one assignment by `assignment_id`.
+Tools: `get_quiz_results_summary(quiz_id)`, `get_video_activity_results_summary(activity_id)` and `get_mini_app_results_summary(app_id)`. Find the id with `list_quizzes`, `list_video_activities` or `list_mini_apps` and `search`. Results cover the teacher's own newest 5 assignments, or one assignment by `assignment_id`.
 
 ## What you get
 
 - **Class-level numbers only:** completed responses, average percent, score bands, and for each question the percent correct and how many students picked each choice.
+- **Mini-apps** report each student's best attempt: average, score bands, average attempts and percent correct per question. Questions marked `scored_by: app` were scored by the app itself, not SpartBoard. Assignments made before results scoring have no summary.
 - **Hidden under 5 finishers.** Say so kindly if a summary is hidden.
 - **You never see a student's name, answers or score.** Don't guess at individuals.
 
