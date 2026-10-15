@@ -26,8 +26,10 @@ Use the live tour tools, never `get_guided_learning` or `update_guided_learning`
    - Adding, removing, reordering or rebinding steps: `update_live_tour` with the full `steps` list, every step to keep with its `id`. Check it with `dry_run: true` first, as the guide says.
 5. **Steps with no anchor.** A step with `anchor: ""` plays from its English fallback name only. If it shows `anchor_ready`, that control has been tagged since. Offer to bind it, which means sending the full `steps` with `tour.anchor` set to that value. Without `anchor_ready`, leave the step as it is and list it in the hand-back.
 
+**Finishing a tour.** When the admin says "finish the tour", "I played it" or "I left notes", follow the guide's **Finish pass**. `get_live_tour` returns their notes (`review_note`), what each step did when they last played it (`last_playtest`) and, once published, how teachers' runs went (`health`). Save with `resolved_notes` for each note you dealt with.
+
 A draft saves straight away. A published tour keeps playing its old steps until an admin publishes the changes: Guided Learning library, Type set to Live tours, Edit, then Publish changes. Show in Help stays on, so that's the only button. Say so after any edit.
 
 ## claude.ai vs Claude Code
 
-The guide's browser run needs Claude Code inside a SpartBoard checkout, because it runs that repo's dev server and script. In claude.ai, or in Claude Code outside that repo, skip it and say the tour was dry-run only, so the admin knows to run it live before publishing.
+The guide's browser run needs Claude Code inside a SpartBoard checkout, because it runs that repo's dev server and script. In claude.ai, or in Claude Code outside that repo, skip it and say the tour was dry-run only. End with the guide's claude.ai hand-back line, so the admin plays it once in the editor, leaves a **Note for Claude** on any step that's wrong, and comes back for the finish pass above.
