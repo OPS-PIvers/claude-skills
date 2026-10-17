@@ -1,6 +1,6 @@
 ---
 name: aim-higher
-description: Take a task, push it to be more ambitious across altitude, depth, range and verification, grill the user until the plan is settled, then do the work and prove it worked with real measurements.
+description: Take a task, research how top practitioners in its field work, push it to go deeper across altitude, depth, range and verification, grill the user until the plan is settled, then do the work and prove it worked with real measurements.
 argument-hint: "[task to make more ambitious]"
 disable-model-invocation: true
 ---
@@ -13,7 +13,17 @@ This runs in three phases: **aim** (propose a more ambitious version), **grill**
 
 ## Phase 1: Aim
 
-Read whatever context is available first (the codebase, docs, prior conversation, connected tools) so every section is specific to this task, not generic. Look up facts yourself; dispatch sub-agents for anything broad. Then present all four sections in one message.
+Aim deeper, not bigger. A version that does the same job with more rigor, better raw material and harder evidence beats one that just adds scope. Raise the scope only where the real outcome needs it.
+
+Read whatever context is available first (the codebase, docs, prior conversation, connected tools) so every section is specific to this task, not generic. Look up facts yourself; dispatch sub-agents for anything broad.
+
+### Research the field first
+
+Before writing any section, find out how top practitioners in this field actually work, instead of relying on what you already believe about them. That belief is usually generic, and generic is what this skill exists to beat. Dispatch a research sub-agent to read a handful of the strongest primary sources (no more than about eight): practitioners' own writing and talks, the field's standards and reference texts, postmortems and case studies, and papers where the field has them. Skip listicles and summaries of summaries. Ask it to report back how those practitioners think about this kind of task, what they start from, what methods and tools they use, and how they judge whether the result is right, with a link for each claim.
+
+Skip this only when the field is the task's own material, such as conventions inside this codebase, where reading the code is the research. Say that you skipped it and why.
+
+Then present all four sections in one message, drawing on the research throughout.
 
 ### ALTITUDE
 
@@ -23,9 +33,9 @@ Read whatever context is available first (the codebase, docs, prior conversation
 
 ### DEPTH
 
-Describe what a top practitioner in this area would do that the user hasn't asked for:
+Describe what a top practitioner in this area would do that the user hasn't asked for, grounded in the research and citing the sources it rests on:
 
-- The raw material they'd start from.
+- The rawest material they'd start from, in place of what has already been digested for the user: logs over dashboards, recordings over notes, source data over reports, the code over its docs.
 - The specific tools and methods they'd use (profilers, test harnesses, telemetry, statistical analysis, and so on).
 - A target that sounds unreasonably high but is achievable.
 
@@ -37,7 +47,7 @@ Describe what a top practitioner in this area would do that the user hasn't aske
 
 ### VERIFICATION
 
-Define how we'll know it worked using something other than your own judgment: tests, benchmarks, measurements, or real user data you can run and check. Give a pass/fail threshold for each.
+Define how we'll know it worked using something other than your judgment or the user's: tests, benchmarks, measurements, or real user data you can run and check. Give a pass/fail threshold for each.
 
 ## Phase 2: Grill
 
@@ -46,7 +56,7 @@ Phase 1 is a proposal, not a plan. Invoke the `grilling` skill with the Skill to
 - Which version to pursue: the literal ask, the ambitious version, or something between.
 - Which access and setup the user will grant, and what to do instead where they won't.
 - The target, and whether it's the right one.
-- Which outside-field techniques and practitioner methods are in scope.
+- Which outside-field techniques and practitioner methods are in scope, and whether the research missed a source the user trusts.
 - The verification checks and their thresholds.
 
 The grill phase ends when the frontier is empty. Then give a short summary of the agreed plan: the outcome, scope, target, techniques, adversarial check, and verification thresholds. Wait for the user's go-ahead before you start.
