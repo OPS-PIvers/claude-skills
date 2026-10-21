@@ -205,32 +205,38 @@ const inkScale = svg => INK_K === 1 ? svg : svg.replace(/stroke-width="([\d.]+)"
 /* ---------- page shell (OPS brand: Lexend headings, Roboto body, blue/red/gray) ---------- */
 const FONTS_URL = 'https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap';
 const CORE_CSS = `
-  :root{--w:760px;--bg:#f3f3f3;--ink:#1d2a5d;--blue:#2d3f89;--blue-light:#4356a0;--blue-lighter:#eaecf5;--red-light:#c13435;
+  :root{--w:1280px;--bg:#f3f3f3;--ink:#1d2a5d;--blue:#2d3f89;--blue-light:#4356a0;--blue-lighter:#eaecf5;--red-light:#c13435;
     --text:#333333;--muted:#666666;--rule:#cccccc;--head:${FONT_HEAD};--body:${FONT_BODY}}
-  html.present{--w:1100px}
-  *{box-sizing:border-box} html,body{margin:0;min-height:100%}
+  *{box-sizing:border-box}
+  /* The page fits the window (or the SpartBoard frame) without scrolling: header, figure, caption and controls are
+     all on screen, and the figure takes whatever height is left and scales to fit it. Only a very short window
+     (the figure would drop under 240px) scrolls. */
+  html,body{margin:0;height:100%}
   body{background-color:var(--bg);
     background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'><filter id='p'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .2  0 0 0 0 .25  0 0 0 0 .42  .09 0 0 0 0'/></filter><rect width='100%' height='100%' filter='url(%23p)'/></svg>");
-    overflow-x:hidden;color:var(--text);font:14px/1.45 var(--body);display:flex;flex-direction:column;align-items:center;padding:24px 16px 32px}
-  header{width:100%;max-width:var(--w);display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+    overflow-x:hidden;overflow-y:auto;color:var(--text);font:14px/1.45 var(--body);display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 16px}
+  header,.stage,.narr,.walk,.controls{width:100%;max-width:var(--w);flex:none}
+  header{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
   header h1{font:600 18px/1.3 var(--head);color:var(--ink);margin:0} header h1 .no{color:var(--red-light);margin-right:8px}
   header .hint{color:var(--muted)}
-  #fig{width:100%;max-width:var(--w);height:auto;display:block;margin:4px 0 4px;user-select:none;overflow:visible}
+  .stage{position:relative;flex:1 1 0;min-height:240px;display:flex;flex-direction:column}
+  #fig{flex:1 1 0;min-height:0;width:100%;height:100%;display:block;user-select:none;overflow:visible}
   #fig [data-act]{cursor:pointer}
-  .stage{position:relative;width:100%;max-width:var(--w)}
   .actions{position:absolute;top:4px;left:0;display:flex;flex-direction:column;align-items:flex-start;gap:8px;z-index:2;max-width:230px}
-  .actions .cap,.ctl label{color:var(--muted);font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;margin:0 0 2px}
+  .actions .cap,.ctl label{color:var(--muted);font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;margin:0}
   html.nolabels #fig .tag{display:none}
   .ctl[hidden],.predict[hidden],.walk[hidden]{display:none}
-  /* the step caption: one plain sentence saying what is happening, read out to screen readers */
-  .caption{width:100%;max-width:var(--w);min-height:2.9em;margin:0 0 10px;text-align:center;font:500 17px/1.4 var(--head);color:var(--ink);text-wrap:balance}
-  /* earlier captions of the current step, so nothing is lost when the caption moves on */
-  .caplog{width:100%;max-width:var(--w);margin:0 0 6px;padding:0;list-style:none;text-align:center;font:400 14px/1.4 var(--head);color:var(--muted);text-wrap:balance}
-  .caplog:empty{display:none} .caplog li{margin:0 0 3px}
-  .predict{width:100%;max-width:560px;display:flex;align-items:center;justify-content:space-between;gap:14px;margin:0 0 14px;
-    background:var(--blue-lighter);border-left:3px solid var(--blue);border-radius:6px;padding:12px 16px;font-size:15px}
+  /* narration: the step's earlier captions, then the current one, in a box of fixed height so the figure never jumps.
+     It scrolls to the newest line. A Predict question takes the box's place while it is asked. */
+  .narr{height:4.8em;overflow-y:auto;font:500 17px/1.35 var(--head);display:flex;flex-direction:column}
+  .caplog{margin:auto 0 3px;padding:0;list-style:none;text-align:center;font-size:.8em;font-weight:400;color:var(--muted);text-wrap:balance}
+  .caplog li{margin:0 0 2px}
+  .caption{margin:0;text-align:center;color:var(--ink);text-wrap:balance}
+  .narr:has(.predict:not([hidden])) > :not(.predict){display:none}
+  .predict{width:100%;max-width:680px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:14px;
+    background:var(--blue-lighter);border-left:3px solid var(--blue);border-radius:6px;padding:10px 16px;font:400 15px/1.4 var(--body)}
   .predict p{margin:0} .predict strong{font-family:var(--head);color:var(--blue);margin-right:8px}
-  .walk{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin:0 0 16px}
+  .walk{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}
   .walk .pos{color:var(--muted);font-variant-numeric:tabular-nums;min-width:7.5em;text-align:center}
   /* ui.flash(text): a short note under the buttons ("the can is empty, refill it") */
   .toast{position:absolute;left:0;z-index:3;font-size:13px;background:var(--blue-lighter);color:var(--text);
@@ -258,11 +264,13 @@ const CORE_CSS = `
   .chip{font-size:12px;padding:4px 9px}
   .chip.current{background:var(--blue);color:#fff}
   .chip.off{opacity:.45}
-  .controls{width:100%;max-width:var(--w);display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px 28px;border-top:1px solid var(--rule);padding-top:16px}
-  .ctl{display:flex;flex-direction:column;gap:6px}
-  input[type=range]{width:100%;accent-color:var(--blue)}
-  .row{display:flex;gap:8px;flex-wrap:wrap}
-  .sw{width:26px;height:26px;padding:0;border-radius:50%;border:1.5px solid var(--rule)} .sw:hover{filter:brightness(1.05)}
+  /* the switches: one compact row under the caption */
+  .controls{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px 18px;border-top:1px solid var(--rule);padding-top:8px}
+  .ctl{display:flex;align-items:center;gap:8px}
+  .ctl .row button{padding:3px 10px;font-size:12px}
+  input[type=range]{width:110px;accent-color:var(--blue)}
+  .row{display:flex;gap:6px;flex-wrap:wrap}
+  .sw{width:22px;height:22px;padding:0;border-radius:50%;border:1.5px solid var(--rule)} .sw:hover{filter:brightness(1.05)}
   .sw[aria-pressed=true]{outline:2px solid var(--ink);outline-offset:2px}
   /* Present mode: readable from the back of a classroom */
   html.present body{font-size:17px}
@@ -270,11 +278,11 @@ const CORE_CSS = `
   html.present .actions{max-width:320px;gap:10px}
   html.present .act{font-size:18px;padding:9px 18px}
   html.present .chip{font-size:16px;padding:6px 12px}
-  html.present .caption{font-size:27px} html.present .caplog{font-size:19px}
-  html.present .predict{max-width:820px;font-size:22px} html.present .walk button,html.present .predict button{font-size:19px;padding:9px 20px}
+  html.present .narr{font-size:26px}
+  html.present .predict{max-width:900px;font-size:22px} html.present .walk button,html.present .predict button{font-size:19px;padding:9px 20px}
   html.present .toast{font-size:17px;max-width:340px}
   html.present .stat .v{font-size:48px} html.present .stat.small .v{font-size:28px}
-  @media (max-width:560px){body{padding:14px 12px 24px}header .hint,.actions .cap{display:none}.actions{flex-direction:row;flex-wrap:wrap;gap:6px}.act{font-size:12px;padding:5px 11px}.stats{position:static;flex-direction:row;justify-content:flex-end;gap:18px;margin-bottom:4px}.actions{position:static;max-width:none;margin:6px 0 4px}.chips{left:0;top:calc(100% + 8px)}.caption{font-size:15px}}`;
+  @media (max-width:560px){body{padding:10px 12px}header .hint,.actions .cap{display:none}.actions{flex-direction:row;flex-wrap:wrap;gap:6px}.act{font-size:12px;padding:5px 11px}.stats{position:static;flex-direction:row;justify-content:flex-end;gap:18px;margin-bottom:4px}.actions{position:static;max-width:none;margin:6px 0 4px}.chips{left:0;top:calc(100% + 8px)}.narr{font-size:15px}.controls{gap:8px 14px}}`;
 
 const filterFor = k => `<filter id="hand" x="-3%" y="-3%" width="106%" height="106%" color-interpolation-filters="sRGB">
   <feTurbulence type="fractalNoise" baseFrequency="${(0.045/k).toFixed(4)}" numOctaves="2" seed="4" result="warp"/>
@@ -327,9 +335,11 @@ function mountFigure(cfg){
       <div class="toast" id="toast" role="status"></div>
       <svg id="fig" role="img" aria-label="${cfg.title}"><defs id="fdefs"></defs><g id="art" filter="url(#hand)"></g></svg>
     </div>
-    <ol class="caplog" id="caplog" aria-label="Earlier in this step"></ol>
-    <p class="caption" id="caption" aria-live="polite"></p>
-    <div class="predict" id="predict" hidden><p><strong>Predict</strong><span id="pq"></span></p><button class="primary" id="pgo">Show me</button></div>
+    <div class="narr" id="narr">
+      <ol class="caplog" id="caplog" aria-label="Earlier in this step"></ol>
+      <p class="caption" id="caption" aria-live="polite"></p>
+      <div class="predict" id="predict" hidden><p><strong>Predict</strong><span id="pq"></span></p><button class="primary" id="pgo">Show me</button></div>
+    </div>
     <div class="walk" id="walkbar" hidden><button id="wback">Back</button><span class="pos" id="wpos"></span><button class="primary" id="wnext">Next</button></div>
     <div class="controls">
       <div class="ctl"><label for="wb">Hand-drawn wobble</label><input id="wb" type="range" min="0" max="6" step="0.1" value="1.6"></div>
@@ -365,7 +375,7 @@ function mountFigure(cfg){
   // caption history: the earlier captions of the current step stay listed above the current one. A caption the figure
   // replaces on its own must have been up for READ_S(it); a shortfall is recorded on <html data-errors>. Numbers don't
   // count as a new caption ("Layer 3 of 24" → "Layer 4 of 24" just updates in place).
-  const capLog = [], logEl = $('caplog'), capKey = t => t.replace(/\d+/g, '#');
+  const capLog = [], logEl = $('caplog'), narrEl = $('narr'), capKey = t => t.replace(/\d+/g, '#');
   let capSince = performance.now(), capFresh = true;
   function setCaption(c){
     const prev = capEl.textContent;
@@ -378,7 +388,7 @@ function mountFigure(cfg){
       }
       capFresh = false; capSince = performance.now();
     }
-    capEl.textContent = c;
+    capEl.textContent = c; narrEl.scrollTop = narrEl.scrollHeight;
   }
   // a press that changes the state or starts an animation begins a new step: the history clears and its first
   // caption isn't timed (a press that only flashes why it can't run leaves both alone)

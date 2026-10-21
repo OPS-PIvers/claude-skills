@@ -79,8 +79,9 @@ phase ends from them (`headphones.html` does this with a small `ends([...])` hel
 re-times its own phase. Shorter sentences make a faster figure; cut words before you cut time. The engine records any
 caption replaced too early on `<html data-errors>`, so the verification run catches it.
 
-Earlier captions are never lost: the engine lists the current step's earlier captions above the current one (a press
-that changes the state starts a new step and clears the list). A caption that only differs by a number ("Layer 3 of
+Earlier captions are never lost: the engine lists the current step's earlier captions above the current one, in a
+caption box of fixed height that scrolls to the newest line (a press that changes the state starts a new step and
+clears the list). A caption that only differs by a number ("Layer 3 of
 24" → "Layer 4 of 24") updates in place and counts as the same caption.
 
 ### Labels on parts
@@ -96,7 +97,7 @@ that changes the state starts a new step and clears the list). A caption that on
 
 ### Predict (how-it-works figures)
 On the same trigger as labels, give each key step's button a `predict` question. Before that button's first press the
-page shows **Predict** with the question and a **Show me** button; the step runs on Show me. Write questions that make
+page shows **Predict** with the question and a **Show me** button in the caption box; the step runs on Show me. Write questions that make
 someone think about the *mechanism*, not recall a fact: "The nozzle only ever moves in a flat circle. How will the cup
 get taller?" One question per key step (3–5 in a figure), none on trivial steps (closing a door, collecting a can).
 Don't put the answer in the question; the caption that follows is the answer. A Predict first switch appears
@@ -115,8 +116,15 @@ the real sequence needs a picker choice, a repeated press (three coins) or skips
   flashing for 160 ms).
 
 ### Present mode (automatic)
-A Present switch (and `?present=1`) widens the page to 1100px and enlarges buttons, caption, Predict, stats and labels
-so it reads from the back of a classroom. Nothing to do in the figure except leave room around labels.
+A Present switch (and `?present=1`) enlarges buttons, caption, Predict, stats and labels so it reads from the back of
+a classroom. Nothing to do in the figure except leave room around labels.
+
+### The page fits the window (automatic)
+The page always fits the window or the SpartBoard frame without scrolling. The header, buttons, caption box and
+switches stay on screen, and the figure scales to the height that's left (up to 1280px wide). The caption box has a
+fixed height, so the figure doesn't jump when the caption changes or a Predict question shows. Only a window too short
+to leave the figure 240px scrolls. Nothing to do in the figure, but don't add page elements of your own around
+`mountFigure`: they would push the figure down.
 
 ## Coordinates and projection
 - `x` = depth (the front face is at `x = W`, facing viewer-right), `y` = width (+y goes viewer-left), `z` = up.
@@ -283,7 +291,8 @@ Each round is just:
 3. **One Walk through run of every step:** `?steps=1&predict=0&press=Next@300,Next@30300,Next@60300,…` (space the
    Nexts wider than the longest step; Next waits while a step runs). The caption should match each step, and a
    `Back` press should return to the state before the last step.
-4. **One `?present=1` shot** of the busiest stage: labels must still clear each other and the moving parts.
+4. **One `?present=1` shot** of the busiest stage at a short, wide window (`--window-size=1366,650`, a Chromebook):
+   labels must still clear each other and the moving parts, and nothing should need scrolling.
 5. **One 3× crop of the part most likely to go wrong** (a row of keys, a glass container, a joint): nearer parts must
    cover farther ones. Rows of identical parts are where order bugs hide: draw them far to near.
 6. **Errors:** run the press URL once with `--dump-dom` and check `<html data-errors="…">` (script errors, unknown
