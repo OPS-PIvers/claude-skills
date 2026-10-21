@@ -10,7 +10,8 @@ Built for two audiences: students (teacher-led, projected or on Chromebooks) and
 ## What every figure has
 
 - Buttons for each real step of the process, in order, with sensible answers to out-of-order presses
-- A caption under the figure: one plain sentence about what is happening right now
+- A caption under the figure: one plain sentence about what is happening right now, held long enough to read, with
+  the step's earlier captions listed above it so nothing scrolls away
 - **Walk through**: Back / Step 2 of 5 / Next, which runs the real steps in order
 - **Present**: bigger buttons, caption and labels for the back of a classroom
 - Colour swatches in the OPS families (blue, red, gray, white) and a hand-drawn wobble slider
@@ -24,6 +25,7 @@ How-it-works figures also get part labels and **Predict first** questions. URL s
 - how does a toaster know when to pop? for my 6th graders
 - a projector, showing how the image gets from the lamp to the screen, for staff PD
 - a vending machine where I can put in coins and buy a drink
+- create the interactive walkthrough for bluetooth headphones
 
 Claude saves an `.html` file and offers to save it to SpartBoard as a mini-app.
 
@@ -32,7 +34,7 @@ Claude saves an `.html` file and offers to save it to SpartBoard as a mini-app.
 - `SKILL.md`: the instructions Claude follows
 - `assets/core.js`: the engine (projection, 3D shapes and shading, ink, labels, the OPS page shell, caption,
   Predict, Walk through, Present mode)
-- `assets/examples/`: complete figures to learn from (3D printer, washing machine, vending machine)
+- `assets/examples/`: complete figures to learn from (3D printer, Bluetooth headphones, washing machine, vending machine)
 - `scripts/build.py`: makes one self-contained file: `python scripts/build.py figure.html OUT.html`
 
 Figures load Lexend and Roboto from Google Fonts and fall back to system fonts offline. Nothing else is fetched.
@@ -42,7 +44,7 @@ Figures load Lexend and Roboto from Google Fonts and fall back to system fonts o
 - Based on [Colorfigures](https://april-zhu.com/colorfigures) by April Zhu (MIT), which is built on
   [ISO-GLOW](https://isoglow.dev) by April Zhu (MIT), which is built on
   [iso-figure](https://github.com/MrBongoC/ai-iso-skill) by Tolga Cohce (MIT).
-- OPS brand, teaching layer and 3D printer example: Paul Ivers, Orono Public Schools.
+- OPS brand, teaching layer, and the 3D printer and headphones examples: Paul Ivers, Orono Public Schools.
 
 ## License
 

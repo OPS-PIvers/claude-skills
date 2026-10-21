@@ -160,7 +160,7 @@ function heatUp(st, ui){
   if (busy(st)) return ui.flash('Wait for the printer to finish this step');
   if (st.nozT >= NOZ_HOT - 1) return ui.flash(`Already hot: the nozzle is at ${NOZ_HOT} °C`);
   st.phase = 'heat'; const n0 = st.nozT, b0 = st.bedT; let t = 0;
-  ui.animate(dt => { t = Math.min(1, t + dt/3);
+  ui.animate(dt => { t = Math.min(1, t + dt/6);                // 6 s: the heating caption needs that long to read
     st.nozT = lerp(n0, NOZ_HOT, ease(t)); st.bedT = lerp(b0, BED_HOT, ease(t));
     if (t >= 1){ st.phase = 'idle'; return false; } return true; });
 }
@@ -169,8 +169,8 @@ function loadFilament(st, ui){
   if (st.loaded) return ui.flash('The filament is already loaded');
   if (st.nozT < 180) return ui.flash("Heat up first: cold plastic can't be pushed through the nozzle");
   st.phase = 'load'; let t = 0;
-  ui.animate(dt => { t = Math.min(1, t + dt/2.4);
-    st.fil = clamp01(t / .8); st.purge = clamp01((t - .8) / .2); st.spin += dt * 2.2;
+  ui.animate(dt => { t = Math.min(1, t + dt/11);               // two captions, about 5.5 s each
+    st.fil = clamp01(t / .5); st.purge = clamp01((t - .5) / .15); st.spin += t < .5 ? dt * 1.2 : 0;
     if (t >= 1){ st.phase = 'idle'; st.loaded = true; return false; } return true; });
 }
 function print(st, ui){
@@ -197,7 +197,7 @@ function coolDown(st, ui){
   if (busy(st)) return ui.flash(st.phase === 'print' ? 'Wait for the print to finish' : 'Wait for the printer to finish this step');
   if (st.nozT <= ROOM + 8 && st.bedT <= ROOM + 8) return ui.flash('Already cool');
   st.phase = 'cool'; const n0 = st.nozT, b0 = st.bedT; let t = 0;
-  ui.animate(dt => { t = Math.min(1, t + dt/3);
+  ui.animate(dt => { t = Math.min(1, t + dt/5);
     st.nozT = lerp(n0, ROOM + 6, ease(t)); st.bedT = lerp(b0, ROOM + 6, ease(t));
     if (t >= 1){ st.phase = 'idle'; return false; } return true; });
 }
@@ -206,9 +206,10 @@ function removePart(st, ui){
   if (st.part === 'desk') return ui.flash('The cup is already on the table');
   if (st.part !== 'bed') return ui.flash('Nothing on the bed yet: print something first');
   if (st.bedT > 35) return ui.flash('Let it cool first: warm plastic is still soft and bends');
-  st.phase = 'remove'; st.part = 'moving'; st.move = 0;
-  ui.animate(dt => { st.move = Math.min(1, st.move + dt/1.6);
-    if (st.move >= 1){ st.part = 'desk'; st.phase = 'idle'; return false; } return true; });
+  st.phase = 'remove'; st.part = 'moving'; st.move = 0; let t = 0;
+  ui.animate(dt => { t += dt; st.move = Math.min(1, t / 1.6);
+    if (st.move >= 1) st.part = 'desk';
+    if (t >= READ_S('The cooled cup pops off the bed.')){ st.phase = 'idle'; return false; } return true; });
 }
 
 ui = mountFigure({

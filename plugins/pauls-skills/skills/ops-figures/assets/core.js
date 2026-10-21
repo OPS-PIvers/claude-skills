@@ -189,6 +189,9 @@ function tag(p3, dx, dy, text, on=false){
     + `<text x="${f(cx)}" y="${f(cy+fs*.36)}" font-size="${f(fs)}" text-anchor="middle" font-family="${FONT_HEAD}" font-weight="700" letter-spacing=".05em" fill="${on ? '#ffffff' : INK}">${text}</text></g>`;
 }
 const clipTo = (pts3, inner) => { const id = 'k' + (++_clipN); return `<clipPath id="${id}"><path d="${pd(pts3)}"/></clipPath><g clip-path="url(#${id})">${inner}</g>`; };
+// The least time (seconds) a caption stays up before the figure replaces it on its own: about 3 words a second while
+// watching the picture, plus a second to notice it changed, never under 3 s. Pace every animated phase to this.
+const READ_S = text => Math.max(3, 1 + String(text).trim().split(/\s+/).length / 3);
 
 /* ---------- constant on-screen line weight ----------
    Stroke widths are written in model units, and each figure is zoomed to fill the frame, so a small
@@ -221,6 +224,9 @@ const CORE_CSS = `
   .ctl[hidden],.predict[hidden],.walk[hidden]{display:none}
   /* the step caption: one plain sentence saying what is happening, read out to screen readers */
   .caption{width:100%;max-width:var(--w);min-height:2.9em;margin:0 0 10px;text-align:center;font:500 17px/1.4 var(--head);color:var(--ink);text-wrap:balance}
+  /* earlier captions of the current step, so nothing is lost when the caption moves on */
+  .caplog{width:100%;max-width:var(--w);margin:0 0 6px;padding:0;list-style:none;text-align:center;font:400 14px/1.4 var(--head);color:var(--muted);text-wrap:balance}
+  .caplog:empty{display:none} .caplog li{margin:0 0 3px}
   .predict{width:100%;max-width:560px;display:flex;align-items:center;justify-content:space-between;gap:14px;margin:0 0 14px;
     background:var(--blue-lighter);border-left:3px solid var(--blue);border-radius:6px;padding:12px 16px;font-size:15px}
   .predict p{margin:0} .predict strong{font-family:var(--head);color:var(--blue);margin-right:8px}
@@ -264,7 +270,7 @@ const CORE_CSS = `
   html.present .actions{max-width:320px;gap:10px}
   html.present .act{font-size:18px;padding:9px 18px}
   html.present .chip{font-size:16px;padding:6px 12px}
-  html.present .caption{font-size:27px}
+  html.present .caption{font-size:27px} html.present .caplog{font-size:19px}
   html.present .predict{max-width:820px;font-size:22px} html.present .walk button,html.present .predict button{font-size:19px;padding:9px 20px}
   html.present .toast{font-size:17px;max-width:340px}
   html.present .stat .v{font-size:48px} html.present .stat.small .v{font-size:28px}
@@ -287,6 +293,8 @@ const filterFor = k => `<filter id="hand" x="-3%" y="-3%" width="106%" height="1
      state:{...},                  // figure state (st.pal is built in). Keep it plain JSON: Walk through's Back saves copies of it
      scene: (st, m) => svgString,  // m = current palette {l,m,d}
      caption: st => 'sentence',    // shown under the figure: what is happening right now, in plain words
+              //   a caption the figure changes on its own must stay up READ_S(it) seconds; earlier captions of the
+              //   step are listed above the current one automatically
      buttons: [{label, onClick(st, ui), predict?}             // listed in the order a person would use them
                | {label, choices: st => [{label, onClick(st,ui), current?, disabled?, why?}], predict?}],   // opens a picker
               // predict: 'What will happen to the water when it heats?' (or st => text). Asked once, before that
@@ -319,6 +327,7 @@ function mountFigure(cfg){
       <div class="toast" id="toast" role="status"></div>
       <svg id="fig" role="img" aria-label="${cfg.title}"><defs id="fdefs"></defs><g id="art" filter="url(#hand)"></g></svg>
     </div>
+    <ol class="caplog" id="caplog" aria-label="Earlier in this step"></ol>
     <p class="caption" id="caption" aria-live="polite"></p>
     <div class="predict" id="predict" hidden><p><strong>Predict</strong><span id="pq"></span></p><button class="primary" id="pgo">Show me</button></div>
     <div class="walk" id="walkbar" hidden><button id="wback">Back</button><span class="pos" id="wpos"></span><button class="primary" id="wnext">Next</button></div>
@@ -353,9 +362,31 @@ function mountFigure(cfg){
   $('fdefs').innerHTML = filterFor(INK_K);
 
   const art = $('art'), capEl = $('caption');
+  // caption history: the earlier captions of the current step stay listed above the current one. A caption the figure
+  // replaces on its own must have been up for READ_S(it); a shortfall is recorded on <html data-errors>. Numbers don't
+  // count as a new caption ("Layer 3 of 24" → "Layer 4 of 24" just updates in place).
+  const capLog = [], logEl = $('caplog'), capKey = t => t.replace(/\d+/g, '#');
+  let capSince = performance.now(), capFresh = true;
+  function setCaption(c){
+    const prev = capEl.textContent;
+    if (capKey(prev) !== capKey(c)){
+      if (!capFresh && prev){
+        const up = (performance.now() - capSince) / 1000, need = READ_S(prev);
+        if (up < need - .25) noteErr(`caption up ${up.toFixed(1)} s, needs ${need.toFixed(1)} s: "${prev.slice(0, 48)}"`);
+        capLog.push(prev); if (capLog.length > 4) capLog.shift();
+        logEl.replaceChildren(...capLog.map(t => Object.assign(document.createElement('li'), { textContent:t })));
+      }
+      capFresh = false; capSince = performance.now();
+    }
+    capEl.textContent = c;
+  }
+  // a press that changes the state or starts an animation begins a new step: the history clears and its first
+  // caption isn't timed (a press that only flashes why it can't run leaves both alone)
+  const newStep = () => { capLog.length = 0; logEl.replaceChildren(); capFresh = true; };
+  const userStep = fn => { const before = JSON.stringify(st), r0 = ui.running; fn(); if (ui.running > r0 || JSON.stringify(st) !== before) newStep(); };
   const ui = { st, running: 0 };
   ui.render = () => { _clipN = 0; art.innerHTML = inkScale(cfg.scene(st, PALS[st.pal]));
-    const c = cfg.caption ? cfg.caption(st) || '' : ''; if (capEl.textContent !== c) capEl.textContent = c;
+    const c = cfg.caption ? cfg.caption(st) || '' : ''; if (capEl.textContent !== c) setCaption(c);
     if (ui.drawStats) ui.drawStats(); drawWalk(); };
   // big numbers in the top-right corner (credit, change, score…); a value that changes gets a little bump
   const statsEl = $('stats'), prevStats = {};
@@ -397,14 +428,14 @@ function mountFigure(cfg){
   // clickable parts react on press, not on click: while something animates, the scene is redrawn every frame, so the
   // element under the pointer is replaced between press and release and a 'click' would never fire
   svg.addEventListener('pointerdown', e => { if (e.button) return; const a = e.target.closest('[data-act]'); if (!a || !cfg.acts || !cfg.acts[a.dataset.act]) return;
-    e.preventDefault(); hidePredict(); cfg.acts[a.dataset.act](st, a, ui); ui.render(); });
+    e.preventDefault(); hidePredict(); userStep(() => cfg.acts[a.dataset.act](st, a, ui)); ui.render(); });
   const btns = $('btns');
   if (btns) buttons.forEach(b => {
     const wrap = document.createElement('div'); wrap.className = 'stepwrap';
     const el = document.createElement('button'); el.className = 'act';
     el.innerHTML = `${b.label}${b.choices ? '<span class="car">▾</span>' : ''}`;
     wrap.appendChild(el); btns.appendChild(wrap);
-    if (!b.choices){ el.onclick = () => { closeChips(); withPredict(b, () => b.onClick(st, ui)); ui.render(); }; return; }
+    if (!b.choices){ el.onclick = () => { closeChips(); withPredict(b, () => userStep(() => b.onClick(st, ui))); ui.render(); }; return; }
     const chips = document.createElement('div'); chips.className = 'chips'; wrap.appendChild(chips);
     el.onclick = e => { e.stopPropagation(); const open = !wrap.classList.contains('open'); closeChips();
       if (!open) return;
@@ -417,7 +448,7 @@ function mountFigure(cfg){
         ch.onclick = ev => { ev.stopPropagation(); closeChips();
           if (c.current) return ui.flash(`${c.label} is already set`);
           if (c.disabled) return ui.flash(c.why || `${c.label} isn't possible right now`);
-          withPredict(b, () => c.onClick(st, ui)); ui.render(); }; chips.appendChild(ch); }
+          withPredict(b, () => userStep(() => c.onClick(st, ui))); ui.render(); }; chips.appendChild(ch); }
       wrap.classList.add('open'); };
   });
   function closeChips(){ document.querySelectorAll('.stepwrap.open').forEach(w => w.classList.remove('open')); }
@@ -427,7 +458,7 @@ function mountFigure(cfg){
   const startSnap = JSON.stringify(st), hist = [];
   let walkOn = false, wi = 0;
   const restore = json => { ui.stopAll(); hidePredict(); const pal = st.pal, o = JSON.parse(json);
-    for (const k of Object.keys(st)) delete st[k]; Object.assign(st, o); st.pal = pal; };
+    for (const k of Object.keys(st)) delete st[k]; Object.assign(st, o); st.pal = pal; newStep(); };
   const starts = (s, t) => s.trim().toLowerCase().startsWith(t.trim().toLowerCase());
   // a step's name on the Next button: the button's full label, plus the choice for a picker step
   const stepName = s => { const [label, choice] = s.split('>'), b = buttons.find(b => starts(b.label, label));
@@ -435,12 +466,12 @@ function mountFigure(cfg){
   function runWalk(i){
     const [label, choice] = walkList[i].split('>'), b = buttons.find(b => starts(b.label, label));
     if (!b) return noteErr(`walk: no button "${label}"`);
-    withPredict(b, () => {
+    withPredict(b, () => userStep(() => {
       if (choice == null) return b.onClick(st, ui);
       const c = b.choices(st).find(c => starts(c.label, choice));
       if (!c) return noteErr(`walk: no choice "${choice}" in "${label}"`);
       if (c.disabled) return ui.flash(c.why || `${c.label} isn't possible right now`);
-      c.onClick(st, ui); }); }
+      c.onClick(st, ui); })); }
   const wnext = $('wnext'), wback = $('wback'), wpos = $('wpos'), walkbar = $('walkbar');
   function drawWalk(){
     walkbar.hidden = !walkOn; if (!walkOn) return;
@@ -475,7 +506,7 @@ function mountFigure(cfg){
   // (any order, repeats allowed); Label>Choice picks a choice from a picker button (?press=Speed>3@300).
   // With ?steps=1, Next and Back press the Walk through buttons (?steps=1&press=Next@300,Next@3000,Back@6000).
   // A Predict question that comes up is answered with "Show me". Script errors and unknown labels are recorded on
-  // <html data-errors="…">. Other params: ?labels=0 ?predict=0 ?steps=1 (Walk through on) ?present=1 ?pal=red
+  // <html data-errors="…">, and so is every caption replaced before READ_S(it) had passed. Other params: ?labels=0 ?predict=0 ?steps=1 (Walk through on) ?present=1 ?pal=red
   window.__st = st;
   if (q.has('press')) q.get('press').split(',').forEach(item => { const [what, ms] = item.split('@'), [label, choice] = what.split('>');
     setTimeout(() => { const b = [...document.querySelectorAll('.act, #walkbar button')].find(b => starts(b.textContent, label));
