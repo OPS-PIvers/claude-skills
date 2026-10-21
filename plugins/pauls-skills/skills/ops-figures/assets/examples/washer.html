@@ -43,9 +43,9 @@ const screw = (pl, u, v, r=1.1) => shape(on(pl, ellUV(u, v, r, r, 12)), METAL.m,
 
 /* ---------- programs (compressed: T seconds of real time) ---------- */
 const PROGS = [
-  { name:'COTTON', min:90, T:10, fill:1.4, wash:6.0, drain:7.0, ang:55 },
-  { name:'QUICK',  min:30, T:7,  fill:1.0, wash:3.6, drain:4.4, ang:105 },
-  { name:'SPIN',   min:12, T:4,  fill:0,   wash:0,   drain:0,   ang:155 },
+  { name:'COTTON', min:90, T:30, fill:5, wash:15, drain:21, ang:55 },     // each phase lasts at least READ_S(its caption)
+  { name:'QUICK',  min:30, T:24, fill:5, wash:11, drain:17, ang:105 },
+  { name:'SPIN',   min:12, T:8,  fill:0, wash:0,  drain:0,  ang:155 },
 ];
 const sstep = (a,b,t) => { const k = Math.min(1, Math.max(0, (t-a)/(b-a || 1e-9))); return k*k*(3-2*k); };
 const phaseAt = (p,t) => t < p.fill ? 'fill' : t < p.wash ? 'wash' : t < p.drain ? 'drain' : 'spin';
@@ -560,7 +560,7 @@ function addSoap(st, ui){
   if (!st.drawerT) toggleDrawer(st, ui);
   st.soap = true; st.soapAnim = 0; const from = st.soapLvl;
   tick(dt => {
-    st.soapAnim += dt / 2.4;
+    st.soapAnim += dt / READ_S(SOAP_CAP);
     const t = st.soapAnim; if (t > .35) st.soapLvl = Math.max(from, Math.min(1, (t - .35) / .45));
     if (t >= 1){ st.soapAnim = null; st.soapLvl = 1; ui.after(.35, () => { if (st.drawerT) toggleDrawer(st, ui); }); return false; }
     return true;
@@ -570,6 +570,12 @@ function cycleProg(st, ui){
   if (st.run) return ui.flash('program locked while running');
   st.prog = (st.prog + 1) % PROGS.length; st.done = false; st.picked = true;
 }
+// a sequence of moves narrated by one caption (TASK_CAP); it ends once that caption has been up long enough to read
+const TASK_CAP = { load:'The door opens and the laundry goes from the basket into the drum. Then the door closes.',
+                   unload:'The door opens and the clean laundry comes out into the basket.' };
+const SOAP_CAP = 'Soap powder pours into the drawer. The fill water will wash it into the drum.';
+function beginTask(st, name){ st.task = name; st.taskT = performance.now(); }
+function endTask(st){ ui.after(Math.max(0, READ_S(TASK_CAP[st.task]) - (performance.now() - st.taskT) / 1000), () => { st.task = null; }); }
 function swingDoor(st, to, then){
   st.doorT = to;
   tick(dt => { const g = Math.sign(st.doorT - st.door); st.door = Math.min(1, Math.max(0, st.door + g * dt / .9));
@@ -584,7 +590,8 @@ function toggleDoor(st, ui, unloadAlways=false){
   if (st.xfer) return;
   if (!st.doorT){                                   // open; after a finished wash the laundry comes out into the basket
     const unload = (unloadAlways || st.done) && st.laundry === 'drum'; st.done = false;
-    swingDoor(st, 1, unload ? () => { ui.flash('unloading the clean laundry…', 1600); transfer(st, 'out', () => ui.flash('laundry is in the basket', 1800)); } : null);
+    if (unload) beginTask(st, 'unload');
+    swingDoor(st, 1, unload ? () => transfer(st, 'out', () => endTask(st)) : null);
   } else swingDoor(st, 0);
 }
 // load: the door opens if needed, the basket load goes into the drum, the door closes again
@@ -592,7 +599,8 @@ function loadLaundry(st, ui){
   if (st.run) return ui.flash('the machine is running');
   if (st.xfer) return;
   if (st.laundry === 'drum') return ui.flash('the drum is already loaded');
-  const go = () => { ui.flash('loading the laundry…', 1600); transfer(st, 'in', () => swingDoor(st, 0, () => ui.flash('loaded — add soap, then start', 1800))); };
+  const go = () => transfer(st, 'in', () => swingDoor(st, 0, () => endTask(st)));
+  beginTask(st, 'load');
   st.doorT ? go() : swingDoor(st, 1, go);
 }
 function toggleDrawer(st, ui){
@@ -606,13 +614,14 @@ ui = mountFigure({
   fig:'01', title:'Washing machine', hint:'load the laundry, add soap, pick a program, start, then unload',
   size:[W, D, H], palette:'white',
   state:{ prog:0, run:false, paused:false, loop:false, tau:0, done:false, door:0, doorT:0, drawer:0, drawerT:0, restA:0,
-          soapLvl:0, soapAnim:null, laundry:'basket', xfer:null },   // starts empty: the laundry waits in the basket
+          soapLvl:0, soapAnim:null, laundry:'basket', xfer:null, task:null, taskT:0 },   // starts empty: the laundry waits in the basket
   scene,
   // the caption under the figure: what is happening, in one plain sentence
   caption: st => {
     const p = prog(st);
+    if (st.task) return TASK_CAP[st.task];
     if (st.xfer) return st.xfer.dir === 'in' ? 'The laundry goes from the basket into the drum.' : 'The clean laundry comes out into the basket.';
-    if (st.soapAnim != null) return 'Soap powder pours into the drawer. The fill water will wash it into the drum.';
+    if (st.soapAnim != null) return SOAP_CAP;
     if (st.run){
       if (st.paused) return `${cap(p.name)} is paused. Press Start to carry on.`;
       return { fill:'Water flows in through the soap drawer and fills the drum.',
@@ -636,7 +645,7 @@ ui = mountFigure({
     { label:'Open door, unload', onClick:(st,ui) => {
         if (!st.doorT) return toggleDoor(st, ui, true);
         if (st.xfer) return;
-        if (st.laundry === 'drum'){ ui.flash('unloading the laundry…', 1600); transfer(st, 'out', () => ui.flash('laundry is in the basket', 1800)); }
+        if (st.laundry === 'drum'){ beginTask(st, 'unload'); transfer(st, 'out', () => endTask(st)); }
         else ui.flash('the drum is already empty'); } },
     { label:'Close door', onClick:(st,ui) => st.doorT ? toggleDoor(st,ui) : ui.flash('Door is closed') },
   ],

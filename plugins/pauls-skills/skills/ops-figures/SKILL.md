@@ -35,6 +35,9 @@ Ask only when the request truly could be either. Never write "students will…" 
 2. **Read the references** before writing:
    - `assets/examples/printer.html`: **the how-it-works reference.** Labels, Predict questions, caption per phase,
      stats, a desk board, a feed tube, a part that grows layer by layer, and the real process written out at the top.
+   - `assets/examples/headphones.html`: **the pacing reference.** Captions kept in one `CAP` object, every phase
+     timed from `READ_S` of its caption, a see-through cover onto the parts inside, radio waves and sound drawn as
+     motion, a phone screen with text lying flat (`txZ`).
    - `assets/examples/washer.html`: a rounded body made with `extrude`, a door, a drawer, a drum seen through glass,
      timed animation, a picker in the walk-through.
    - `assets/examples/vending.html`: products behind glass, clipping, a picker with disabled choices, stats.
@@ -67,6 +70,18 @@ Every figure gets a **caption**. Labels, Predict and Walk through depend on the 
 happening *right now* and, when the figure is waiting, what to do next: "Water flows in through the soap drawer and
 fills the drum." / "The plastic is hard now. Take the cup off the bed." Write it from state, one sentence per phase of
 the real process. Sentence case, full sentences, no ALL CAPS, no emoji. Two short sentences at most.
+
+**Give every caption time to be read.** A caption the figure replaces on its own (the next phase of an animation)
+must stay up at least `READ_S(caption)` seconds: about 3 words a second plus one, never under 3 s. A 12-word caption
+needs 5 s. Pace the animation to the captions, not the other way round: the motion itself can be quick, and the
+phase then holds until its caption has been read. Keep the caption strings in one `CAP` object and work out when each
+phase ends from them (`headphones.html` does this with a small `ends([...])` helper), so a caption you reword
+re-times its own phase. Shorter sentences make a faster figure; cut words before you cut time. The engine records any
+caption replaced too early on `<html data-errors>`, so the verification run catches it.
+
+Earlier captions are never lost: the engine lists the current step's earlier captions above the current one (a press
+that changes the state starts a new step and clears the list). A caption that only differs by a number ("Layer 3 of
+24" → "Layer 4 of 24") updates in place and counts as the same caption.
 
 ### Labels on parts
 - If the request is about **how something works** ("show how it works", "explain", "for my class", "what happens
@@ -204,8 +219,9 @@ then anything drawn over everything (a tube). Write the order as numbered commen
   `ui.flash('Heat up first: the plastic has to melt')` (a short note under the buttons, sentence case) or on the object
   itself (a display, a light). `stats` (big numbers top right) suit a measured quantity: credit, temperature, litres,
   layer.
-- **Animations:** `ui.animate(dt => { ...; return stillRunning; })`, eased, mostly under ~2 s per step (a whole print
-  or wash can run ~8–12 s, with the caption narrating each phase). One state object is the one source of truth, and a
+- **Animations:** `ui.animate(dt => { ...; return stillRunning; })`, eased. Movement can be quick, but each phase lasts
+  at least `READ_S` of its caption (see *Caption*), so a step with three captions runs ~15 s and a whole print or wash
+  ~25–30 s. One state object is the one source of truth, and a
   press during an animation either waits ("Wait for the printer to finish this step") or is safe.
 - `params(st, q)`: read URL params for every interesting state (`?hot=1&prog=0.5`) so a screenshot can show it.
 
@@ -232,7 +248,7 @@ then anything drawn over everything (a tube). Write the order as numbered commen
   FONT_MONO FONTS_URL C S OX OY VIEW RC VIEW_NAMES TURNS rotV rotXY P0 P Dv depthOf byDepth f pd sp arcUV rrUV rectUV
   ellUV PX PY PZ on sub dot cross norm avg vis facing SHADOW_K AZ_MIN AZ_MAX SHADOW_LEN L SH setLight LIN tone toneI mix
   matOf ease ink fill face shape line loft hull hullInk box extrude cyl cylX rod txM tx txY castShadow BOARD WOOD
-  boardTop board act TAG_K tag clipTo INK_REF_VB INK_K inkScale CORE_CSS filterFor mountFigure`. Prefix your own short
+  boardTop board act TAG_K tag clipTo READ_S INK_REF_VB INK_K inkScale CORE_CSS filterFor mountFigure`. Prefix your own short
   names (`lampS`, `armL`).
 
 ## Shapes that look right
@@ -264,13 +280,15 @@ Each round is just:
    budgets, e.g. `figure.html?press=Heat@200,Load@3600,Print@6400` at 2000, 7000, 12000 ms. `?press=` clicks buttons
    by the start of their label; `Label>Choice` picks from a picker; a Predict question that comes up is answered with
    Show me. Add **one out-of-order press** (a later step first) to see it answers sensibly.
-3. **One Walk through run:** `?steps=1&press=Next@300,Next@4000,Back@8000`. The caption should match each step, and
-   Back should return to the state before the last step.
+3. **One Walk through run of every step:** `?steps=1&predict=0&press=Next@300,Next@30300,Next@60300,…` (space the
+   Nexts wider than the longest step; Next waits while a step runs). The caption should match each step, and a
+   `Back` press should return to the state before the last step.
 4. **One `?present=1` shot** of the busiest stage: labels must still clear each other and the moving parts.
 5. **One 3× crop of the part most likely to go wrong** (a row of keys, a glass container, a joint): nearer parts must
    cover farther ones. Rows of identical parts are where order bugs hide: draw them far to near.
 6. **Errors:** run the press URL once with `--dump-dom` and check `<html data-errors="…">` (script errors, unknown
-   labels and unknown walk steps land there), grep for `NaN`, and read the caption text.
+   labels, unknown walk steps and captions replaced before `READ_S` land there; the full Walk through run above is the
+   one to check), grep for `NaN`, and read the caption text.
 7. **A quick look as a stranger would:** anything physically wrong or odd, a caption that doesn't match the picture,
    a Predict question that gives away its answer.
 

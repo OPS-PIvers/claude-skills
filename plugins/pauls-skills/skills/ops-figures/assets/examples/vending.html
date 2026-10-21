@@ -349,10 +349,11 @@ function vend(r, c){
   if (!st.stock[r][c]) return flash('SOLD|OUT');
   if (st.credit < row.price - 1e-9) return flash('INSERT|' + money(row.price - st.credit));
   st.credit -= row.price; st.stock[r][c]--; st.sel = '';
-  st.drop = { r, c, code, t:0 };
+  st.drop = { r, c, code, t:0, h:0 };
+  const hold = READ_S(captionText(st));                  // the item rests in the tray until the caption has been read
   ui.animate(dt => {
-    st.drop.t = Math.min(1, st.drop.t + dt/1.1);
-    if (st.drop.t >= 1){ st.tray = { kind:row.kind, col:row.cols[c], code }; st.drop = null; return false; }
+    st.drop.h += dt; st.drop.t = Math.min(1, st.drop.h/1.1);
+    if (st.drop.h >= hold){ st.tray = { kind:row.kind, col:row.cols[c], code }; st.drop = null; return false; }
     return true;
   });
 }

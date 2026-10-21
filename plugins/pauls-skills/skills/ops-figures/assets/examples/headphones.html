@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bluetooth headphones</title>
+</head>
+<body>
+<script src="core.js"></script>
+<script>
+/* A how-it-works figure. The real sequence, and where the energy and the song are after each step:
+   1 Charge      cable from the power strip into the ear cup        energy: strip → cable → battery (0 → 100 %)
+   2 Power on    hold the button, the chip wakes, light blinks blue  energy: battery → chip
+   3 Pair        phone asks by radio, headphones answer, they swap   a shared code: phone ↔ antenna
+                 a secret code
+   4 Play music  phone → radio waves → antenna → chip → wire in the  song: phone → air → chip → both speakers →
+                 headband → both speakers → air → your ears                air between the ear cups
+   5 Turn off    the chip sleeps, the link drops; the pairing stays  the phone is remembered for next time */
+
+/* ---------- geometry (x = depth, y = width, z = height; 1 unit ≈ 4 mm) ---------- */
+const HP_W = 86, HP_D = 76, HP_H = 64;
+const XC = 30, ZC = 13, RX = 10, RZ = 13;      // ear cups: oval, centred at (x, z) = (XC, ZC), axis along y
+const BRD = [-6, -6, 86, 76, 3, 6];            // the desk board (top at z = 0)
+const BAND_Z = 31, BAND_TOP = 61;              // where the headband leaves the yokes, and its highest point
+const PH = [46, 23, 80, 40];                   // the phone lying on the desk: x0, y0, x1, y1
+const STRIP = [52, 64, 80, 71, 3.5];           // the power strip: x0, y0, x1, y1, height
+const USB = [56, 67.5, 3.5];                   // its USB port, on top
+const A_PH = [47.2, 31.5, 1.9];                // the phone's antenna (top edge)
+const A_HP = [XC + 2.4, 56.3, ZC + 6.8];       // the antenna on the circuit board in the left cup
+
+/* ---------- the captions, and how long each phase lasts: long enough to read its caption (READ_S) ---------- */
+const CAP = {
+  plugIn:'The cable plugs into the ear cup.',
+  fill:'Electricity flows from the power strip through the cable and is stored in the battery.',
+  full:'Full! Unplug the cable: from now on the battery powers everything.',
+  power:'Hold the button: the battery wakes up the chip, the brain of the headphones.',
+  ask:'The phone sends out invisible radio waves, asking what is nearby.',
+  answer:"The headphones' antenna hears it and answers with their name.",
+  code:'They swap a secret code, so from now on they only talk to each other.',
+  send:'The phone turns the song into numbers and sends them as radio waves.',
+  chip:'The antenna catches the waves. The chip turns the numbers back into an electric signal.',
+  wire:'A thin wire inside the headband carries the signal to the other ear cup.',
+  sound:"Each speaker's magnet pushes a thin cone back and forth. The cone shakes the air, and that is sound.",
+  off:'The chip goes to sleep and stops listening for the phone.',
+};
+const ends = keys => { let t = 0; return keys.map(k => t += READ_S(CAP[k])); };   // when each phase ends, in seconds
+const CHARGE_E = ends(['plugIn', 'fill', 'full']), PAIR_E = ends(['ask', 'answer', 'code']), PLAY_E = ends(['send', 'chip', 'wire', 'sound']);
+const PLAY_T = PLAY_E[3];
+const stageOf = (E, t) => { let i = 0; while (i < E.length - 1 && t >= E[i]) i++; return i; };
+
+const RED = '#ad2122', GOLD = '#c9a14a', SCREEN = '#141a33';
+const PCB = { l:'#4a9a68', m:'#2f6b4a', d:'#1f4a33' };
+const CABLE = { l:'#ffffff', m:'#e6eaf2', d:'#c3c9d6' };
+const clamp01 = t => Math.max(0, Math.min(1, t));
+const lerp = (a, b, t) => a + (b - a) * t;
+const lerp3 = (a, b, t) => a.map((v, i) => lerp(v, b[i], t));
+const cupRing = (y, dr = 0) => on(PY(y), ellUV(XC, ZC, RX - dr, RZ - dr, 28));
+const rimX = dz => XC + RX * Math.sqrt(1 - (dz / RZ) ** 2);        // the cup's front edge at height ZC + dz
+const sw = w => `style="stroke-width:${f(w)}"`, CAPS = 'fill="none" stroke-linecap="round" stroke-linejoin="round"';
+// text lying on a horizontal surface (the phone screen), lines running down toward +x
+const txZ = (x, y, z, str, size, col, weight = 600) => { const o = P(x, y, z);
+  return `<text transform="${txM(o, Dv(0,-1,0), Dv(1,0,0))}" font-size="${size}" fill="${col}" text-anchor="middle" font-family="${FONT_HEAD}" font-weight="${weight}">${str}</text>`; };
+function smooth3(pts, it = 3){
+  for (let k = 0; k < it; k++){ const o = [pts[0]];
+    for (let i = 0; i < pts.length - 1; i++){ const a = pts[i], b = pts[i+1];
+      o.push(a.map((v,j) => v*.75 + b[j]*.25), a.map((v,j) => v*.25 + b[j]*.75)); }
+    o.push(pts[pts.length-1]); pts = o; }
+  return pts;
+}
+function bandPts(){ const o = [];                // left cup → right cup, the way the wire inside runs
+  for (let i = 0; i <= 24; i++){ const a = Math.PI * (1 - i/24); o.push([XC, 29 - 24.5*Math.cos(a), BAND_Z + (BAND_TOP - BAND_Z)*Math.sin(a)]); }
+  return o; }
+
+/* ---------- state helpers ---------- */
+const busy = st => st.phase !== 'idle';
+const chipOn = st => st.phase === 'play' && st.pt >= PLAY_E[0];
+const wireOn = st => st.phase === 'play' && st.pt >= PLAY_E[1];
+const soundOn = st => st.phase === 'play' && st.pt >= PLAY_E[2] && st.pt < PLAY_T - .2;
+function ledColour(st){
+  if (st.phase === 'charge') return st.batt >= 100 ? '#43c25c' : st.plug >= 1 ? '#e2483d' : null;
+  if (st.phase === 'pair') return Math.floor(st.tk * 4) % 2 ? '#4aa3ff' : null;
+  if (st.phase === 'power') return st.press < .5 && st.tk > .6 ? '#4aa3ff' : null;
+  return st.on ? '#4aa3ff' : null;
+}
+
+/* ---------- pieces ---------- */
+// sound: rings leaving a speaker into the space between the cups (dir = +1 from the right cup, -1 from the left)
+function soundRings(st, y0, dir){
+  let s = '';
+  for (let k = 0; k < 3; k++){
+    const d = (st.tk * 7 + k * 4.5) % 13.5, r = 4.5 + d * .35, o = (1 - d / 13.5) * .85;
+    s += `<path d="${pd(on(PY(y0 + dir*d), ellUV(XC, ZC, r*.78, r, 24)))}" fill="none" stroke="${RED}" stroke-width="1.3" opacity="${o.toFixed(2)}"/>`;
+  }
+  return s;
+}
+// the right ear cup (far): shell, cushion, and the speaker seen through the cushion
+function rightCup(st, m){
+  let s = loft(cupRing(0), cupRing(9), n => tone(n, m)) + shape(cupRing(9), tone([0,1,0], m), 1.1);
+  s += loft(cupRing(9, .6), cupRing(14, 1.3), n => toneI(n, DARK));
+  const outer = cupRing(14, 1.3), hole = on(PY(14), ellUV(XC, ZC, 5.4, 8, 28));
+  s += `<path d="${pd(outer)}${pd(hole)}" fill="${DARK.l}" fill-rule="evenodd"/>` + ink(pd(outer), 1);
+  // the speaker (driver): a cone with a small cap that moves in and out with the sound
+  const v = soundOn(st) ? .7 * Math.sin(st.tk * 38) : 0;
+  let drv = fill(pd(hole), DARK.d) + shape(on(PY(12), ellUV(XC, ZC, 4.6, 4.6, 24)), '#5a5f6e', .7)
+    + shape(on(PY(12.4 + v*.4), ellUV(XC, ZC, 3.3 + v*.15, 3.3 + v*.15, 20)), '#6c7180', .5)
+    + shape(on(PY(12.8 + v), ellUV(XC, ZC, 1.6, 1.6, 16)), DARK.l, .6);
+  s += clipTo(hole, drv) + fill(pd(hole), '#9aa3c0', 'opacity=".18"') + ink(pd(hole), 1.1);
+  return s + hullInk([...cupRing(0), ...cupRing(9), ...cupRing(14, 1.3)], 2.4);
+}
+// the left ear cup (near): a clear cover on the outside shows the battery and the circuit board
+function leftCup(st, m){
+  let s = loft(cupRing(44, 1.3), cupRing(49, .6), n => toneI(n, DARK));
+  s += loft(cupRing(49), cupRing(58), n => tone(n, m));
+  const outer = cupRing(58), win = on(PY(58), ellUV(XC, ZC, 7.8, 10.6, 28));
+  // seen through the cover: inside wall, back plate, circuit board, chip, antenna, battery (far to near)
+  let inside = fill(pd(win), DARK.l) + fill(pd(on(PY(55), ellUV(XC, ZC, 8, 10.8, 28))), DARK.m);
+  inside += box(XC - 1.5, 55, ZC - 4, XC + 6, 56.2, ZC + 9, PCB, toneI, .7);
+  const ant = [[5,4.6],[5,7.6],[3.6,7.6],[3.6,5.6],[2.2,5.6],[2.2,7.6],[.8,7.6],[.8,5.6],[-.6,5.6],[-.6,7.6]].map(([u,v]) => [XC + u, 56.25, ZC + v]);
+  const antOn = st.phase === 'pair' || (st.phase === 'play' && st.pt < PLAY_E[1]);
+  inside += `<path d="${pd(ant, false)}" ${CAPS} stroke="${antOn ? '#ffd27a' : GOLD}" stroke-width="${antOn ? 1.1 : .8}"/>`;
+  inside += box(XC + .5, 56.2, ZC - 1.5, XC + 4.5, 56.9, ZC + 2.5, DARK, toneI, .6);
+  if (chipOn(st) || st.phase === 'pair'){ const [X,Y] = P(XC + 2.5, 56.9, ZC + .5);
+    inside += `<circle cx="${f(X)}" cy="${f(Y)}" r="3.2" fill="#ff8a7a" opacity="${(.3 + .2*Math.sin(st.tk*9)).toFixed(2)}"/>`; }
+  inside += box(XC - 8, 55, ZC - 9, XC - .5, 57.2, ZC + 1.5, METAL, toneI, .8);
+  inside += txY(XC - 4.2, 57.25, ZC - 5.5, 'Li-ion', 2.1, INK, 600);
+  s += clipTo(win, inside);
+  s += fill(pd(win), '#cfe9f0', 'opacity=".2" pointer-events="none"')
+     + `<path d="${pd(on(PY(58.05), [[XC-5.5, ZC+4], [XC-1.5, ZC+8.5]]), false)}" stroke="#ffffff" stroke-width="1.1" opacity=".38" fill="none" pointer-events="none"/>`
+     + `<path d="${pd(on(PY(58.05), [[XC-6, ZC], [XC-4.6, ZC+1.6]]), false)}" stroke="#ffffff" stroke-width="1.1" opacity=".38" fill="none" pointer-events="none"/>`;
+  s += `<path d="${pd(outer)}${pd(win)}" fill="${tone([0,1,0], m)}" fill-rule="evenodd"/>` + ink(pd(outer), 1.3) + ink(pd(win), 1.1);
+  // on the front edge: the USB-C port, the light, the power button
+  const xp = rimX(-5), xl = rimX(0), xb = rimX(5);
+  s += shape(on(PX(xp + .1), rrUV(51.8, ZC - 5.8, 55.2, ZC - 4.2, .7)), '#1a1d24', .6);
+  const led = ledColour(st);
+  s += shape(on(PX(xl + .1), ellUV(53.5, ZC, .9, .9, 12)), led || '#555a68', .6);
+  if (led){ const [X,Y] = P(xl + .5, 53.5, ZC); s += `<circle cx="${f(X)}" cy="${f(Y)}" r="3" fill="${led}" opacity=".35"/>`; }
+  s += act('power', cylX(xb, xb + 1.5 - st.press, 53.5, ZC + 5, 1.7, DARK, toneI, .9));
+  return s + hullInk([...cupRing(44, 1.3), ...cupRing(49), ...cupRing(58)], 2.4);
+}
+function headband(st, m){
+  let s = rod([XC, 4.5, ZC + RZ - 1], [XC, 4.5, BAND_Z + .5], 1.3, METAL, toneI, 1)
+        + rod([XC, 53.5, ZC + RZ - 1], [XC, 53.5, BAND_Z + .5], 1.3, METAL, toneI, 1);
+  const d = pd(bandPts(), false);
+  s += `<path d="${d}" ${CAPS} stroke="${INK}" ${sw(4.6 + 2.4*INK_K)}/>` + `<path d="${d}" ${CAPS} stroke="${m.m}" ${sw(4.6)}/>`
+     + `<path d="${d}" ${CAPS} stroke="${m.l}" ${sw(1.6)} transform="translate(-.4 -1.3)"/>`;
+  if (wireOn(st)) s += `<path d="${d}" ${CAPS} stroke="${RED}" ${sw(1.3)} pathLength="1" stroke-dasharray=".05 .07" stroke-dashoffset="${f(-st.tk*.5 % 1)}"/>`;
+  return s;
+}
+function phone(st){
+  const base = on(PZ(0), rrUV(PH[0], PH[1], PH[2], PH[3], 3)), top = on(PZ(1.8), rrUV(PH[0], PH[1], PH[2], PH[3], 3));
+  let s = loft(base, top, n => toneI(n, DARK)) + fill(pd(top), DARK.m)
+        + fill(pd(on(PZ(1.85), rrUV(PH[0] + 1.3, PH[1] + 1.2, PH[2] - 1.3, PH[3] - 1.2, 2))), SCREEN);
+  const yc = (PH[1] + PH[3]) / 2, z = 1.9, W_ = '#ffffff', G = '#9aa3c0', OK = '#43c25c';
+  s += txZ(52, yc, z, 'Bluetooth', 2.6, W_, 700);
+  const found = st.link || st.paired || (st.phase === 'pair' && st.pairS >= PAIR_E[0]);
+  if (!found) s += txZ(56.5, yc, z, st.phase === 'pair' ? 'Searching...' : 'Not connected', 1.8, G);
+  else {
+    s += txZ(56.5, yc, z, 'OPS Headphones', 1.65, W_);
+    s += st.link || (st.phase === 'pair' && st.pairS >= PAIR_E[1]) ? txZ(60, yc, z, 'Connected', 1.8, OK) : txZ(60, yc, z, st.phase === 'pair' ? 'Tap to connect' : 'Not connected', 1.7, G);
+  }
+  if (st.phase === 'play'){
+    s += txZ(67, yc, z, 'Now playing', 1.9, G, 500) + txZ(70.6, yc, z, 'Fight Song', 2.3, W_, 700);
+    const p = st.pt / PLAY_T, ya = PH[3] - 4, yb = PH[1] + 4;
+    s += `<path d="${pd([[73.5, ya, z], [73.5, yb, z]], false)}" stroke="${G}" stroke-width=".9" stroke-linecap="round" fill="none"/>`
+       + `<path d="${pd([[73.5, ya, z], [73.5, lerp(ya, yb, p), z]], false)}" stroke="${RED}" stroke-width="1.1" stroke-linecap="round" fill="none"/>`;
+  }
+  return act('phone', s + hullInk([...base, ...top], 1.8));
+}
+function powerStrip(){
+  const [x0, y0, x1, y1, h] = STRIP;
+  let s = box(x0, y0, 0, x1, y1, h, CERAMIC, tone, 1);
+  for (const x of [64, 73]) s += shape(on(PZ(h + .05), rrUV(x - 2.4, y0 + 1.6, x + 2.4, y1 - 1.6, 1.2)), CERAMIC.m, .6)
+    + line(on(PZ(h + .1), [[x - 1, y0 + 2.8], [x - 1, y0 + 3.8]]), 1) + line(on(PZ(h + .1), [[x + 1, y0 + 2.8], [x + 1, y0 + 3.8]]), 1);
+  s += shape(on(PZ(h + .05), rrUV(USB[0] - 1.3, USB[1] - 1.1, USB[0] + 1.3, USB[1] + 1.1, .4)), '#1a1d24', .6);
+  return s;
+}
+function stripCord(){
+  const q = smooth3([[STRIP[0], 67.5, 1.6], [44, 69.5, .9], [20, 70.5, .9], [BRD[0] + .5, 70, .9]]);
+  const d = pd(q, false);
+  return `<path d="${d}" ${CAPS} stroke="${INK}" ${sw(1.4 + 2*INK_K)}/><path d="${d}" ${CAPS} stroke="${CABLE.m}" ${sw(1.4)}/>`;
+}
+// the charging cable: from the strip's USB port to the plug, which lies on the desk or sits in the ear cup
+function cable(st){
+  const k = ease(st.plug), xp = rimX(-5);
+  const rest = [46.5, 58.5, .9], port = [xp + .2, 53.5, ZC - 5];
+  const e = lerp3(rest, port, k); e[2] += 4 * Math.sin(Math.PI * k);
+  const q = smooth3([[USB[0], USB[1], USB[2]], [USB[0], USB[1], USB[2] + 2.5], [53, 62.5, 1], [e[0] + 7, e[1] + .4, Math.max(.9, e[2] - .6)], [e[0] + 3.3, e[1], e[2]]]);
+  const d = pd(q, false);
+  let s = `<path d="${d}" ${CAPS} stroke="${INK}" ${sw(1.4 + 2*INK_K)}/><path d="${d}" ${CAPS} stroke="${CABLE.m}" ${sw(1.4)}/>`;
+  if (st.phase === 'charge' && st.plug >= 1 && st.batt < 100)
+    s += `<path d="${d}" ${CAPS} stroke="${RED}" ${sw(.8)} pathLength="1" stroke-dasharray=".04 .06" stroke-dashoffset="${f(-st.tk*.6 % 1)}"/>`;
+  return s + box(e[0], e[1] - 1.1, e[2] - .7, e[0] + 3.3, e[1] + 1.1, e[2] + .7, CABLE, toneI, .8);
+}
+// radio: rings of waves spreading out from one antenna toward the other, and the song travelling as little bursts
+function radio(st){
+  const pa = P(...A_PH), pb = P(...A_HP);
+  const arcs = (from, to, o) => { const a = Math.atan2(to[1] - from[1], to[0] - from[0]); let s = '';
+    for (let k = 0; k < 3; k++){ const r = 5 + ((st.tk * 18 + k * 10) % 30), op = (1 - (r - 5) / 30) * o;
+      const p0 = [from[0] + r*Math.cos(a - .55), from[1] + r*Math.sin(a - .55)], p1 = [from[0] + r*Math.cos(a + .55), from[1] + r*Math.sin(a + .55)];
+      s += `<path d="M${f(p0[0])} ${f(p0[1])}A${f(r)} ${f(r)} 0 0 1 ${f(p1[0])} ${f(p1[1])}" fill="none" stroke="${RED}" stroke-width="1.4" stroke-linecap="round" opacity="${op.toFixed(2)}"/>`; }
+    return s; };
+  let s = '';
+  if (st.phase === 'pair'){ s += arcs(pa, pb, .9); if (st.pairS >= PAIR_E[0]) s += arcs(pb, pa, .9); }
+  if (st.phase === 'play' && st.pt < PLAY_T - .2){
+    const c = [(pa[0] + pb[0]) / 2, (pa[1] + pb[1]) / 2 - 12];
+    for (let i = 0; i < 6; i++){ const u = (st.tk * .8 + i / 6) % 1, w = 1 - u;
+      const X = w*w*pa[0] + 2*u*w*c[0] + u*u*pb[0], Y = w*w*pa[1] + 2*u*w*c[1] + u*u*pb[1];
+      s += `<circle cx="${f(X)}" cy="${f(Y)}" r="1.3" fill="${RED}" opacity="${(.4 + .5*Math.sin(Math.PI*u)).toFixed(2)}"/>`; }
+  }
+  return `<g pointer-events="none">${s}</g>`;
+}
+
+/* ---------- scene ---------- */
+function scene(st, m){
+  let s = '';
+  // 0 the desk board (its top is the z = 0 plane), then the cast shadows on it
+  OY += BRD[4]; s += board(...BRD); OY -= BRD[4];
+  const onBoard = on(PZ(0), rrUV(BRD[0], BRD[1], BRD[2], BRD[3], BRD[5]));
+  const bp = bandPts(); let sh = castShadow([...cupRing(0), ...cupRing(14, 1.3)]) + castShadow([...cupRing(44, 1.3), ...cupRing(58)]);
+  for (let i = 0; i < bp.length - 1; i++) sh += castShadow([bp[i], bp[i+1]].flatMap(p => [[p[0] - 2.3, p[1], p[2]], [p[0] + 2.3, p[1], p[2]]]));
+  for (const y of [4.5, 53.5]) sh += castShadow([[XC - 1.3, y, ZC + RZ], [XC + 1.3, y, ZC + RZ], [XC - 1.3, y, BAND_Z], [XC + 1.3, y, BAND_Z]]);
+  sh += castShadow([[PH[0], PH[1], 0], [PH[2], PH[1], 0], [PH[2], PH[3], 0], [PH[0], PH[3], 0], [PH[0], PH[1], 1.8], [PH[2], PH[1], 1.8], [PH[2], PH[3], 1.8], [PH[0], PH[3], 1.8]]);
+  sh += castShadow([[STRIP[0], STRIP[1], 0], [STRIP[2], STRIP[1], 0], [STRIP[2], STRIP[3], 0], [STRIP[0], STRIP[3], 0], [STRIP[0], STRIP[1], STRIP[4]], [STRIP[2], STRIP[1], STRIP[4]], [STRIP[2], STRIP[3], STRIP[4]], [STRIP[0], STRIP[3], STRIP[4]]]);
+  s += clipTo(onBoard, sh);
+  // 1 the strip's cord, flat on the desk (nothing can stand in front of it)
+  s += stripCord();
+  // 2 the right ear cup (far), then the sound leaving its speaker
+  s += act('speaker', rightCup(st, m));
+  if (soundOn(st)) s += soundRings(st, 14.5, 1);
+  // 3 the yokes and the headband (a wire inside it carries the sound to the right cup)
+  s += headband(st, m);
+  // 4 the sound leaving the left speaker (its cushion faces away from us), then the left cup in front of it
+  if (soundOn(st)) s += soundRings(st, 43.5, -1);
+  s += leftCup(st, m);
+  // 5 what is on the desk in front: the phone, the power strip, the charging cable
+  s += phone(st) + powerStrip() + cable(st);
+  // 6 radio waves over everything, then the labels
+  s += radio(st);
+  const ph = st.phase;
+  s += tag([XC - 4.5, 57.2, ZC - 3], -64, 26, 'BATTERY', ph === 'charge' || ph === 'power' || ph === 'play');
+  s += tag([XC + 1, 56.3, ZC + 7.6], -46, -44, 'ANTENNA', ph === 'pair' || (ph === 'play' && st.pt < PLAY_E[1]));
+  s += tag([XC + 3.5, 56.9, ZC + 2.5], -78, -8, 'CHIP', ph === 'power' || ph === 'pair' || chipOn(st));
+  s += tag([XC, 12.8, ZC + 1.5], 62, 6, 'SPEAKER', soundOn(st));
+  return s;
+}
+
+/* ---------- behaviour ---------- */
+let ui;
+function charge(st, ui){
+  if (busy(st)) return ui.flash('Wait for this step to finish');
+  if (st.batt >= 99.5) return ui.flash('The battery is already full');
+  st.phase = 'charge'; st.cs = 'in'; const b0 = st.batt; let t = 0;
+  const [e0, e1, e2] = CHARGE_E;
+  ui.animate(dt => { t += dt; st.tk += dt;
+    if (t < e0){ st.plug = Math.min(1, t / .9); return true; }
+    st.plug = 1;
+    if (t < e1){ st.cs = 'fill'; st.batt = lerp(b0, 100, ease((t - e0) / (e1 - e0))); return true; }
+    st.batt = 100; st.cs = 'out';
+    st.plug = 1 - clamp01((t - e1 - 1.5) / .9);                // a moment to see the green light, then it unplugs
+    if (t >= e2){ st.plug = 0; st.phase = 'idle'; return false; } return true; });
+}
+function powerOn(st, ui){
+  if (busy(st)) return ui.flash('Wait for this step to finish');
+  if (st.on) return ui.flash('The headphones are already on');
+  if (st.batt < 1) return ui.flash('Nothing happens: the battery is empty. Charge it first');
+  st.phase = 'power'; st.tk = 0; let t = 0;
+  ui.animate(dt => { t += dt; st.tk += dt;
+    st.press = t < 1.2 ? Math.min(1, t / .15) * .8 : Math.max(0, .8 - (t - 1.2) / .15 * .8);
+    if (t >= READ_S(CAP.power)){ st.press = 0; st.on = true; st.link = st.paired; st.phase = 'idle'; return false; } return true; });
+}
+function pair(st, ui){
+  if (busy(st)) return ui.flash('Wait for this step to finish');
+  if (!st.on) return ui.flash(st.batt < 1 ? 'The battery is empty: charge it first' : 'Turn the headphones on first: the radio inside needs power');
+  if (st.link) return ui.flash('Already connected to the phone');
+  st.phase = 'pair'; st.pairS = 0;
+  ui.animate(dt => { st.tk += dt; st.pairS = Math.min(PAIR_E[2], st.pairS + dt);
+    if (st.pairS >= PAIR_E[2]){ st.link = st.paired = true; st.phase = 'idle'; return false; } return true; });
+}
+function play(st, ui){
+  if (busy(st)) return ui.flash('Wait for this step to finish');
+  if (!st.on) return ui.flash(st.batt < 1 ? 'The battery is empty: charge it first' : 'Turn the headphones on first');
+  if (!st.link) return ui.flash("Pair first: the phone doesn't know where to send the song yet");
+  st.phase = 'play'; st.pt = 0; const b0 = st.batt;
+  ui.animate(dt => { st.pt = Math.min(PLAY_T, st.pt + dt); st.tk += dt; st.batt = b0 - 2 * st.pt / PLAY_T;
+    if (st.pt >= PLAY_T){ st.played = true; st.phase = 'idle'; return false; } return true; });
+}
+function turnOff(st, ui){
+  if (busy(st)) return ui.flash('Wait for this step to finish');
+  if (!st.on) return ui.flash('The headphones are already off');
+  st.phase = 'off'; let t = 0;
+  ui.animate(dt => { t += dt; st.press = t < .7 ? .8 : 0; if (t >= .7) st.on = false;
+    if (t >= READ_S(CAP.off)){ st.press = 0; st.on = st.link = false; st.phase = 'idle'; return false; } return true; });
+}
+
+ui = mountFigure({
+  fig:'05', title:'Bluetooth headphones', hint:'charge them, turn them on, pair the phone, play a song',
+  size:[HP_W, HP_D, HP_H], palette:'blue',
+  state:{ phase:'idle', cs:'', batt:0, plug:0, on:false, paired:false, link:false, played:false, press:0, pairS:0, pt:0, tk:0 },
+  scene,
+  caption: st => {
+    const ph = st.phase;
+    if (ph === 'charge') return CAP[{ in:'plugIn', fill:'fill', out:'full' }[st.cs]];
+    if (ph === 'power') return CAP.power;
+    if (ph === 'pair') return CAP[['ask', 'answer', 'code'][stageOf(PAIR_E, st.pairS)]];
+    if (ph === 'play') return CAP[['send', 'chip', 'wire', 'sound'][stageOf(PLAY_E, st.pt)]];
+    if (ph === 'off') return CAP.off;
+    if (st.batt < 1) return 'Wireless headphones have no cord when you wear them, and this battery is empty. Charge it first.';
+    if (!st.on) return st.paired ? 'Off. They remember the phone, so next time they connect on their own.' : 'Charged and ready. Turn the headphones on.';
+    if (!st.link) return 'On. The blue light means they are looking for a phone to pair with.';
+    if (st.played) return 'Phone, radio waves, antenna, chip, wire, speaker, air, ear: that is the whole trip.';
+    return 'Paired with the phone. Play a song.';
+  },
+  stats: st => [ { label:'Battery', value:`${Math.round(st.batt)}%` } ],
+  buttonsLabel:'Headphones',
+  buttons:[
+    { label:'Charge', onClick:charge, predict:'Wireless headphones have no cord when you wear them. Where will they get the energy to make sound?' },
+    { label:'Power on', onClick:powerOn },
+    { label:'Pair', onClick:pair, predict:"There's no wire between the phone and the headphones. How could a song get across the gap?" },
+    { label:'Play music', onClick:play, predict:'The song arrives as radio signals. What has to happen inside the headphones before you can hear it?' },
+    { label:'Turn off', onClick:turnOff, predict:'When you turn them back on tomorrow, will you have to pair them again? Why or why not?' },
+  ],
+  acts:{ power:(st,el,ui) => st.on ? turnOff(st,ui) : powerOn(st,ui), phone:(st,el,ui) => st.link ? play(st,ui) : pair(st,ui) },
+  params:(st, q) => {
+    if (['charged','on','paired','play'].some(k => q.has(k))) st.batt = 100;
+    if (q.has('on') || q.has('paired') || q.has('play')) st.on = true;
+    if (q.has('paired') || q.has('play')) st.link = st.paired = true;
+    if (q.has('play')){ st.phase = 'play'; st.pt = Math.min(PLAY_T - .3, +q.get('play')); st.tk = st.pt; }
+  },
+});
+</script>
+</body>
+</html>
