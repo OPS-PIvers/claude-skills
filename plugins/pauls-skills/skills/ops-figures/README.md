@@ -11,15 +11,16 @@ Built for two audiences: students (teacher-led, projected or on Chromebooks) and
 
 - Buttons for each real step of the process, in order, with sensible answers to out-of-order presses
 - A caption under the figure: one plain sentence about what is happening right now, held long enough to read, with
-  the step's earlier captions listed above it so nothing scrolls away
+  the step's earlier captions on a wheel above it, tilting back and fading, so nothing is lost
 - **Walk through**: Back / Step 2 of 5 / Next, which runs the real steps in order
 - **Present**: bigger buttons, caption and labels for the back of a classroom
+- **Settings** fold away into one small button (Present does this itself), leaving more room for the figure
 - The page fits the window or the SpartBoard frame: the figure scales to the space left, so there's no scrolling
   between the buttons, the picture and the caption
 - Colour swatches in the OPS families (blue, red, gray, white) and a hand-drawn wobble slider
 
 How-it-works figures also get part labels and **Predict first** questions. URL switches: `?steps=1`, `?present=1`,
-`?labels=0`, `?predict=0`, `?pal=red`.
+`?labels=0`, `?predict=0`, `?settings=0`, `?pal=red`.
 
 ## Try
 

@@ -80,9 +80,10 @@ re-times its own phase. Shorter sentences make a faster figure; cut words before
 caption replaced too early on `<html data-errors>`, so the verification run catches it.
 
 Earlier captions are never lost: the engine lists the current step's earlier captions above the current one, in a
-caption box of fixed height that scrolls to the newest line (a press that changes the state starts a new step and
-clears the list). A caption that only differs by a number ("Layer 3 of
-24" → "Layer 4 of 24") updates in place and counts as the same caption.
+caption box of fixed height (a press that changes the state starts a new step and clears the list). The box reads like
+a wheel: the current caption sits on a white band at the front, each earlier one tilts back and fades, and a new one
+rolls in from below. It scrolls with the mouse wheel or a swipe, with no visible scroll bar. A caption that only
+differs by a number ("Layer 3 of 24" → "Layer 4 of 24") updates in place and counts as the same caption.
 
 ### Labels on parts
 - If the request is about **how something works** ("show how it works", "explain", "for my class", "what happens
@@ -117,7 +118,12 @@ the real sequence needs a picker choice, a repeated press (three coins) or skips
 
 ### Present mode (automatic)
 A Present switch (and `?present=1`) enlarges buttons, caption, Predict, stats and labels so it reads from the back of
-a classroom. Nothing to do in the figure except leave room around labels.
+a classroom, and folds the switches away. Nothing to do in the figure except leave room around labels.
+
+### Settings fold away (automatic)
+The switch row (wobble, colour, Labels, Predict first, Walk through, Present) has a **Hide settings** button at its
+end; folded, only a small **Settings** button is left at the bottom right, and the figure gets the space. Present mode
+folds it on its own, and `?settings=0` starts folded. Walk through's Back / Next bar is not part of it and stays.
 
 ### The page fits the window (automatic)
 The page always fits the window or the SpartBoard frame without scrolling. The header, buttons, caption box and
