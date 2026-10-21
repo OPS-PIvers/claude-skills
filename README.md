@@ -3,7 +3,7 @@
 Claude skills marketplace with two plugins:
 
 - `ops-staff`: the subset of my skills I choose to share with Orono staff (currently `spartboard`, `grill-me`). Enable this one for the org.
-- `pauls-skills`: everything I use, a superset of `ops-staff`: engineering, planning, design and animation, `spartboard`, `grill-me` (a shortcut to the model-invokable `grilling`), `aim-higher`, `ops-brand-guidelines`, `deslop`, `to-questionnaire` and more. Install it on your own machines only.
+- `pauls-skills`: everything I use, a superset of `ops-staff`: engineering, planning, design and animation, `spartboard`, `grill-me` (a shortcut to the model-invokable `grilling`), `aim-higher`, `ops-brand-guidelines`, `ops-figures`, `deslop`, `to-questionnaire` and more. Install it on your own machines only.
 
 Skills live in `plugins/<plugin>/skills/<name>/SKILL.md`.
 
@@ -50,3 +50,5 @@ Run it by hand on every skill with `sh scripts/check-skill-descriptions.sh`.
 ## Credits
 
 `architect`, `blast-radius`, `correct`, `create-verification-skill`, `engineering-principles`, `how`, `maintain-verification-skill`, `reflect`, `teach`, `typescript-best-practices`, and `why` are adapted for Claude Code from [pstack](https://github.com/cursor/plugins/tree/main/pstack) by Lauren Tan, under the MIT License ([licenses/pstack-MIT.txt](licenses/pstack-MIT.txt)).
+
+`ops-figures` is adapted from [Colorfigures](https://april-zhu.com/colorfigures) by April Zhu (built on ISO-GLOW and iso-figure by Tolga Cohce), under the MIT License (`plugins/pauls-skills/skills/ops-figures/LICENSE`).
