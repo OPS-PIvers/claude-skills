@@ -227,11 +227,24 @@ const CORE_CSS = `
   html.nolabels #fig .tag{display:none}
   .ctl[hidden],.predict[hidden],.walk[hidden]{display:none}
   /* narration: the step's earlier captions, then the current one, in a box of fixed height so the figure never jumps.
-     It scrolls to the newest line. A Predict question takes the box's place while it is asked. */
-  .narr{height:4.8em;overflow-y:auto;font:500 17px/1.35 var(--head);display:flex;flex-direction:column}
-  .caplog{margin:auto 0 3px;padding:0;list-style:none;text-align:center;font-size:.8em;font-weight:400;color:var(--muted);text-wrap:balance}
-  .caplog li{margin:0 0 2px}
-  .caption{margin:0;text-align:center;color:var(--ink);text-wrap:balance}
+     It reads like a wheel: the current caption sits on a white band at the front, and each earlier one is tilted
+     further back, smaller and fainter (--d = how many captions ago), fading out at the top. A new caption rolls in from
+     below. The box scrolls (wheel or swipe, no visible bar) to reach anything that faded out. A Predict question takes
+     the box's place while it is asked. */
+  .narr{height:5.6em;overflow-y:auto;scrollbar-width:none;font:500 17px/1.35 var(--head);display:flex;flex-direction:column;
+    perspective:420px;-webkit-mask-image:linear-gradient(transparent,#000 1.8em);mask-image:linear-gradient(transparent,#000 1.8em)}
+  .narr::-webkit-scrollbar{display:none}
+  .caplog{margin:auto 0 4px;padding:0;list-style:none;text-align:center;font-size:.8em;font-weight:400;color:var(--muted);text-wrap:balance}
+  .caplog li{margin:0 0 2px;transform-origin:50% 100%;transform:rotateX(calc(var(--d) * 16deg)) scale(calc(1 - var(--d) * .05));opacity:calc(1 - var(--d) * .22)}
+  .caption{margin:0 auto 2px;max-width:100%;text-align:center;color:var(--ink);font-weight:600;text-wrap:balance;background:#fff;
+    border-radius:8px;padding:.15em .8em;box-shadow:0 0 0 1px var(--blue-lighter),0 3px 12px rgba(29,42,93,.12)}
+  .caption:empty{visibility:hidden}
+  .narr.roll .caption{animation:capIn .38s cubic-bezier(.2,.8,.3,1)}
+  .narr.roll .caplog{animation:logUp .38s cubic-bezier(.2,.8,.3,1)}
+  @keyframes capIn{from{transform:translateY(.7em) rotateX(-55deg);opacity:0}}
+  @keyframes logUp{from{transform:translateY(1.1em)}}
+  @media (prefers-reduced-motion:reduce){.narr.roll .caption,.narr.roll .caplog{animation:none}}
+  .narr:has(.predict:not([hidden])){-webkit-mask-image:none;mask-image:none}
   .narr:has(.predict:not([hidden])) > :not(.predict){display:none}
   .predict{width:100%;max-width:680px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:14px;
     background:var(--blue-lighter);border-left:3px solid var(--blue);border-radius:6px;padding:10px 16px;font:400 15px/1.4 var(--body)}
@@ -264,8 +277,13 @@ const CORE_CSS = `
   .chip{font-size:12px;padding:4px 9px}
   .chip.current{background:var(--blue);color:#fff}
   .chip.off{opacity:.45}
-  /* the switches: one compact row under the caption */
+  /* the switches: one compact row under the caption. The Settings button folds them away (Present does this itself),
+     leaving just the button at the right. */
   .controls{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px 18px;border-top:1px solid var(--rule);padding-top:8px}
+  .controls.closed{justify-content:flex-end;border-top-color:transparent;padding-top:0}
+  .controls.closed > .ctl{display:none}
+  button.setbtn{border:none;background:none;color:var(--muted);font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;padding:3px 6px}
+  button.setbtn:hover{background:none;color:var(--blue)}
   .ctl{display:flex;align-items:center;gap:8px}
   .ctl .row button{padding:3px 10px;font-size:12px}
   input[type=range]{width:110px;accent-color:var(--blue)}
@@ -341,10 +359,11 @@ function mountFigure(cfg){
       <div class="predict" id="predict" hidden><p><strong>Predict</strong><span id="pq"></span></p><button class="primary" id="pgo">Show me</button></div>
     </div>
     <div class="walk" id="walkbar" hidden><button id="wback">Back</button><span class="pos" id="wpos"></span><button class="primary" id="wnext">Next</button></div>
-    <div class="controls">
+    <div class="controls" id="controls">
       <div class="ctl"><label for="wb">Hand-drawn wobble</label><input id="wb" type="range" min="0" max="6" step="0.1" value="1.6"></div>
       <div class="ctl"><label>Colour</label><div class="row" id="pals"></div></div>
       ${tog('lbl', 'Labels', true)}${tog('prd', 'Predict first', !hasPredict)}${tog('wlk', 'Walk through', walkList.length < 2)}${tog('prs', 'Present', false)}
+      <button class="setbtn" id="setbtn" aria-expanded="true" aria-controls="controls">Hide settings</button>
     </div>`;
   const st = cfg.state || {};            // kept as the same object, so a figure may hold on to it
   if (!st.pal) st.pal = cfg.palette || 'blue';
@@ -384,8 +403,10 @@ function mountFigure(cfg){
         const up = (performance.now() - capSince) / 1000, need = READ_S(prev);
         if (up < need - .25) noteErr(`caption up ${up.toFixed(1)} s, needs ${need.toFixed(1)} s: "${prev.slice(0, 48)}"`);
         capLog.push(prev); if (capLog.length > 4) capLog.shift();
-        logEl.replaceChildren(...capLog.map(t => Object.assign(document.createElement('li'), { textContent:t })));
+        logEl.replaceChildren(...capLog.map((t, i) => { const li = document.createElement('li');
+          li.textContent = t; li.style.setProperty('--d', capLog.length - i); return li; }));
       }
+      if (prev){ narrEl.classList.remove('roll'); void narrEl.offsetWidth; narrEl.classList.add('roll'); }   // restart the roll-in
       capFresh = false; capSince = performance.now();
     }
     capEl.textContent = c; narrEl.scrollTop = narrEl.scrollHeight;
@@ -502,7 +523,11 @@ function mountFigure(cfg){
   $('prd').onclick = () => setPredict(!predictOn);
   const setWalk = on => { walkOn = on; setTog('wlk', on); restore(startSnap); hist.length = 0; wi = 0; asked.clear(); ui.render(); };
   $('wlk').onclick = () => setWalk(!walkOn);
-  const setPresent = on => { document.documentElement.classList.toggle('present', on); TAG_K = on ? 1.35 : 1; setTog('prs', on); ui.render(); };
+  const setSettings = open => { $('controls').classList.toggle('closed', !open);
+    $('setbtn').textContent = open ? 'Hide settings' : 'Settings'; $('setbtn').setAttribute('aria-expanded', open); };
+  $('setbtn').onclick = () => setSettings($('controls').classList.contains('closed'));
+  const setPresent = on => { document.documentElement.classList.toggle('present', on); TAG_K = on ? 1.35 : 1; setTog('prs', on);
+    if (on) setSettings(false); ui.render(); };
   $('prs').onclick = () => setPresent(!document.documentElement.classList.contains('present'));
   $('wb').oninput = e => $('wob').setAttribute('scale', (e.target.value * INK_K).toFixed(2));
   const pals = $('pals');
@@ -517,6 +542,7 @@ function mountFigure(cfg){
   // With ?steps=1, Next and Back press the Walk through buttons (?steps=1&press=Next@300,Next@3000,Back@6000).
   // A Predict question that comes up is answered with "Show me". Script errors and unknown labels are recorded on
   // <html data-errors="…">, and so is every caption replaced before READ_S(it) had passed. Other params: ?labels=0 ?predict=0 ?steps=1 (Walk through on) ?present=1 ?pal=red
+  // ?settings=0 (switches folded away)
   window.__st = st;
   if (q.has('press')) q.get('press').split(',').forEach(item => { const [what, ms] = item.split('@'), [label, choice] = what.split('>');
     setTimeout(() => { const b = [...document.querySelectorAll('.act, #walkbar button')].find(b => starts(b.textContent, label));
@@ -527,6 +553,7 @@ function mountFigure(cfg){
       if (pending) pgo.click(); }, +ms || 0); });
   setPredict(predictOn);
   if (q.get('present') === '1') setPresent(true);
+  if (q.get('settings') === '0') setSettings(false);
   setLight(st.az); ui.render();
   if (art.querySelector('.tag')){ $('lblctl').hidden = false; setLabels(q.get('labels') !== '0'); }
   if (q.get('steps') === '1' && walkList.length > 1) setWalk(true);
