@@ -14,6 +14,8 @@ Built for two audiences: students (teacher-led, projected or on Chromebooks) and
   the step's earlier captions listed above it so nothing scrolls away
 - **Walk through**: Back / Step 2 of 5 / Next, which runs the real steps in order
 - **Present**: bigger buttons, caption and labels for the back of a classroom
+- The page fits the window or the SpartBoard frame: the figure scales to the space left, so there's no scrolling
+  between the buttons, the picture and the caption
 - Colour swatches in the OPS families (blue, red, gray, white) and a hand-drawn wobble slider
 
 How-it-works figures also get part labels and **Predict first** questions. URL switches: `?steps=1`, `?present=1`,
