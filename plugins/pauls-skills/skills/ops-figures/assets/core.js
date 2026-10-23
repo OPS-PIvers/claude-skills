@@ -296,7 +296,11 @@ const CORE_CSS = `
      two ends (Walk through is on), the button Next will press outlined and the step count under the row. */
   html.present body{font-size:17px}
   html.present header{order:-2;align-items:center} html.present header .hint{display:none}
-  html.present header h1{font-size:26px}
+  html.present header:not(:has(h1)){display:none}
+  html.present .stage > h1{position:absolute;left:0;top:50%;transform:translateY(-50%);z-index:2;width:max-content;
+    max-width:clamp(160px,21vw,300px);margin:0;font:600 clamp(24px,2.1vw,34px)/1.2 var(--head);color:var(--ink);text-wrap:balance}
+  html.present .stage > h1 .no{display:block;margin:0 0 10px;font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+  html.present .stage > h1::after{content:'';display:block;width:44px;height:3px;margin-top:16px;border-radius:2px;background:var(--red-light)}
   html.present .stats{top:50%;transform:translateY(-50%);gap:18px}
   html.present .narr{order:-1;font-size:26px;height:4.4em;flex-direction:column;
     -webkit-mask-image:linear-gradient(#000 calc(100% - 1.4em),transparent);mask-image:linear-gradient(#000 calc(100% - 1.4em),transparent)}
@@ -458,15 +462,19 @@ function mountFigure(cfg){
   ui.drawStats = () => { if (!statsEl) return;
     const list = cfg.stats(st).filter(Boolean), html = list.map(x => `<div class="stat${x.small ? ' small' : ''}"><div class="k">${x.label}</div><div class="v" data-k="${x.label}">${x.value}</div></div>`).join('');
     if (statsEl._html !== html){ statsEl._html = html; statsEl.innerHTML = html;
-      statsEl.querySelectorAll('.v').forEach(v => { if (prevStats[v.dataset.k] != null && prevStats[v.dataset.k] !== v.textContent) v.classList.add('bump'); prevStats[v.dataset.k] = v.textContent; }); fitStats(); } };
-  // Present stands the stats in a column right of the figure. The stage keeps that much room clear on both sides, so
-  // the figure stays centred and never runs under them; the room only grows, so a changing value can't make it jump.
-  let statsRoom = 0;
+      statsEl.querySelectorAll('.v').forEach(v => { if (prevStats[v.dataset.k] != null && prevStats[v.dataset.k] !== v.textContent) v.classList.add('bump'); prevStats[v.dataset.k] = v.textContent; }); fitSides(); } };
+  // Present stands the title in a column left of the figure and the stats in one on its right, leaving the top to the
+  // caption. The stage keeps the wider column's room clear on both sides, so the figure stays centred and never runs
+  // under either; the room only grows, so a changing value can't make it jump. A narrow screen has no room beside the
+  // figure: the title goes back to the header.
+  let sideRoom = 0;
   const narrow = () => innerWidth <= 760;     // matches the narrow Present @media in CORE_CSS
-  function fitStats(reset){ if (!statsEl) return; const stage = svg.parentElement;
-    if (reset || !presenting() || narrow()){ statsRoom = 0; stage.style.removeProperty('padding-inline'); if (!presenting() || narrow()) return; }
-    const w = Math.ceil(statsEl.offsetWidth) + 20;
-    if (w > statsRoom){ statsRoom = w; stage.style.paddingInline = w + 'px'; } }
+  const titleEl = document.querySelector('header h1');
+  function fitSides(reset){ const stage = svg.parentElement, beside = presenting() && !narrow();
+    if (beside !== (titleEl.parentElement === stage)){ if (beside) stage.prepend(titleEl); else document.querySelector('header').prepend(titleEl); }
+    if (reset || !beside){ sideRoom = 0; stage.style.removeProperty('padding-inline'); if (!beside) return; }
+    const w = Math.ceil(Math.max(titleEl.offsetWidth, statsEl ? statsEl.offsetWidth : 0)) + 24;
+    if (w > sideRoom){ sideRoom = w; stage.style.paddingInline = w + 'px'; } }
   let flashT = 0, lastAct = null;   // lastAct: the button just pressed, so Present can show the note above it
   const toast = $('toast');
   ui.flash = (text, ms=1800) => { toast.textContent = text;
@@ -586,11 +594,11 @@ function mountFigure(cfg){
     const over = () => btns.scrollWidth > btns.clientWidth + 1;
     for (let px = 17; px >= 12 && over(); px--) walkbar.style.setProperty('--act-fs', px + 'px');
     btns.classList.toggle('wrap', over()); wnext.textContent = label; }
-  addEventListener('resize', () => { fitRow(); fitStats(true);
+  addEventListener('resize', () => { fitRow(); fitSides(true);
     const k = presenting() && !narrow() ? 1.35 : 1; if (k !== TAG_K){ TAG_K = k; ui.render(); } });
-  if (document.fonts) document.fonts.ready.then(fitRow);
-  // Present moves the buttons into the Back / Next row and the stats into a column right of the figure, centres the
-  // figure (no button column to clear), and turns Walk through on from the start; turning it off puts back whatever
+  if (document.fonts) document.fonts.ready.then(() => { fitRow(); fitSides(true); });
+  // Present moves the buttons into the Back / Next row, the title and stats into columns either side of the figure,
+  // centres the figure (no button column to clear), and turns Walk through on from the start; turning it off puts back whatever
   // Walk through was.
   let walkWas = false;
   const setPresent = on => { if (presenting() === on) return;
@@ -600,7 +608,7 @@ function mountFigure(cfg){
       walkWas = walkOn; setSettings(false); setWalk(walkList.length > 1); }
     else { if (btns) svg.parentElement.prepend(btns);
       if (!walkWas) setWalk(false); }
-    fitStats(true); ui.render(); fitRow(); };
+    fitSides(true); ui.render(); fitRow(); };
   $('prs').onclick = () => setPresent(!presenting());
   // in Present a clicker or the keyboard runs the walk: → / Page Down / Space = Next (or Show me), ← / Page Up = Back
   document.addEventListener('keydown', e => {
