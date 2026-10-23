@@ -290,16 +290,39 @@ const CORE_CSS = `
   .row{display:flex;gap:6px;flex-wrap:wrap}
   .sw{width:22px;height:22px;padding:0;border-radius:50%;border:1.5px solid var(--rule)} .sw:hover{filter:brightness(1.05)}
   .sw[aria-pressed=true]{outline:2px solid var(--ink);outline-offset:2px}
-  /* Present mode: readable from the back of a classroom */
+  /* Present mode: readable from the back of a classroom. The top of the screen is the easiest place to read, so the
+     title and stats come first, then the caption box (newest caption on top, rolling in from above, earlier ones
+     tilting back below it); the figure is centred; the buttons sit in one row under it, with Back and Next at the
+     two ends (Walk through is on), the button Next will press outlined and the step count under the row. */
   html.present body{font-size:17px}
+  html.present header{order:-2;align-items:center} html.present header .hint{display:none}
   html.present header h1{font-size:26px}
-  html.present .actions{max-width:320px;gap:10px}
-  html.present .act{font-size:18px;padding:9px 18px}
+  html.present header .stats{position:static;flex-direction:row;align-items:flex-end;gap:28px}
+  html.present .narr{order:-1;font-size:26px;height:4.4em;flex-direction:column;
+    -webkit-mask-image:linear-gradient(#000 calc(100% - 1.4em),transparent);mask-image:linear-gradient(#000 calc(100% - 1.4em),transparent)}
+  html.present .caption{order:-1;margin:2px auto}
+  html.present .caplog{margin:0 0 auto;display:flex;flex-direction:column-reverse}
+  html.present .caplog li{margin:2px 0 0;transform-origin:50% 0;transform:rotateX(calc(var(--d) * -16deg)) scale(calc(1 - var(--d) * .05))}
+  html.present .narr.roll .caption{animation-name:capDown}
+  html.present .narr.roll .caplog{animation-name:logDown}
+  @keyframes capDown{from{transform:translateY(-.7em) rotateX(55deg);opacity:0}}
+  @keyframes logDown{from{transform:translateY(-1.1em)}}
+  html.present .walk{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"back acts next" ". pos .";align-items:center;gap:2px 16px}
+  html.present #wback{grid-area:back} html.present #wnext{grid-area:next} html.present .walk .pos{grid-area:pos;font-size:14px}
+  html.present #wback::before{content:'\\2190  '} html.present #wnext::after{content:'  \\2192'}
+  /* one line: fitRow() steps the row's text (buttons, Back and Next) down from 18px until it fits; it wraps only if
+     even 12px can't */
+  html.present .actions{grid-area:acts;position:static;flex-direction:row;flex-wrap:nowrap;justify-content:center;align-items:center;max-width:none;min-width:0;gap:10px}
+  html.present .actions.wrap{flex-wrap:wrap}
+  html.present .actions .cap{display:none}
+  html.present .act{font-size:var(--act-fs,18px);padding:.5em .85em}
+  html.present .act.nextup{outline:3px solid var(--red-light);outline-offset:3px}
+  html.present .chips{left:50%;top:auto;bottom:calc(100% + 10px);transform:translateX(-50%);max-width:min(620px,90vw)}
   html.present .chip{font-size:16px;padding:6px 12px}
-  html.present .narr{font-size:26px}
-  html.present .predict{max-width:900px;font-size:22px} html.present .walk button,html.present .predict button{font-size:19px;padding:9px 20px}
-  html.present .toast{font-size:17px;max-width:340px}
-  html.present .stat .v{font-size:48px} html.present .stat.small .v{font-size:28px}
+  html.present .predict{max-width:900px;font-size:22px} html.present .predict button{font-size:19px;padding:9px 20px}
+  html.present .walk > button{font-size:calc(var(--act-fs,18px) + 1px);padding:.47em 1em}
+  html.present .toast{position:fixed;font-size:17px;max-width:340px;transform:translate(-50%,-100%)}
+  html.present .stat .v{font-size:40px} html.present .stat.small .v{font-size:26px}
   @media (max-width:560px){body{padding:10px 12px}header .hint,.actions .cap{display:none}.actions{flex-direction:row;flex-wrap:wrap;gap:6px}.act{font-size:12px;padding:5px 11px}.stats{position:static;flex-direction:row;justify-content:flex-end;gap:18px;margin-bottom:4px}.actions{position:static;max-width:none;margin:6px 0 4px}.chips{left:0;top:calc(100% + 8px)}.narr{font-size:15px}.controls{gap:8px 14px}}`;
 
 const filterFor = k => `<filter id="hand" x="-3%" y="-3%" width="106%" height="106%" color-interpolation-filters="sRGB">
@@ -390,7 +413,7 @@ function mountFigure(cfg){
   INK_K = vbW / INK_REF_VB;
   $('fdefs').innerHTML = filterFor(INK_K);
 
-  const art = $('art'), capEl = $('caption');
+  const art = $('art'), capEl = $('caption'), presenting = () => document.documentElement.classList.contains('present');
   // caption history: the earlier captions of the current step stay listed above the current one. A caption the figure
   // replaces on its own must have been up for READ_S(it); a shortfall is recorded on <html data-errors>. Numbers don't
   // count as a new caption ("Layer 3 of 24" → "Layer 4 of 24" just updates in place).
@@ -409,7 +432,7 @@ function mountFigure(cfg){
       if (prev){ narrEl.classList.remove('roll'); void narrEl.offsetWidth; narrEl.classList.add('roll'); }   // restart the roll-in
       capFresh = false; capSince = performance.now();
     }
-    capEl.textContent = c; narrEl.scrollTop = narrEl.scrollHeight;
+    capEl.textContent = c; narrEl.scrollTop = presenting() ? 0 : narrEl.scrollHeight;
   }
   // a press that changes the state or starts an animation begins a new step: the history clears and its first
   // caption isn't timed (a press that only flashes why it can't run leaves both alone)
@@ -425,10 +448,13 @@ function mountFigure(cfg){
     const list = cfg.stats(st).filter(Boolean), html = list.map(x => `<div class="stat${x.small ? ' small' : ''}"><div class="k">${x.label}</div><div class="v" data-k="${x.label}">${x.value}</div></div>`).join('');
     if (statsEl._html !== html){ statsEl._html = html; statsEl.innerHTML = html;
       statsEl.querySelectorAll('.v').forEach(v => { if (prevStats[v.dataset.k] != null && prevStats[v.dataset.k] !== v.textContent) v.classList.add('bump'); prevStats[v.dataset.k] = v.textContent; }); } };
-  let flashT = 0;
+  let flashT = 0, lastAct = null;   // lastAct: the button just pressed, so Present can show the note above it
   const toast = $('toast');
   ui.flash = (text, ms=1800) => { toast.textContent = text;
-    toast.style.top = (($('btns') ? $('btns').offsetTop + $('btns').offsetHeight : 0) + 8) + 'px'; toast.classList.add('show');
+    if (presenting()){ const r = (lastAct && lastAct.isConnected && !lastAct.hidden ? lastAct : $('walkbar')).getBoundingClientRect();
+      toast.style.left = Math.max(180, Math.min(innerWidth - 180, r.left + r.width/2)) + 'px'; toast.style.top = (r.top - 10) + 'px'; }
+    else { toast.style.left = ''; toast.style.top = (($('btns') ? $('btns').offsetTop + $('btns').offsetHeight : 0) + 8) + 'px'; }
+    toast.classList.add('show');
     clearTimeout(flashT); flashT = setTimeout(() => toast.classList.remove('show'), ms); };
   // animations run on a ~60 fps timer rather than requestAnimationFrame, so they also run in headless test shots.
   // ui.running counts the ones in flight (Walk through waits for 0); stopAll cancels them (Back does this).
@@ -459,14 +485,14 @@ function mountFigure(cfg){
   // clickable parts react on press, not on click: while something animates, the scene is redrawn every frame, so the
   // element under the pointer is replaced between press and release and a 'click' would never fire
   svg.addEventListener('pointerdown', e => { if (e.button) return; const a = e.target.closest('[data-act]'); if (!a || !cfg.acts || !cfg.acts[a.dataset.act]) return;
-    e.preventDefault(); hidePredict(); userStep(() => cfg.acts[a.dataset.act](st, a, ui)); ui.render(); });
-  const btns = $('btns');
+    e.preventDefault(); lastAct = null; hidePredict(); userStep(() => cfg.acts[a.dataset.act](st, a, ui)); ui.render(); });
+  const btns = $('btns'), actEls = new Map();   // button config -> its .act element
   if (btns) buttons.forEach(b => {
     const wrap = document.createElement('div'); wrap.className = 'stepwrap';
     const el = document.createElement('button'); el.className = 'act';
     el.innerHTML = `${b.label}${b.choices ? '<span class="car">▾</span>' : ''}`;
-    wrap.appendChild(el); btns.appendChild(wrap);
-    if (!b.choices){ el.onclick = () => { closeChips(); withPredict(b, () => userStep(() => b.onClick(st, ui))); ui.render(); }; return; }
+    wrap.appendChild(el); btns.appendChild(wrap); actEls.set(b, el);
+    if (!b.choices){ el.onclick = () => { closeChips(); lastAct = el; withPredict(b, () => userStep(() => b.onClick(st, ui))); ui.render(); }; return; }
     const chips = document.createElement('div'); chips.className = 'chips'; wrap.appendChild(chips);
     el.onclick = e => { e.stopPropagation(); const open = !wrap.classList.contains('open'); closeChips();
       if (!open) return;
@@ -476,7 +502,7 @@ function mountFigure(cfg){
       //   disabled:true = not possible right now (shown faded); a press says why (c.why, or a generic note)
       for (const c of b.choices(st)){ const ch = document.createElement('button'); ch.className = 'chip' + (c.current ? ' current' : c.disabled ? ' off' : ''); ch.textContent = c.label;
         if (c.current) ch.setAttribute('aria-pressed', 'true');
-        ch.onclick = ev => { ev.stopPropagation(); closeChips();
+        ch.onclick = ev => { ev.stopPropagation(); closeChips(); lastAct = el;
           if (c.current) return ui.flash(`${c.label} is already set`);
           if (c.disabled) return ui.flash(c.why || `${c.label} isn't possible right now`);
           withPredict(b, () => userStep(() => c.onClick(st, ui))); ui.render(); }; chips.appendChild(ch); }
@@ -497,6 +523,7 @@ function mountFigure(cfg){
   function runWalk(i){
     const [label, choice] = walkList[i].split('>'), b = buttons.find(b => starts(b.label, label));
     if (!b) return noteErr(`walk: no button "${label}"`);
+    lastAct = actEls.get(b) || wnext;
     withPredict(b, () => userStep(() => {
       if (choice == null) return b.onClick(st, ui);
       const c = b.choices(st).find(c => starts(c.label, choice));
@@ -505,7 +532,11 @@ function mountFigure(cfg){
       c.onClick(st, ui); })); }
   const wnext = $('wnext'), wback = $('wback'), wpos = $('wpos'), walkbar = $('walkbar');
   function drawWalk(){
-    walkbar.hidden = !walkOn; if (!walkOn) return;
+    // in Present the bar is the button row, so it stays up with Walk through off (just without Back and Next)
+    walkbar.hidden = !walkOn && !presenting(); wback.hidden = wnext.hidden = wpos.hidden = !walkOn;
+    const nb = walkOn && wi < walkList.length ? buttons.find(b => starts(b.label, walkList[wi].split('>')[0])) : null;
+    actEls.forEach((el, b) => el.classList.toggle('nextup', b === nb));
+    if (!walkOn) return;
     const n = walkList.length, pos = wi === 0 ? `${n} steps` : `Step ${wi} of ${n}`, nx = wi >= n ? 'Start over' : `Next: ${stepName(walkList[wi])}`;
     if (wpos.textContent !== pos) wpos.textContent = pos;
     if (wnext.textContent !== nx) wnext.textContent = nx;
@@ -526,9 +557,38 @@ function mountFigure(cfg){
   const setSettings = open => { $('controls').classList.toggle('closed', !open);
     $('setbtn').textContent = open ? 'Hide settings' : 'Settings'; $('setbtn').setAttribute('aria-expanded', open); };
   $('setbtn').onclick = () => setSettings($('controls').classList.contains('closed'));
-  const setPresent = on => { document.documentElement.classList.toggle('present', on); TAG_K = on ? 1.35 : 1; setTog('prs', on);
-    if (on) setSettings(false); ui.render(); };
-  $('prs').onclick = () => setPresent(!document.documentElement.classList.contains('present'));
+  // Present keeps the button row on one line: its text (buttons, Back and Next together) shrinks from 18px down to
+  // 12px until it fits.
+  // It is measured with the longest Next label, so the buttons keep one size through the whole walk.
+  function fitRow(){ if (!btns) return; walkbar.style.removeProperty('--act-fs'); btns.classList.remove('wrap');
+    if (!presenting()) return;
+    const label = wnext.textContent, longest = walkList.map(s => `Next: ${stepName(s)}`).reduce((a, b) => b.length > a.length ? b : a, 'Start over');
+    if (walkOn) wnext.textContent = longest;
+    const over = () => btns.scrollWidth > btns.clientWidth + 1;
+    for (let px = 17; px >= 12 && over(); px--) walkbar.style.setProperty('--act-fs', px + 'px');
+    btns.classList.toggle('wrap', over()); wnext.textContent = label; }
+  addEventListener('resize', fitRow);
+  if (document.fonts) document.fonts.ready.then(fitRow);
+  // Present moves the stats into the header and the buttons into the Back / Next row, centres the figure (no button
+  // column to clear), and turns Walk through on from the start; turning it off puts back whatever Walk through was.
+  let walkWas = false;
+  const setPresent = on => { if (presenting() === on) return;
+    document.documentElement.classList.toggle('present', on); TAG_K = on ? 1.35 : 1; setTog('prs', on);
+    svg.setAttribute('viewBox', `${f(on ? vbW*.06 : 0)} 0 ${f(vbW)} ${f(vbH)}`);
+    if (on){ if (btns) walkbar.insertBefore(btns, wnext); if (statsEl) document.querySelector('header').appendChild(statsEl);
+      walkWas = walkOn; setSettings(false); setWalk(walkList.length > 1); }
+    else { if (btns) svg.parentElement.prepend(btns); if (statsEl) svg.parentElement.insertBefore(statsEl, toast);
+      if (!walkWas) setWalk(false); }
+    ui.render(); fitRow(); };
+  $('prs').onclick = () => setPresent(!presenting());
+  // in Present a clicker or the keyboard runs the walk: → / Page Down / Space = Next (or Show me), ← / Page Up = Back
+  document.addEventListener('keydown', e => {
+    if (!presenting() || e.altKey || e.ctrlKey || e.metaKey || e.target.closest('input, .chips') || document.querySelector('.stepwrap.open')) return;
+    const k = e.key, fwd = k === 'ArrowRight' || k === 'PageDown' || (k === ' ' && !e.target.closest('button')), back = k === 'ArrowLeft' || k === 'PageUp';
+    if (!fwd && !back) return;
+    e.preventDefault();
+    if (fwd){ if (pending) pgo.click(); else if (walkOn && !wnext.disabled) wnext.click(); }
+    else if (walkOn && !wback.disabled) wback.click(); });
   $('wb').oninput = e => $('wob').setAttribute('scale', (e.target.value * INK_K).toFixed(2));
   const pals = $('pals');
   for (const [k,p] of Object.entries(PALS)){
@@ -552,10 +612,10 @@ function mountFigure(cfg){
         if (c) c.click(); else return noteErr(`no choice "${choice}" in "${label}"`); }
       if (pending) pgo.click(); }, +ms || 0); });
   setPredict(predictOn);
-  if (q.get('present') === '1') setPresent(true);
   if (q.get('settings') === '0') setSettings(false);
   setLight(st.az); ui.render();
   if (art.querySelector('.tag')){ $('lblctl').hidden = false; setLabels(q.get('labels') !== '0'); }
   if (q.get('steps') === '1' && walkList.length > 1) setWalk(true);
+  if (q.get('present') === '1') setPresent(true);
   return ui;
 }

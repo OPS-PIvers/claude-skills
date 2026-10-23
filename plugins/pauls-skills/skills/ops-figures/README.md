@@ -13,7 +13,9 @@ Built for two audiences: students (teacher-led, projected or on Chromebooks) and
 - A caption under the figure: one plain sentence about what is happening right now, held long enough to read, with
   the step's earlier captions on a wheel above it, tilting back and fading, so nothing is lost
 - **Walk through**: Back / Step 2 of 5 / Next, which runs the real steps in order
-- **Present**: bigger buttons, caption and labels for the back of a classroom
+- **Present**: laid out for projecting. The caption and stats are at the top, where the back of a classroom reads
+  best, with the newest caption on top. The buttons sit in one row under the figure, with Back and Next at its ends,
+  and a clicker's Page Up / Page Down work them.
 - **Settings** fold away into one small button (Present does this itself), leaving more room for the figure
 - The page fits the window or the SpartBoard frame: the figure scales to the space left, so there's no scrolling
   between the buttons, the picture and the caption

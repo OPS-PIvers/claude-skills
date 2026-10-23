@@ -117,13 +117,28 @@ the real sequence needs a picker choice, a repeated press (three coins) or skips
   flashing for 160 ms).
 
 ### Present mode (automatic)
-A Present switch (and `?present=1`) enlarges buttons, caption, Predict, stats and labels so it reads from the back of
-a classroom, and folds the switches away. Nothing to do in the figure except leave room around labels.
+A Present switch (and `?present=1`) lays the page out for projecting, where the top of the screen is the easiest
+place to read from the back of a classroom:
+- **Top:** the title, with the stats as big readouts on the right of the same line. Under it is the caption box: the
+  newest caption rolls in from above, and the step's earlier captions move down under it, tilting back and fading
+  toward the figure. A Predict question takes over that box.
+- **Middle:** the figure, centred (there's no button column to clear) and labels 1.35× larger.
+- **Bottom:** one row: **← Back**, the figure's buttons, **Next: Add soap →**. Walk through turns on from the start
+  (turning Present off puts it back how it was), the button Next will press is outlined in red, and "Step 2 of 5"
+  sits under the row. The buttons still work in any order. Pickers open upward, and a `ui.flash` note pops up above
+  the button that was pressed. The row stays on one line: its text shrinks from 18px toward 12px until it fits
+  beside the longest Next label, and it only wraps if even 12px can't fit.
+- **Clicker keys:** → / Page Down / Space press Next (or Show me, while a Predict question is up), and ← / Page Up
+  press Back.
+
+The switches fold away. Nothing to do in the figure except leave room around labels, and keep button labels short
+(two or three words) so the row stays readable.
 
 ### Settings fold away (automatic)
 The switch row (wobble, colour, Labels, Predict first, Walk through, Present) has a **Hide settings** button at its
 end; folded, only a small **Settings** button is left at the bottom right, and the figure gets the space. Present mode
-folds it on its own, and `?settings=0` starts folded. Walk through's Back / Next bar is not part of it and stays.
+folds it on its own, and `?settings=0` starts folded. Walk through's Back / Next bar (Present's button row) is not
+part of it and stays.
 
 ### The page fits the window (automatic)
 The page always fits the window or the SpartBoard frame without scrolling. The header, buttons, caption box and
@@ -298,7 +313,8 @@ Each round is just:
    Nexts wider than the longest step; Next waits while a step runs). The caption should match each step, and a
    `Back` press should return to the state before the last step.
 4. **One `?present=1` shot** of the busiest stage at a short, wide window (`--window-size=1366,650`, a Chromebook):
-   labels must still clear each other and the moving parts, and nothing should need scrolling.
+   labels must still clear each other and the moving parts, nothing should need scrolling, and the button row must
+   be one line at a readable size (if it shrank to 12px, shorten the button labels).
 5. **One 3× crop of the part most likely to go wrong** (a row of keys, a glass container, a joint): nearer parts must
    cover farther ones. Rows of identical parts are where order bugs hide: draw them far to near.
 6. **Errors:** run the press URL once with `--dump-dom` and check `<html data-errors="…">` (script errors, unknown

@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "overused-font",
+        "value": "roboto",
+        "createdAt": "2026-10-23T16:01:45.503Z",
+        "reason": "OPS brand identity mandates Lexend headings + Roboto body (ops-brand-guidelines skill); ops-figures is on-brand by design"
+      }
+    ]
+  }
+}
