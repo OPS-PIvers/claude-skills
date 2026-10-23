@@ -113,7 +113,8 @@ def main(argv):
     for d in (EXAMPLES, EXTRA):
         if os.path.isdir(d):
             for n in sorted(os.listdir(d)):
-                if n.lower().endswith(('.html', '.htm')): sources[n] = os.path.join(d, n)
+                p = os.path.join(d, n)             # only real files in the folder: no links out of the repo
+                if n.lower().endswith(('.html', '.htm')) and os.path.isfile(p) and not os.path.islink(p): sources[n] = p
     chrome = find_chrome() if shots else None
     if shots and not chrome: print('Chrome not found: building without screenshots')
     figs = []
