@@ -104,22 +104,27 @@ page shows **Predict** with the question and a **Show me** button in the caption
 someone think about the *mechanism*, not recall a fact: "The nozzle only ever moves in a flat circle. How will the cup
 get taller?" One question per key step (3–5 in a figure), none on trivial steps (closing a door, collecting a can).
 Don't put the answer in the question; the caption that follows is the answer. A Predict first switch appears
-automatically; `?predict=0` starts with it off. A press that changes nothing (an out-of-order press that only flashes
+automatically; it starts off, so a teacher turns it on when they want the questions (`?predict=1` opens with it on). A press that changes nothing (an out-of-order press that only flashes
 why) doesn't use up its question.
 
 ### Walk through (every figure with 2+ steps)
-A switch (and `?steps=1`) shows **Back / Step 2 of 5 / Next: Add soap**. Next runs the real button for the next step
-(asking its Predict question first if that's on) and waits until its animation finishes; Back restores the state saved
-before that step; the last Next becomes Start over. The free buttons keep working alongside. By default the steps are
+On from the start (a switch turns it off; `?steps=0` opens without it): **Back / Step 2 of 5 / Next: Add soap**. Next
+runs the real button for the next step (asking its Predict question first if that's on). Next never makes anyone wait:
+pressed while a step is still running, it finishes that step at once and goes straight on to the next one. → and ←
+(and a clicker's Page Down / Page Up) press Next and Back. Back restores the state saved before that step; the last
+Next becomes Start over. The free buttons keep working alongside. By default the steps are
 every button without a picker, in order. Pass `walk: ['Load', 'Program>Quick', 'Start']` (the `?press=` syntax) when
 the real sequence needs a picker choice, a repeated press (three coins) or skips a button. For Walk through to work:
 - keep the figure's `state` plain JSON (numbers, strings, booleans, arrays, plain objects; no Maps, functions or DOM),
 - run every animation through `ui.animate`, and every delayed change through `ui.after(sec, fn)`, never `setTimeout`,
-  so Next can wait for a step and Back can cancel it. A `setTimeout` is fine only for something purely cosmetic (a key
+  so Next can finish a step and Back can cancel it. A `setTimeout` is fine only for something purely cosmetic (a key
   flashing for 160 ms).
+- move things by the `dt` that `ui.animate` passes in, never by `performance.now()` or `Date.now()`: the Speed setting
+  scales `dt`, and Next's skip runs the step with large steps of it all at once.
 
 ### Present mode (automatic)
-A Present switch (and `?present=1`) lays the page out for projecting, where the top of the screen is the easiest
+Every figure opens in Present (a switch turns it off; `?present=0` opens the normal layout). It lays the page out for
+projecting, where the top of the screen is the easiest
 place to read from the back of a classroom:
 - **Top:** the caption box alone: the newest caption rolls in from above, and the step's earlier captions move down
   under it, tilting back and fading toward the figure. A Predict question takes over that box.
@@ -127,8 +132,8 @@ place to read from the back of a classroom:
   FIG. 06 over the title, which wraps to fit, and a short red rule under it) and the stats as big readouts in a column
   on its right, both vertically centred. The figure keeps the wider column's room clear on both sides, so it stays
   centred and never runs under either. Keep titles short enough to read in two or three lines there.
-- **Bottom:** one row: **← Back**, the figure's buttons, **Next: Add soap →**. Walk through turns on from the start
-  (turning Present off puts it back how it was), the button Next will press is outlined in red, and "Step 2 of 5"
+- **Bottom:** one row: **← Back**, the figure's buttons, **Next: Add soap →**. Walk through is on (turning Present off
+  leaves it as it was), the button Next will press is outlined in red, and "Step 2 of 5"
   sits under the row. The buttons still work in any order. Pickers open upward, and a `ui.flash` note pops up above
   the button that was pressed. The row stays on one line: its text shrinks from 18px toward 12px until it fits
   beside the longest Next label, and it only wraps if even 12px can't fit.
@@ -136,13 +141,14 @@ place to read from the back of a classroom:
   title goes back to the top line, the stats become a compact row over the figure, the caption is smaller so a whole sentence fits, the buttons wrap into rows
   above Back / Next, and labels stay normal size.
 - **Clicker keys:** → / Page Down / Space press Next (or Show me, while a Predict question is up), and ← / Page Up
-  press Back.
+  press Back. Next never waits for a step to finish: it skips the rest of it.
 
 The switches fold away. Nothing to do in the figure except leave room around labels, and keep button labels short
 (two or three words) so the row stays readable.
 
 ### Settings fold away (automatic)
-The switch row (wobble, colour, Labels, Predict first, Walk through, Present) has a **Hide settings** button at its
+The switch row (wobble, starting low; Speed, ¼× to 3× for every animation, also `?speed=2`; colour; Labels; Predict
+first; Walk through; Present) has a **Hide settings** button at its
 end; folded, only a small **Settings** button is left at the bottom right, and the figure gets the space. Present mode
 folds it on its own, and `?settings=0` starts folded. Walk through's Back / Next bar (Present's button row) is not
 part of it and stays.
@@ -163,9 +169,9 @@ to leave the figure 240px scrolls. Nothing to do in the figure, but don't add pa
   automatically.
 
 ## Look (OPS brand, built into the engine)
-- **Body colour:** one palette `m = {l, m, d}` (light / mid / dark), shaded with `tone(normal, m)`. The swatches are the
-  OPS families: `blue` (the default), `red`, `gray` (charcoal) and `white`. Pick the default that suits the real
-  object (a washer is `white`, a vending machine `red`, most school tech `blue` or `gray`). Small props and interiors
+- **Body colour:** one palette `m = {l, m, d}` (light / mid / dark), shaded with `tone(normal, m)`. Every figure
+  starts in `blue`; the swatches switch to the other OPS families, `red`, `gray` (charcoal) and `white`, and `?pal=red`
+  opens in one. Design the shading so the object reads well in all four. Small props and interiors
   use `toneI`. Other materials stay realistic: `METAL`, `CLEAR`, `CERAMIC`, `DARK`, or `matOf('#hex')`.
 - **Contents keep their real colours.** Cans, laundry, filament, food, liquids: whatever the object holds or makes can
   be any colour that is true to it. Prefer brand reds and blues where nothing real decides it (the printer's PLA is
@@ -321,17 +327,18 @@ Windows (Git Bash):
 Mac: `"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"`; Linux: `google-chrome` or `chromium`.
 
 Each round is just:
-1. **The idle shot**, looked at full size.
+1. **The idle shot**, looked at full size. A figure opens in Present, so add `?present=0` for the normal layout.
 2. **One `?press=` run of the main sequence** (the buttons in the order a person would use them), shot at two or three
    budgets, e.g. `figure.html?press=Heat@200,Load@3600,Print@6400` at 2000, 7000, 12000 ms. `?press=` clicks buttons
    by the start of their label; `Label>Choice` picks from a picker; a Predict question that comes up is answered with
    Show me. Add **one out-of-order press** (a later step first) to see it answers sensibly.
-3. **One Walk through run of every step:** `?steps=1&predict=0&press=Next@300,Next@30300,Next@60300,…`. Space the
-   Nexts wider than the longest step, counting any overflow handling it can set off: Next is disabled while a step
-   runs, so a press that lands early does nothing, and the walk silently ends short or runs its steps from the wrong
-   state. Afterwards check that it reads "Step N of N" with the final caption you expect. The caption should match
+3. **Two Walk through runs of every step** (Walk through is on from the start). The full run,
+   `?press=Next@300,Next@30300,Next@60300,…`, spaces the Nexts wider than the longest step, counting any overflow
+   handling it can set off: a Next that lands early skips the rest of its step, and the caption timing is only checked
+   on steps that run to the end. The quick run, `?press=Next@300,Next@700,Next@1100,…`, skips every step and must end
+   in the same state. After each, check that it reads "Step N of N" with the final caption you expect. The caption should match
    each step, and a `Back` press should return to the state before the last step.
-4. **One `?present=1` shot** of the busiest stage at a short, wide window (`--window-size=1366,650`, a Chromebook):
+4. **One Present shot** (the default layout) of the busiest stage at a short, wide window (`--window-size=1366,650`, a Chromebook):
    labels must still clear each other and the moving parts, nothing should need scrolling, and the button row must
    be one line at a readable size (if it shrank to 12px, shorten the button labels). Headless Chrome won't make a
    window narrower than 500px, so to see a phone width, shoot a page holding the figure in an iframe that wide.

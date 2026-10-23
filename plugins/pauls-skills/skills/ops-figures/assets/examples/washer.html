@@ -529,8 +529,8 @@ function scene(st, m){
 
 /* ---------- behaviour ---------- */
 let ui;
-// own clock: frame timestamps can lag performance.now(), which would give a negative first dt
-function tick(fn){ let last = performance.now(); ui.animate(() => { const n = performance.now(), dt = Math.min(.05, Math.max(0, (n - last) / 1000)); last = n; return fn(dt); }); }
+// runs fn(dt) every frame until it returns false; dt comes from the engine, so the Speed setting and Next's skip apply
+function tick(fn){ ui.animate(dt => fn(dt)); }
 function runLoop(){
   if (st0.loop) return;
   st0.loop = true;
@@ -612,7 +612,7 @@ let st0;
 const cap = w => w[0] + w.slice(1).toLowerCase();
 ui = mountFigure({
   fig:'01', title:'Washing machine', hint:'load the laundry, add soap, pick a program, start, then unload',
-  size:[W, D, H], palette:'white',
+  size:[W, D, H],
   state:{ prog:0, run:false, paused:false, loop:false, tau:0, done:false, door:0, doorT:0, drawer:0, drawerT:0, restA:0,
           soapLvl:0, soapAnim:null, laundry:'basket', xfer:null, task:null, taskT:0 },   // starts empty: the laundry waits in the basket
   scene,

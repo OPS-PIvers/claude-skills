@@ -12,17 +12,19 @@ Built for two audiences: students (teacher-led, projected or on Chromebooks) and
 - Buttons for each real step of the process, in order, with sensible answers to out-of-order presses
 - A caption under the figure: one plain sentence about what is happening right now, held long enough to read, with
   the step's earlier captions on a wheel above it, tilting back and fading, so nothing is lost
-- **Walk through**: Back / Step 2 of 5 / Next, which runs the real steps in order
-- **Present**: laid out for projecting. The caption has the top to itself, where the back of a classroom reads best,
+- **Walk through**: Back / Step 2 of 5 / Next, which runs the real steps in order. Next (or →) never waits: pressed
+  mid-step, it finishes that step and goes on, and ← goes back
+- **Present**, which every figure opens in: laid out for projecting. The caption has the top to itself, where the back of a classroom reads best,
   with the newest caption on top. The title stands in a column left of the figure and the stats in one on its right. The buttons sit in one row under the
   figure, with Back and Next at its ends, and a clicker's Page Up / Page Down work them.
 - **Settings** fold away into one small button (Present does this itself), leaving more room for the figure
 - The page fits the window or the SpartBoard frame: the figure scales to the space left, so there's no scrolling
   between the buttons, the picture and the caption
-- Colour swatches in the OPS families (blue, red, gray, white) and a hand-drawn wobble slider
+- Colour swatches in the OPS families (every figure starts blue), a hand-drawn wobble slider (starting low) and a
+  Speed slider (¼× to 3×) for every animation
 
-How-it-works figures also get part labels and **Predict first** questions. URL switches: `?steps=1`, `?present=1`,
-`?labels=0`, `?predict=0`, `?settings=0`, `?pal=red`.
+How-it-works figures also get part labels and **Predict first** questions (off until a teacher turns them on). URL
+switches: `?present=0`, `?steps=0`, `?labels=0`, `?predict=1`, `?speed=2`, `?settings=0`, `?pal=red`.
 
 ## Try
 
