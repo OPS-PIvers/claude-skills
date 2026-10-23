@@ -237,8 +237,8 @@ function scene(st, m){
   // 6 radio waves over everything, then the labels
   s += radio(st);
   const ph = st.phase;
-  s += tag([XC - 4.5, 57.2, ZC - 3], -64, 26, 'BATTERY', ph === 'charge' || ph === 'power' || ph === 'play');
-  s += tag([XC + 1, 56.3, ZC + 7.6], -46, -44, 'ANTENNA', ph === 'pair' || (ph === 'play' && st.pt < PLAY_E[1]));
+  s += tag([XC - 4.5, 57.2, ZC - 3], -74, 26, 'BATTERY', ph === 'charge' || ph === 'power' || ph === 'play');
+  s += tag([XC + 1, 56.3, ZC + 7.6], -56, -44, 'ANTENNA', ph === 'pair' || (ph === 'play' && st.pt < PLAY_E[1]));
   s += tag([XC + 3.5, 56.9, ZC + 2.5], -78, -8, 'CHIP', ph === 'power' || ph === 'pair' || chipOn(st));
   s += tag([XC, 12.8, ZC + 1.5], 62, 6, 'SPEAKER', soundOn(st));
   return s;
