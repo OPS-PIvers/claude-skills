@@ -1,6 +1,20 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Washing machine</title></head><body>
 <script src="core.js"></script>
 <script>
+/* A how-it-works figure: labels on the working parts, a Predict question before each key step, and a walk-through.
+   The real sequence, and where the laundry, soap and water are after each step:
+   1 Load laundry   the door opens, the clothes go in, the door closes   laundry: basket → drum
+   2 Add soap       the drawer slides out, the box on top pours powder   soap: box → drawer; the box goes back on top
+   3 Choose program the dial turns to Cotton, Quick or Spin              nothing moves; the display shows the time
+   4 Start          the door locks, then the program runs:
+                      fill   tap → inlet hose → soap drawer → drum      the water carries the soap into the drum
+                      wash   the drum turns one way, then the other     clothes tumble in soapy water
+                      drain  pump → drain hose → standpipe              the dirty water leaves
+                      rinse  tap → inlet hose → drum                    clean water rinses out the soap
+                      spin   the drum spins fast                        water flies out of the clothes and drains away
+                    the door unlocks                                    clean, damp laundry in the drum
+   5 Open door      the door opens, the laundry comes out              laundry: drum → basket; the door stays open */
+
 /* ---------- geometry (x = depth, y = width, z = up) ---------- */
 const W = 62, D = 65, H = 88, PL = 4, RCR = 7;         // depth, width, height, foot height, corner radius (RC is core's turning centre)
 const OUT = rrUV(0, PL, D, H, RCR);                     // body profile in (y,z)
@@ -31,33 +45,67 @@ function smooth3(pts, it=3){
     o.push(pts[pts.length-1]); pts=o; }
   return pts;
 }
-function tube(pts, r, m, rib=false){
-  const q = smooth3(pts), d = pd(q, false), sw = w => `style="stroke-width:${f(w)}"`, cap = 'fill="none" stroke-linecap="round" stroke-linejoin="round"';
+function tube(pts, r, m, rib=false, it=3){
+  const q = smooth3(pts, it), d = pd(q, false), sw = w => `style="stroke-width:${f(w)}"`, cap = 'fill="none" stroke-linecap="round" stroke-linejoin="round"';
   const hl = 'M' + q.map(p => { const [X,Y] = P(...p); return f(X - r*.35)+' '+f(Y - r*.35); }).join('L');
   return `<path d="${d}" ${cap} stroke="${INK}" ${sw(2*r + 2.4*INK_K)}/>` + `<path d="${d}" ${cap} stroke="${m.m}" ${sw(2*r)}/>`
     + (rib ? `<path d="${d}" fill="none" stroke="${m.d}" ${sw(2*r)} stroke-dasharray=".45 1.1" opacity=".55"/>` : '')
     + `<path d="${hl}" ${cap} stroke="${m.l}" ${sw(r*.55)} opacity=".85"/>`;
 }
+// water travelling along a hose: dashes that run from the first point to the last
+const flow = (pts, r, col, t, it=3) => `<path d="${pd(smooth3(pts, it), false)}" fill="none" stroke="${col}" style="stroke-width:${f(r)}" stroke-linecap="round" pathLength="1" stroke-dasharray=".035 .045" stroke-dashoffset="${f(-(t*.35 % 1))}"/>`;
 // a round screw head on a plane, with a slot
 const screw = (pl, u, v, r=1.1) => shape(on(pl, ellUV(u, v, r, r, 12)), METAL.m, .7) + ink(pd(on(pl, [[u-r*.7, v-r*.25],[u+r*.7, v+r*.25]]), false), .6);
 
-/* ---------- programs (compressed: T seconds of real time) ---------- */
+/* ---------- the captions, and how long each phase lasts: long enough to read its caption (READ_S) ---------- */
+const CAP = {
+  empty:'The drum is empty. Load the laundry from the basket.',
+  load:'The door opens and the laundry goes from the basket into the drum. Then the door closes.',
+  needSoap:'The laundry is in. Add soap to the drawer.',
+  soap:'Soap powder pours into the drawer. The fill water will wash it into the drum.',
+  open:'The door is open. Close it before you start.',
+  fill:'Water from the tap runs in through the soap drawer and carries the soap into the drum.',
+  wash:'The drum turns one way, then the other, tumbling the clothes through the soapy water.',
+  drain:'The pump pushes the dirty water out through the drain hose.',
+  rinse:'Clean water runs in, and the drum turns again to rinse out the soap.',
+  spin:'The drum spins fast. The water flies out through the little holes and drains away.',
+  done:'The wash is done. Open the door to unload.',
+  unload:'The drum has stopped and the water is gone, so the door unlocks. The clean laundry comes out into the basket.',
+  clean:'The clean laundry is in the basket. The door stays open so the drum can dry.',
+};
+/* ---------- programs: each runs its phases in order, each phase as long as its caption needs (plus a little more
+   tumbling for cotton); p.fill, p.wash… are when each phase ends, in seconds; a phase a program skips takes no time ---------- */
+const PHASES = ['fill', 'wash', 'drain', 'rinse', 'spin'];
 const PROGS = [
-  { name:'COTTON', min:90, T:30, fill:5, wash:15, drain:21, ang:55 },     // each phase lasts at least READ_S(its caption)
-  { name:'QUICK',  min:30, T:24, fill:5, wash:11, drain:17, ang:105 },
-  { name:'SPIN',   min:12, T:8,  fill:0, wash:0,  drain:0,  ang:155 },
+  { name:'COTTON', min:90, ang:55,  phases:PHASES, extra:{ wash:2 } },
+  { name:'QUICK',  min:30, ang:105, phases:PHASES, extra:{} },
+  { name:'SPIN',   min:12, ang:155, phases:['spin'], extra:{ spin:1 } },
 ];
+PROGS.forEach(p => { let t = 0; for (const k of PHASES){ if (p.phases.includes(k)) t += READ_S(CAP[k]) + (p.extra[k] || 0); p[k] = t; } p.T = t; });
 const sstep = (a,b,t) => { const k = Math.min(1, Math.max(0, (t-a)/(b-a || 1e-9))); return k*k*(3-2*k); };
-const phaseAt = (p,t) => t < p.fill ? 'fill' : t < p.wash ? 'wash' : t < p.drain ? 'drain' : 'spin';
+const phaseAt = (p,t) => t < p.fill ? 'fill' : t < p.wash ? 'wash' : t < p.drain ? 'drain' : t < p.rinse ? 'rinse' : 'spin';
+const sway = (t, k) => Math.sin(t * Math.PI / 1.5) >= 0 ? k : -k;   // one way, then the other
 function omegaAt(p,t){                                   // drum speed, rad/s (sign = direction)
   const ph = phaseAt(p,t);
   if (ph === 'fill') return 0.7;
-  if (ph === 'wash') return 2.6 * (Math.sin((t - p.fill) * Math.PI / 1.5) >= 0 ? 1 : -1);
+  if (ph === 'wash') return sway(t - p.fill, 2.6);
   if (ph === 'drain') return 1.2;
-  return (1.5 + 19 * sstep(p.drain, p.drain + 1.2, t)) * (1 - sstep(p.T - .7, p.T, t));
+  if (ph === 'rinse') return sway(t - p.drain, 2.1);
+  return (1.5 + 19 * sstep(p.rinse, p.rinse + 1.2, t)) * (1 - sstep(p.T - .7, p.T, t));
 }
 function angleAt(p,t){ let a = 0; for (let s = 0; s < t; s += .01) a += omegaAt(p, s) * Math.min(.01, t - s); return a; }
-function waterAt(p,t){ if (!p.fill) return 0; if (t < p.fill) return sstep(0, p.fill, t); if (t < p.wash) return 1; if (t < p.drain) return 1 - sstep(p.wash, p.drain, t); return 0; }
+function waterAt(p,t){                                   // water level in the drum, 0..1
+  if (!p.fill) return 0;
+  const ph = phaseAt(p,t);
+  if (ph === 'fill') return sstep(0, p.fill * .8, t);
+  if (ph === 'wash') return 1;
+  if (ph === 'drain') return 1 - sstep(p.wash, p.wash + (p.drain - p.wash) * .75, t);
+  if (ph === 'rinse') return .8 * sstep(p.drain, p.drain + (p.rinse - p.drain) * .5, t);
+  return .8 * (1 - sstep(p.rinse, p.rinse + 1.6, t));
+}
+// water running in from the tap (fill, and the start of the rinse) and out through the drain hose (drain, spin)
+const inflowAt = (p,t) => { const ph = phaseAt(p,t); return ph === 'fill' && t < p.fill * .85 || ph === 'rinse' && t < p.drain + (p.rinse - p.drain) * .55; };
+const outflowAt = (p,t) => { const ph = phaseAt(p,t); return ph === 'drain' || ph === 'spin'; };
 
 /* ---------- clothes: soft flat shapes floating just behind the glass ---------- */
 function chaikin(pts, it=2){
@@ -155,13 +203,17 @@ function basket(st){
   s += ink(pd(top), 1.4) + ink(pd(ring(B.h, 1.2)), .7);
   return s;
 }
-// detergent box: tips over the open drawer and pours powder into the main compartment
+
+/* ---------- the detergent box: it stands on the washer's top, at the back; Add soap lifts it over the open drawer, tips it to pour
+   the powder into the main compartment, and puts it back ---------- */
+const BOX_REST = [16, 21, H], BOX_POUR = [W + DRAWER_MAX*.5, 59, 96];
+const boxW = 6, boxD = 9, boxH = 12;                       // x, y, height
 function soapBox(st){
-  if (st.soapAnim == null) return '';
-  const t = st.soapAnim, inn = Math.min(1, t/.2), out = t > .85 ? (t-.85)/.15 : 0;
-  const tilt = (t < .2 ? 0 : t < .35 ? (t-.2)/.15 : t < .85 ? 1 : 1 - out) * 112 * Math.PI/180;
-  const base = [W + DRAWER_MAX*.5, 59, 96 + 10*(1-ease(inn)) + 10*ease(out)], op = Math.min(inn, 1-out);
-  const c = Math.cos(tilt), sn = Math.sin(tilt), wx = 6, wy = 9, h = 12;
+  const t = st.soapAnim == null ? 0 : st.soapAnim;
+  const go = ease(Math.min(1, t/.2)), back = t > .85 ? ease((t-.85)/.15) : 0, u = go * (1 - back);
+  const tilt = (t < .2 ? 0 : t < .35 ? (t-.2)/.15 : t < .85 ? 1 : 1 - back) * 112 * Math.PI/180;
+  const base = BOX_REST.map((v, j) => v + (BOX_POUR[j] - v) * u + (j === 2 ? 9 * Math.sin(Math.PI * u) : 0));
+  const c = Math.cos(tilt), sn = Math.sin(tilt), wx = boxW, wy = boxD, h = boxH;
   const X = ([x,y,z]) => [base[0] + x, base[1] + y*c - z*sn, base[2] + y*sn + z*c], R = ([x,y,z]) => [x, y*c - z*sn, y*sn + z*c];
   const BOX = matOf('#f08a2b');
   const F = [
@@ -172,6 +224,9 @@ function soapBox(st){
     [[0,0,1],  [[-wx/2,-wy/2,h],[wx/2,-wy/2,h],[wx/2,wy/2,h],[-wx/2,wy/2,h]]],
     [[0,0,-1], [[-wx/2,-wy/2,0],[wx/2,-wy/2,0],[wx/2,wy/2,0],[-wx/2,wy/2,0]]] ];
   let s = '';
+  // on the top it casts a small shadow onto the lid
+  if (u === 0) s += clipTo(on(PZ(H), rectUV(0, RCR, W, D - RCR)),
+    castShadow([[-wx/2,-wy/2,0],[wx/2,-wy/2,0],[wx/2,wy/2,0],[-wx/2,wy/2,0],[-wx/2,-wy/2,h],[wx/2,-wy/2,h],[wx/2,wy/2,h],[-wx/2,wy/2,h]].map(X), H));
   for (const [n, q] of F){ const rn = R(n); if (!vis(rn)) continue;
     s += shape(q.map(X), n[2] === 1 ? '#fbf7ea' : toneI(rn, BOX), 1);
     if (n[0] === 1) s += fill(pd([[wx/2+.05,-wy/2,h*.45],[wx/2+.05,wy/2,h*.45],[wx/2+.05,wy/2,h*.7],[wx/2+.05,-wy/2,h*.7]].map(X)), '#fbf7ea'); }
@@ -180,7 +235,43 @@ function soapBox(st){
     const sp = X([0, -wy/2, h]), zb = DRW[3] - 1.2, ys = 51;
     s += `<path d="${pd([sp, [sp[0]-1, ys, zb]], false)}" fill="none" stroke="#6fa6e8" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="1.6 1.3" stroke-dashoffset="${f(-t*60)}"/>`;
   }
-  return `<g opacity="${f(op)}">${s}</g>`;
+  return s;
+}
+const boxAt = st => { const t = st.soapAnim == null ? 0 : st.soapAnim, u = ease(Math.min(1, t/.2)) * (1 - (t > .85 ? ease((t-.85)/.15) : 0));
+  return BOX_REST.map((v, j) => v + (BOX_POUR[j] - v) * u + (j === 2 ? boxH/2 : 0)); };
+
+/* ---------- plumbing beside the machine: a cold tap on a supply pipe, and a drain standpipe. The hoses run behind the
+   machine to its inlet valve and its pump. Everything stays left of the body's outline (x − y < −66), so it never
+   overlaps the body on screen and can be drawn before it; the body hides the hose ends behind it. ---------- */
+const PIPE_X = 4, SUP_Y = D + 9, DRN_Y = D + 17, TAP_Z = 72, STAND_Z = 60;
+const SUP_HOSE = [[PIPE_X - 3, SUP_Y, TAP_Z], [-1.5, SUP_Y - .5, TAP_Z - 1], [-4, SUP_Y - 3, TAP_Z - 3], [-5, D + 1, TAP_Z - 2], [-5, D - 6, TAP_Z + 3], [-4, 46, 81]];
+const DRN_HOSE = [[-4, 30, 14], [-5, D - 6, 18], [-4, D + 6, 22], [-2, DRN_Y - 3, 44], [0, DRN_Y - 1.5, STAND_Z + 5], [PIPE_X, DRN_Y, STAND_Z + 4.5], [PIPE_X + .4, DRN_Y, STAND_Z + 1.5]];
+const DRN_HOOK = (q => q.slice(q.findIndex((p, i) => i > q.length/2 && p[2] > STAND_Z + .3)))(smooth3(DRN_HOSE));   // the end of DRN_HOSE, above the rim (already smoothed)
+const TAP_B = matOf('#3e86d9'), PIPE_M = { l:'#d9dedf', m:'#aab2b4', d:'#7d8689' }, DRAIN_M = { l:'#c9cfd0', m:'#9aa3a6', d:'#6a7377' };
+const plumbShadow = () => castShadow([...on(PZ(0), ellUV(PIPE_X, SUP_Y, 1.2, 1.2, 10)), ...on(PZ(TAP_Z + 4), ellUV(PIPE_X, SUP_Y, 1.2, 1.2, 10))])
+  + castShadow([...on(PZ(0), ellUV(PIPE_X, DRN_Y, 2.4, 2.4, 12)), ...on(PZ(STAND_Z), ellUV(PIPE_X, DRN_Y, 2.4, 2.4, 12))]);
+function plumbing(st){
+  const p = prog(st), inF = st.run && !st.paused && inflowAt(p, st.tau), outF = st.run && !st.paused && outflowAt(p, st.tau);
+  let s = '';
+  // 1 the drain hose, from the pump behind the machine up beside the standpipe (it passes behind the pipe)
+  s += tube(DRN_HOSE, 1.3, DRAIN_M, true);
+  if (outF) s += flow(DRN_HOSE, 1.1, '#4f9fdc', st.tau);
+  // 2 the drain standpipe: an open pipe; its mouth is dark
+  const sA = on(PZ(0), ellUV(PIPE_X, DRN_Y, 2.4, 2.4, 20)), sB = on(PZ(STAND_Z), ellUV(PIPE_X, DRN_Y, 2.4, 2.4, 20));
+  s += loft(sA, sB, n => toneI(n, PIPE_M)) + hullInk([...sA, ...sB], 1.2);
+  s += fill(pd(sB), PIPE_M.l) + fill(pd(on(PZ(STAND_Z), ellUV(PIPE_X, DRN_Y, 1.7, 1.7, 20))), '#2b3134') + ink(pd(sB), .9);
+  // 3 the hose's hook over the rim, on top of the pipe
+  s += tube(DRN_HOOK, 1.3, DRAIN_M, true, 0);
+  if (outF) s += flow(DRN_HOOK, 1.1, '#4f9fdc', st.tau, 0);
+  // 4 the supply pipe with its tap: valve body, blue handle (cold), and a short spout the inlet hose screws onto
+  s += cyl(PIPE_X, SUP_Y, 0, TAP_Z - 1.6, 1.1, PIPE_M, toneI, 1, 16);
+  s += cyl(PIPE_X, SUP_Y, TAP_Z - 2, TAP_Z + 2.4, 1.9, PIPE_M, toneI, 1.1, 16);
+  s += rod([PIPE_X, SUP_Y, TAP_Z], [PIPE_X - 3, SUP_Y, TAP_Z], .9, PIPE_M, toneI, .9);
+  s += rod([PIPE_X, SUP_Y, TAP_Z + 2.4], [PIPE_X, SUP_Y + 4.5, TAP_Z + 3.4], .7, TAP_B, toneI, .9);
+  // 5 the inlet hose, from the tap round behind the machine to its inlet valve
+  s += tube(SUP_HOSE, 1.1, { l:'#ffffff', m:'#e8ecec', d:'#b9c0c1' });
+  if (inF) s += flow(SUP_HOSE, .9, '#4f9fdc', st.tau);
+  return s;
 }
 
 /* ---------- state helpers ---------- */
@@ -228,7 +319,7 @@ function drum(st){
   }
   // clothes: tumble on a circle around the drum axis, pinned to the wall when spinning
   const spread = run ? sstep(0, .9, t) * (1 - sstep(p.T - .8, p.T, t)) : 0;
-  const spinK = run ? sstep(p.drain, p.drain + 1, t) * (1 - sstep(p.T - .8, p.T, t)) : 0;
+  const spinK = run ? sstep(p.rinse, p.rinse + 1, t) * (1 - sstep(p.T - .8, p.T, t)) : 0;
   const items = CLOTHES.map((c, i) => ({ c, i })).filter(o => whereIs(st, o.i) === 'drum').map(({ c, i }) => {
     const [h0, hr, ht] = c.heap, even = -Math.PI/2 + i * 2*Math.PI/CLOTHES.length;
     const base = h0*Math.PI/180 * (1-spread) + even * spread;
@@ -242,16 +333,16 @@ function drum(st){
       s += cloth(o.c, CY + o.r*Math.cos(ga), CZ + o.r*Math.sin(ga), o.psi - Math.sign(om)*g*.26, .34 - g*.08); }
     s += cloth(o.c, CY + o.r*Math.cos(o.ang), CZ + o.r*Math.sin(o.ang), o.psi);
   }
-  // water: translucent fill with a wavy top and a little foam
-  const lv = run ? waterAt(p, t) : 0;
+  // water: translucent fill with a wavy top; soapy (darker, with foam while washing) until the rinse
+  const lv = run ? waterAt(p, t) : 0, ph = run ? phaseAt(p, t) : '', soapy = ph === 'fill' || ph === 'wash' || ph === 'drain';
   if (lv > .01){
     const zl = CZ - RO - 1 + lv * 17, xw = W - 2, top = [];
     for (let y = CY + RO + 2; y >= CY - RO - 2; y -= 1)
       top.push([xw, y, zl + 1.1*Math.sin(y*.55 + t*7) + .6*Math.sin(y*.21 - t*4) + .07*(y-CY)*Math.sign(om)]);
     const poly = [...top, [xw, CY-RO-2, CZ-RO-3], [xw, CY+RO+2, CZ-RO-3]];
-    s += fill(pd(poly), '#4f9fdc', 'opacity=".42"');
+    s += fill(pd(poly), soapy ? '#4f9fdc' : '#86c4ee', 'opacity=".42"');
     s += `<path d="${pd(top,false)}" fill="none" stroke="#d7f0ff" stroke-width="1.2" stroke-linecap="round" opacity=".9"/>`;
-    if (phaseAt(p,t) === 'wash') for (let i = 0; i < 9; i++){
+    if (ph === 'wash') for (let i = 0; i < 9; i++){
       const y = CY - 13 + i*3.3 + Math.sin(t*3 + i)*1.2, z = zl + 1.1*Math.sin(y*.55 + t*7) + .3;
       s += fill(pd(on(PX(xw - .2), ellUV(y, z, 1 + (i%3)*.35, .8 + (i%2)*.3, 10))), '#ffffff', 'opacity=".85"');
     }
@@ -342,7 +433,6 @@ function drawer(st){
 function dial(st){
   const [y,z,r] = DIAL, F = W + .25;
   let s = cylX(F, F + 2.6, y, z, r, BEZEL, toneI, 1.2, 28);
-  // ribbed edge marks
   // grip bar, pointing at the selected program
   const a = PROGS[st.prog].ang * Math.PI/180, ca = Math.cos(a), sa = Math.sin(a);
   const bar = [[-1.1,-4.3],[1.1,-4.3],[1.1,4.3],[-1.1,4.3]].map(([u,v]) => [y + u*sa + v*ca, z - u*ca + v*sa]);
@@ -363,7 +453,7 @@ function display(st){
   let s = shape(on(PX(W + .3), rrUV(y0, z0, y1, z1, 1.6)), '#1d2a26', 1.2);
   let l1, l2;
   if (st.done && !st.run){ l1 = 'DING!'; l2 = 'DONE'; }
-  else if (st.run){ const ph = phaseAt(p, st.tau); l1 = st.paused ? 'PAUSE' : { fill:'FILL', wash:'WASH', drain:'RINSE', spin:'SPIN' }[ph]; l2 = fmt(remaining(st)); }
+  else if (st.run){ const ph = phaseAt(p, st.tau); l1 = st.paused ? 'PAUSE' : ph.toUpperCase(); l2 = fmt(remaining(st)); }
   else { l1 = p.name; l2 = fmt(p.min); }
   s += tx(W + .4, cy, z0 + 5.6, l1, 2.5, '#8af0ae', 700, FONT_MONO);
   s += tx(W + .4, cy, z0 + 1.7, l2, 3.6, '#8af0ae', 800, FONT_MONO);
@@ -385,7 +475,7 @@ const INLET = [[-4.6,44,81],[-7.6,44.4,79],[-10,45,72],[-11.6,45.6,50],[-12.4,46
 const DRAIN_UP = [[-2.6,24,13],[-2.9,24,30],[-2.9,24,52],[-3,24.2,66]];
 const DRAIN_DN = [[-3,24.2,66],[-3.4,24.5,70.5],[-6.6,25.2,72],[-9.4,25.8,67],[-12.6,26.4,52],[-15.6,26.8,30],[-17.6,27.2,12],[-19.4,27.6,3],[-22,28,1.4],[-25,28.4,1.4]];
 const HOSE_M = matOf('#a9b0b2'), CORD_M = { l:'#5b5650', m:'#2f2c29', d:'#1b1917' }, INLET_M = { l:'#ffffff', m:'#e8ecec', d:'#b9c0c1' };
-const TAP_B = matOf('#3e86d9'), TAP_R = matOf('#e2483d'), CAPS = matOf('#dedbd0');
+const TAP_R = matOf('#e2483d'), CAPS = matOf('#dedbd0');
 function backFace(m){
   const tb = tone([-1,0,0], m), dk = mix(tb, '#000000', .06);
   let s = '';
@@ -444,14 +534,24 @@ function sideRight(m){                                     // the -y side
   return s;
 }
 
+/* ---------- labels on the working parts (drawn last, outside the spin shake) ---------- */
+function labels(st){
+  const p = prog(st), run = st.run && !st.paused, ph = run ? phaseAt(p, st.tau) : '';
+  return tag([-1, SUP_Y - .4, TAP_Z - 1], -58, -34, 'WATER IN', run && inflowAt(p, st.tau))
+       + tag([PIPE_X, DRN_Y + 2.2, STAND_Z - 18], -40, 26, 'DRAIN', run && outflowAt(p, st.tau))
+       + tag([W + 1.4, DRW[2] - 1.5, DRW[3] - .5], -135, -137, 'SOAP DRAWER', st.soapAnim != null || ph === 'fill')
+       + tag([W - 1, CY - 10, CZ - 4], 165, 85, 'DRUM', run);
+}
+
 /* ---------- scene ---------- */
 function scene(st, m){
   const p = prog(st);
   const FRONT = facing([1,0,0]), BACK = facing([-1,0,0]), LEFT = facing([0,1,0]), RIGHT = facing([0,-1,0]);
-  const showBasket = st.door > .02 || st.laundry === 'basket' || st.xfer;
-  let s = castShadow([...on(PX(0), OUT), ...on(PX(W), OUT)]);
+  let s = castShadow([...on(PX(0), OUT), ...on(PX(W), OUT)]) + plumbShadow();
   if (st.door > .02){ const th = ease(st.door) * DOOR_MAX; s += castShadow(dRing(0, RB, th, 24).concat(dRing(BT, RB, th, 24))); }
-  if (showBasket) s += basketShadow();
+  s += basketShadow();
+  // the tap, the standpipe and their hoses stand beside the machine, left of its outline: drawn before it
+  s += plumbing(st);
 
   // spin shake: offset everything but the shadow
   const om = st.run ? omegaAt(p, st.tau) : 0, shake = Math.max(0, (Math.abs(om) - 8) / 12);
@@ -496,10 +596,6 @@ function scene(st, m){
       body += `<path d="${v}" fill="none" stroke="${INK}" stroke-width="1.4" stroke-linecap="round" opacity=".7"/>`;
     }
     if (RIGHT) body += sideRight(m);
-    // top: a little care-label sticker
-    const tp = PZ(H + .1);
-    body += shape(on(tp, rrUV(16, 18, 34, 44, 2)), '#fbf7ea', 1);
-    for (const k of [0,1,2,3]) body += ink(pd(on(tp, [[29 - k*3.6, 22], [29 - k*3.6, k === 0 ? 40 : 35]]), false), k === 0 ? 1.1 : .7);
 
     // silhouette + the outline of whichever end panel faces us
     if (FRONT) body += ink(pd(on(X, OUT)), 2.2);
@@ -514,9 +610,9 @@ function scene(st, m){
     const th = ease(st.door) * DOOR_MAX, s0 = ease(st.drawer) * DRAWER_MAX;
     const parts = [
       { at: dP(BT/2, uc, CZ, th), svg: door(st) },
-      showBasket && { at: basketAt(), svg: basket(st) },
+      { at: basketAt(), svg: basket(st) },
       { at: [W + s0 + .7, (DRW[0]+DRW[2])/2, (DRW[1]+DRW[3])/2], svg: drawer(st) },   // pulled out, it sits in front of the door's top rim
-      st.soapAnim != null && { at: [W + DRAWER_MAX*.5, 59, 100], svg: soapBox(st) },
+      { at: boxAt(st), svg: soapBox(st) },
       ...flying(st) ];
     const frontStuff = FRONT ? mounted + byDepth(parts) : byDepth(parts) + mounted;
 
@@ -524,145 +620,149 @@ function scene(st, m){
     if (FRONT) s += backBits() + body + frontStuff;
     else       s += frontStuff + body + backBits();
   } finally { OX -= jx; OY -= jy; }
-  return s;
+  return s + labels(st);
 }
 
-/* ---------- behaviour ---------- */
+/* ---------- behaviour: every move runs on ui.animate's dt, so Speed scales it and Next can finish it ---------- */
 let ui;
-// runs fn(dt) every frame until it returns false; dt comes from the engine, so the Speed setting and Next's skip apply
-function tick(fn){ ui.animate(dt => fn(dt)); }
-function runLoop(){
-  if (st0.loop) return;
-  st0.loop = true;
+const tick = fn => ui.animate(fn);
+// a step with moves still going on: a press waits for it
+const busy = st => !!(st.task || st.xfer || st.soapAnim != null || st.door !== st.doorT || st.drawer !== st.drawerT);
+function runLoop(st){
+  if (st.loop) return;
+  st.loop = true;
   tick(dt => {
-    const st = ui.st;
     if (!st.run || st.paused){ st.loop = false; return false; }
+    if (st.door > 0) return true;                        // the door swings shut and locks before the water comes in
     st.tau += dt;
     if (st.soapLvl > 0 && prog(st).fill) st.soapLvl = Math.max(0, 1 - st.tau / prog(st).fill);   // the fill water flushes the powder in
     if (st.tau >= prog(st).T){
-      st.run = false; st.loop = false; st.done = true; st.tau = 0;
-      ui.flash('ding! ' + prog(st).name.toLowerCase() + ' done — open the door', 2600);
+      st.run = false; st.loop = false; st.done = true; st.washed = true; st.tau = 0;
+      ui.flash('Ding! The wash is done', 2600);
       return false;
     }
     return true;
   });
 }
 function start(st, ui){
-  if (st.run){ st.paused = !st.paused; if (!st.paused) runLoop(); else ui.flash('paused — press start to resume'); return; }
-  if (st.door > 0 || st.doorT) return ui.flash('close the door first');
-  if (st.laundry === 'basket') return ui.flash('the drum is empty — load laundry first');
-  st.run = true; st.paused = false; st.done = false; st.tau = 0; runLoop();
+  if (st.run){ st.paused = !st.paused; if (!st.paused) runLoop(st); return; }
+  if (busy(st)) return ui.flash('Wait for the machine to finish this step');
+  if (st.laundry !== 'drum') return ui.flash('Load the laundry first: the drum is empty');
+  if (st.drawer > 0) return ui.flash('Close the soap drawer first');
+  if (prog(st).fill && st.soapLvl < 1) return ui.flash("Add soap first: water alone won't get the clothes clean");
+  if (st.doorT) swingDoor(st, 0);                      // the door was left open: it closes first
+  st.run = true; st.paused = false; st.done = false; st.tau = 0; runLoop(st);
 }
 function addSoap(st, ui){
-  if (st.run) return ui.flash('the drawer is locked while washing');
-  if (st.soapAnim != null) return;
-  if (st.soapLvl >= 1) return ui.flash('there is already soap in the drawer');
-  if (!st.drawerT) toggleDrawer(st, ui);
-  st.soap = true; st.soapAnim = 0; const from = st.soapLvl;
+  if (st.run) return ui.flash('The drawer stays shut while the machine runs');
+  if (busy(st)) return ui.flash('Wait for the machine to finish this step');
+  if (st.soapLvl >= 1) return ui.flash('There is already soap in the drawer');
+  if (!st.drawerT) toggleDrawer(st);
+  st.soapAnim = 0; const from = st.soapLvl;
   tick(dt => {
-    st.soapAnim += dt / READ_S(SOAP_CAP);
+    st.soapAnim += dt / READ_S(CAP.soap);
     const t = st.soapAnim; if (t > .35) st.soapLvl = Math.max(from, Math.min(1, (t - .35) / .45));
-    if (t >= 1){ st.soapAnim = null; st.soapLvl = 1; ui.after(.35, () => { if (st.drawerT) toggleDrawer(st, ui); }); return false; }
+    if (t >= 1){ st.soapAnim = null; st.soapLvl = 1; ui.after(.35, () => { if (st.drawerT) toggleDrawer(st); }); return false; }
     return true;
   });
 }
 function cycleProg(st, ui){
-  if (st.run) return ui.flash('program locked while running');
-  st.prog = (st.prog + 1) % PROGS.length; st.done = false; st.picked = true;
+  if (st.run) return ui.flash('The program is locked while it runs');
+  st.prog = (st.prog + 1) % PROGS.length; st.done = false;
 }
-// a sequence of moves narrated by one caption (TASK_CAP); it ends once that caption has been up long enough to read
-const TASK_CAP = { load:'The door opens and the laundry goes from the basket into the drum. Then the door closes.',
-                   unload:'The door opens and the clean laundry comes out into the basket.' };
-const SOAP_CAP = 'Soap powder pours into the drawer. The fill water will wash it into the drum.';
-function beginTask(st, name){ st.task = name; st.taskT = performance.now(); }
-function endTask(st){ ui.after(Math.max(0, READ_S(TASK_CAP[st.task]) - (performance.now() - st.taskT) / 1000), () => { st.task = null; }); }
+// a sequence of moves narrated by one caption (CAP.load / CAP.unload). Its moves add their dt to st.taskT, and the task
+// ends once its caption has been up READ_S: the hold runs on engine time too, so Speed and Next's skip apply to it.
+function beginTask(st, name){ st.task = name; st.taskT = 0; }
+const taskTime = (st, dt) => { if (st.task) st.taskT += dt; };
+function endTask(st){ ui.after(Math.max(0, READ_S(CAP[st.task]) - st.taskT), () => { st.task = null; }); }
 function swingDoor(st, to, then){
   st.doorT = to;
-  tick(dt => { const g = Math.sign(st.doorT - st.door); st.door = Math.min(1, Math.max(0, st.door + g * dt / .9));
+  tick(dt => { taskTime(st, dt); const g = Math.sign(st.doorT - st.door); st.door = Math.min(1, Math.max(0, st.door + g * dt / .9));
     if (st.door === st.doorT){ if (then) then(); return false; } return true; });
 }
 function transfer(st, dir, then){
   st.xfer = { dir, T: 0 };
-  tick(dt => { st.xfer.T += dt; if (st.xfer.T >= xferEnd()){ st.laundry = dir === 'out' ? 'basket' : 'drum'; st.xfer = null; if (then) then(); return false; } return true; });
-}
-function toggleDoor(st, ui, unloadAlways=false){
-  if (st.run) return ui.flash('door locked — wait for the cycle to end');
-  if (st.xfer) return;
-  if (!st.doorT){                                   // open; after a finished wash the laundry comes out into the basket
-    const unload = (unloadAlways || st.done) && st.laundry === 'drum'; st.done = false;
-    if (unload) beginTask(st, 'unload');
-    swingDoor(st, 1, unload ? () => transfer(st, 'out', () => endTask(st)) : null);
-  } else swingDoor(st, 0);
+  tick(dt => { taskTime(st, dt); st.xfer.T += dt; if (st.xfer.T >= xferEnd()){ st.laundry = dir === 'out' ? 'basket' : 'drum'; st.xfer = null; if (then) then(); return false; } return true; });
 }
 // load: the door opens if needed, the basket load goes into the drum, the door closes again
 function loadLaundry(st, ui){
-  if (st.run) return ui.flash('the machine is running');
-  if (st.xfer) return;
-  if (st.laundry === 'drum') return ui.flash('the drum is already loaded');
+  if (st.run) return ui.flash('The machine is running');
+  if (busy(st)) return ui.flash('Wait for the machine to finish this step');
+  if (st.laundry === 'drum') return ui.flash('The laundry is already in the drum');
+  st.washed = false; beginTask(st, 'load');
   const go = () => transfer(st, 'in', () => swingDoor(st, 0, () => endTask(st)));
-  beginTask(st, 'load');
   st.doorT ? go() : swingDoor(st, 1, go);
 }
-function toggleDrawer(st, ui){
-  st.drawerT = st.drawerT ? 0 : 1; if (st.drawerT) st.soap = true;
+// unload: once the wash is done the door unlocks; it opens and the clean laundry comes out into the basket
+function unload(st, ui){
+  if (st.run) return ui.flash('The door stays locked until the wash ends');
+  if (busy(st)) return ui.flash('Wait for the machine to finish this step');
+  if (st.laundry !== 'drum') return ui.flash('The drum is already empty');
+  if (!st.washed) return ui.flash("This laundry isn't washed yet: press Start");
+  st.done = false; beginTask(st, 'unload');
+  const go = () => transfer(st, 'out', () => endTask(st));
+  st.doorT ? go() : swingDoor(st, 1, go);
+}
+// pressing the door itself: opens or closes it (after a wash, opening it unloads)
+function toggleDoor(st, ui){
+  if (st.run) return ui.flash('The door stays locked until the wash ends');
+  if (busy(st)) return ui.flash('Wait for the machine to finish this step');
+  if (!st.doorT && st.washed && st.laundry === 'drum') return unload(st, ui);
+  swingDoor(st, st.doorT ? 0 : 1);
+}
+function toggleDrawer(st){
+  st.drawerT = st.drawerT ? 0 : 1;
   tick(dt => { const g = Math.sign(st.drawerT - st.drawer); st.drawer = Math.min(1, Math.max(0, st.drawer + g * dt / .5)); return st.drawer !== st.drawerT; });
 }
 
-let st0;
 const cap = w => w[0] + w.slice(1).toLowerCase();
 ui = mountFigure({
   fig:'01', title:'Washing machine', hint:'load the laundry, add soap, pick a program, start, then unload',
-  size:[W, D, H],
-  state:{ prog:0, run:false, paused:false, loop:false, tau:0, done:false, door:0, doorT:0, drawer:0, drawerT:0, restA:0,
+  size:[W, D + 19, H],                                  // D + 19: the tap and the standpipe beside the machine
+  state:{ prog:0, run:false, paused:false, loop:false, tau:0, done:false, washed:false, door:0, doorT:0, drawer:0, drawerT:0, restA:0,
           soapLvl:0, soapAnim:null, laundry:'basket', xfer:null, task:null, taskT:0 },   // starts empty: the laundry waits in the basket
   scene,
   // the caption under the figure: what is happening, in one plain sentence
   caption: st => {
     const p = prog(st);
-    if (st.task) return TASK_CAP[st.task];
-    if (st.xfer) return st.xfer.dir === 'in' ? 'The laundry goes from the basket into the drum.' : 'The clean laundry comes out into the basket.';
-    if (st.soapAnim != null) return SOAP_CAP;
+    if (st.task) return CAP[st.task];
+    if (st.soapAnim != null) return CAP.soap;
     if (st.run){
       if (st.paused) return `${cap(p.name)} is paused. Press Start to carry on.`;
-      return { fill:'Water flows in through the soap drawer and fills the drum.',
-               wash:'The drum turns one way, then the other, tumbling the clothes through soapy water.',
-               drain:'The pump drains the dirty water and clean water rinses the clothes.',
-               spin:'The drum spins fast. The water is flung out through the little holes; the clothes stay in.' }[phaseAt(p, st.tau)];
+      return CAP[phaseAt(p, st.tau)];
     }
-    if (st.done) return 'The wash is done. Open the door to unload.';
-    if (st.laundry === 'basket') return st.door > 0 ? 'The laundry is in the basket.' : 'The drum is empty. Load the laundry from the basket.';
-    if (st.door > 0) return 'The door is open. Close it before you start.';
-    if (st.soapLvl < 1) return 'The laundry is in. Add soap to the drawer.';
+    if (st.done) return CAP.done;
+    if (st.laundry === 'basket') return !st.washed ? CAP.empty : st.door > 0 ? CAP.clean : 'The clean laundry is in the basket.';
+    if (st.door > 0) return CAP.open;
+    if (p.fill && st.soapLvl < 1) return CAP.needSoap;
     return `${cap(p.name)} is set (${fmt(p.min)} on the display). Press Start.`;
   },
-  walk: ['Load laundry', 'Add soap', 'Choose program>Quick', 'Start', 'Open door'],
+  walk: ['Load laundry', 'Add soap', 'Choose program>Quick', 'Start', 'Unload'],
   buttons:[
     { label:'Load laundry', onClick:(st,ui) => loadLaundry(st,ui) },
-    { label:'Add soap', onClick:(st,ui) => addSoap(st,ui) },
-    { label:'Choose program', choices: st => PROGS.map((p,i) => ({ label:p.name, current: st.prog === i, disabled: st.run, why: 'the program is locked while it runs',
-        onClick:(st,ui) => { if (st.run) return ui.flash('program locked while running'); st.prog = i; st.picked = true; st.done = false; } })) },
-    { label:'Start / pause', onClick:(st,ui) => start(st,ui) },
-    { label:'Open door, unload', onClick:(st,ui) => {
-        if (!st.doorT) return toggleDoor(st, ui, true);
-        if (st.xfer) return;
-        if (st.laundry === 'drum'){ beginTask(st, 'unload'); transfer(st, 'out', () => endTask(st)); }
-        else ui.flash('the drum is already empty'); } },
-    { label:'Close door', onClick:(st,ui) => st.doorT ? toggleDoor(st,ui) : ui.flash('Door is closed') },
+    { label:'Add soap', onClick:(st,ui) => addSoap(st,ui),
+      predict:'The soap goes in a drawer at the top, not in with the clothes. How will it reach them?' },
+    { label:'Choose program', choices: st => PROGS.map((p,i) => ({ label:p.name, current: st.prog === i, disabled: st.run, why: 'The program is locked while it runs',
+        onClick:(st,ui) => { st.prog = i; st.done = false; } })) },
+    { label:'Start / pause', onClick:(st,ui) => start(st,ui),
+      predict:'Nobody pours water into this machine. Where will the water come from, and where will it go?' },
+    { label:'Unload', onClick:(st,ui) => unload(st,ui),
+      predict:'The door stayed locked the whole time the machine ran. Why does it lock?' },
   ],
   buttonsLabel:'Machine',
-  acts:{ dial:(st,el,ui) => cycleProg(st,ui), start:(st,el,ui) => start(st,ui), door:(st,el,ui) => toggleDoor(st,ui), drawer:(st,el,ui) => toggleDrawer(st,ui) },
+  acts:{ dial:(st,el,ui) => cycleProg(st,ui), start:(st,el,ui) => start(st,ui), door:(st,el,ui) => toggleDoor(st,ui),
+         drawer:(st,el,ui) => st.run ? ui.flash('The drawer stays shut while the machine runs') : busy(st) ? ui.flash('Wait for the machine to finish this step') : toggleDrawer(st) },
   params:(st,q) => {
     const pi = PROGS.findIndex(p => p.name === (q.get('prog') || '').toUpperCase()); if (pi >= 0) st.prog = pi;
     if (q.get('run') === '1' || q.get('done') === '1' || q.get('laundry') === 'drum') st.laundry = 'drum';
-    if (q.get('run') === '1'){ st.run = true; st.tau = Math.min(.999, Math.max(0, +(q.get('t') || 0))) * PROGS[st.prog].T; }
+    if (q.get('run') === '1'){ st.run = true; st.soapLvl = 1; st.tau = Math.min(.999, Math.max(0, +(q.get('t') || 0))) * PROGS[st.prog].T; }
     if (q.get('door') === 'open' || q.get('door') === '1'){ st.door = st.doorT = 1; st.run = false; }
     if (q.has('doorT')) st.door = st.doorT = +q.get('doorT');
     if (q.get('drawer') === '1') st.drawer = st.drawerT = 1;
-    if (q.get('done') === '1'){ st.done = true; st.run = false; }
+    if (q.get('done') === '1'){ st.done = st.washed = true; st.run = false; }
     if (q.has('soap')){ const v = +q.get('soap'); if (v > 0 && v < 1){ st.soapAnim = v; st.soapLvl = Math.max(0, Math.min(1, (v-.35)/.45)); st.drawer = st.drawerT = 1; } else st.soapLvl = v ? 1 : 0; }
-    if (q.get('laundry') === 'basket'){ st.laundry = 'basket'; st.door = st.doorT = 1; }
-    if (q.has('unload')){ st.door = st.doorT = 1; st.xfer = { dir:'out', T: +q.get('unload') * xferEnd() }; }
+    if (q.get('laundry') === 'basket'){ st.laundry = 'basket'; st.door = st.doorT = 1; st.washed = q.get('washed') === '1'; }
+    if (q.has('unload')){ st.door = st.doorT = 1; st.washed = true; st.xfer = { dir:'out', T: +q.get('unload') * xferEnd() }; }
   },
 });
-st0 = ui.st;
 </script></body></html>

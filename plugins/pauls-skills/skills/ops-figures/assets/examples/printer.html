@@ -12,9 +12,11 @@
    The real sequence, and where the plastic is after each step:
    1 Heat up        nozzle 22 → 210 °C, bed 22 → 60 °C       plastic: on the spool
    2 Load filament  the extruder pushes it down the tube      plastic: spool → tube → nozzle, a bead oozes out
-   3 Print          24 rings, the gantry lifts one layer each  plastic: nozzle → a cup on the bed
-   4 Cool down      nozzle and bed back to room temperature    the cup hardens on the bed
-   5 Remove part    the cup comes off the bed onto the table   plastic: a pencil cup on the table */
+   3 Print          the bead is wiped into the first ring; 24 rings, the gantry lifts one layer each; then the
+                    printer switches its heaters off by itself (nobody presses anything) and the cup hardens
+                                                              plastic: nozzle → a cup on the bed, cooling
+   4 Remove part    cool plastic shrinks and lets go; you lift the cup onto the table
+                                                              plastic: a pencil cup on the table (room for two) */
 
 /* ---------- geometry (x = depth, y = width, z = height; 1 unit ≈ 5 mm, so the parts read) ---------- */
 const W = 62, D = 88, H = 98;          // D reaches past the printer (y 0..64) to the spot on the board where the cup goes
@@ -23,7 +25,7 @@ const Z0 = 13.5;                       // top of the bed sheet
 const NX = 34, PCY = 32;               // nozzle depth (fixed: the bed slides under it) and the bed's centre line
 const CUP_R = 7, LAYERS = 24;          // the part: a pencil cup, one unit per layer
 const REST_Z = Z0 + 26, LIFT = 8;      // nozzle height when parked, and how far it lifts after printing
-const DESK = [52, 78];                 // where the finished cup stands on the board
+const DESKS = [[52, 78], [34, 80]];    // where finished cups stand on the board, beside the printer
 const BRD = [-4, -4, W + 4, D, 3, 6];   // the desk board: x0, y0, x1, y1, thickness, corner radius (top at z = 0)
 const SPOOL = [22, 86];                // spool axle (x, z), along y
 const ROOM = 22, NOZ_HOT = 210, BED_HOT = 60;
@@ -35,6 +37,28 @@ const HOT = '#ff7a3d';
 const clamp01 = t => Math.max(0, Math.min(1, t));
 const lerp = (a, b, t) => a + (b - a) * t;
 const heatOf = (t, hot) => clamp01((t - ROOM) / (hot - ROOM));
+
+/* ---------- the captions, and how long each phase lasts: long enough to read its caption (READ_S) ---------- */
+const CAP = {
+  cold:'The printer is cold and the plastic is still on the spool. Heat it up first.',
+  heat:`The heaters warm the nozzle to ${NOZ_HOT} °C and the bed to ${BED_HOT} °C.`,
+  hot:'Hot and ready. Load the filament: a long string of plastic wound on the spool.',
+  push:'The extruder motor grips the plastic string and pushes it down the tube.',
+  ooze:'The plastic melts in the hot nozzle, and a little bead oozes out.',
+  ready:'Melted plastic is ready in the nozzle. Press Print.',
+  coldLoaded:'The filament is loaded, but the printer is cold. Heat it up to print.',
+  layer:`Layer 1 of ${LAYERS}: the nozzle draws one thin ring of melted plastic, then the gantry lifts it a little higher.`,
+  cool:'Done! The printer switches its heaters off, and the cup cools and hardens.',
+  warm:'The plastic is still warm and soft. It has to cool before it comes off.',
+  take:'The plastic is hard now. Take the cup off the bed.',
+  lift:'Cool plastic shrinks a little, so the cup lets go of the bed.',
+  desk:`A pencil cup, built from ${LAYERS} thin layers of plastic. Press Heat up to print another.`,
+  two:`Two pencil cups, each built from ${LAYERS} thin layers of plastic.`,
+};
+const capLayer = n => CAP.layer.replace(/^Layer 1/, `Layer ${n}`);   // same words, so it updates in place
+const ends = keys => { let t = 0; return keys.map(k => t += READ_S(CAP[k])); };   // when each phase ends, in seconds
+const HEAT_T = READ_S(CAP.heat), LOAD_E = ends(['push', 'ooze']), COOL_T = READ_S(CAP.cool), LIFT_T = READ_S(CAP.lift), WAIT_T = READ_S(CAP.warm);
+const T_DOWN = .8, T_UP = .8, T_PRINT = Math.max(8, READ_S(CAP.layer) - T_DOWN - T_UP);   // the layer caption stays up all three
 
 /* ---------- pieces ---------- */
 function smooth3(pts, it=3){
@@ -107,13 +131,16 @@ function scene(st, m){
   // 0 the board the printer stands on: its top is the z = 0 plane, so draw it 3 units lower
   OY += BRD[4]; s += board(...BRD); OY -= BRD[4];
   const onBoard = on(PZ(0), rrUV(BRD[0], BRD[1], BRD[2], BRD[3], BRD[5]));
+  const cupPts = (cx, cy, z0) => on(PZ(z0), ellUV(cx, cy, CUP_R, CUP_R, 16)).concat(on(PZ(z0 + LAYERS), ellUV(cx, cy, CUP_R, CUP_R, 16)));
+  const mv = st.part === 'moving' ? movingCup(st) : null;
   s += clipTo(onBoard, castShadow(base) + castShadow(postR) + castShadow(postL) + castShadow(top)
-    + (st.part === 'desk' ? castShadow(on(PZ(0), ellUV(DESK[0], DESK[1], CUP_R, CUP_R, 16)).concat(on(PZ(LAYERS), ellUV(DESK[0], DESK[1], CUP_R, CUP_R, 16)))) : ''));
+    + DESKS.slice(0, st.cups).map(([x, y]) => castShadow(cupPts(x, y, 0))).join('')
+    + (mv ? `<g opacity=".5">${castShadow(cupPts(...mv))}</g>` : ''));       // lifted: its shadow is apart, so half strength
 
   // 2 base with the screen and the control knob
   s += box(0, 0, 0, W, PW, 10, m, tone, 1.1) + hullInk(base, 2.6);
   const scr = st.phase === 'heat' ? `HEAT ${Math.round(st.nozT)}` : st.phase === 'load' ? 'LOADING' : st.phase === 'print' ? `L ${layerOf(st)}/${LAYERS}`
-    : st.phase === 'cool' ? `COOL ${Math.round(st.nozT)}` : st.part === 'bed' && st.bedT <= 35 ? 'DONE' : st.nozT > 150 ? `${Math.round(st.nozT)} C` : 'READY';
+    : st.phase === 'cool' ? `COOL ${Math.round(st.nozT)}` : st.part === 'bed' && st.bedT <= COOL_OK ? 'DONE' : st.nozT > 150 ? `${Math.round(st.nozT)} C` : 'READY';
   s += shape(on(PX(W+.2), rrUV(36, 2.6, 56, 8, 1)), '#1d2a26', 1) + tx(W+.3, 46, 4.4, scr, 2.5, '#8af0ae', 700, FONT_MONO);
   s += act('heat', cylX(W, W+2.2, 26, 5.3, 2.3, METAL));
   s += tx(W+.3, 12, 4.4, 'OPS LAB', 2.6, m === PALS.white ? INK : '#ffffff', 700);
@@ -135,32 +162,42 @@ function scene(st, m){
   if (st.part === 'bed') s += cup(NX + bx, PCY, Z0, st.partH);
   s += head(st, m);
   s += feedTube(st);
-  // 8 the cup on its way off the bed, or standing on the table
-  if (st.part === 'moving'){
-    const t = ease(st.move), from = [NX + bx, PCY, Z0], to = [DESK[0], DESK[1], 0];
-    s += cup(lerp(from[0], to[0], t), lerp(from[1], to[1], t), lerp(from[2], to[2], t) + 16*Math.sin(Math.PI*t), LAYERS);
-  }
-  if (st.part === 'desk') s += cup(DESK[0], DESK[1], 0, LAYERS);
+  // 8 cups standing on the table (far one first), then the cup on its way off the bed
+  for (let i = st.cups - 1; i >= 0; i--) s += cup(DESKS[i][0], DESKS[i][1], 0, LAYERS);
+  if (mv) s += cup(...mv, LAYERS);
 
   // 9 labels on the working parts (lit while that part is doing its job)
   const ph = st.phase;
   s += tag([SPOOL[0], 39, SPOOL[1] + 6], -64, -14, 'SPOOL', ph === 'load' || ph === 'print');
-  s += tag([NX-2, st.hy - 4, st.zt + 16], 66, -40, 'EXTRUDER', ph === 'load' || ph === 'print');
-  s += tag([NX, st.hy, st.zt + .5], 92, 12, 'NOZZLE', ph === 'heat' || ph === 'load' || ph === 'print');
-  s += tag([NX + 18 + bx, 13, Z0], 60, 50, 'BED', ph === 'heat' || ph === 'cool');
+  // the head's two pills stay where they sit when it's parked, in clear space right of the frame; only the leader
+  // follows the head down, so a pill never lands on the bed or the base while it prints
+  const pinTag = (p3, rest, dx, dy, text, on) => { const [X, Y] = P(...p3), [RX, RY] = P(...rest);
+    return tag(p3, dx + (RX - X) / INK_K, dy + (RY - Y) / INK_K, text, on); };
+  s += pinTag([NX-2, st.hy - 4, st.zt + 16], [NX-2, PCY - 4, REST_Z + 16], 74, -40, 'EXTRUDER', ph === 'load' || ph === 'print');
+  s += pinTag([NX, st.hy, st.zt + .5], [NX, PCY, REST_Z + .5], 100, 12, 'NOZZLE', ph === 'heat' || ph === 'load' || ph === 'print');
+  s += tag([NX + 18 + bx, 13, Z0], 92, 64, 'BED', ph === 'heat' || ph === 'cool');
   return s;
 }
 
 /* ---------- behaviour ---------- */
-const layerOf = st => Math.min(LAYERS, Math.floor(st.prog * LAYERS) + (st.prog > 0 ? 1 : 0));
+const layerOf = st => Math.max(1, Math.min(LAYERS, Math.floor(st.prog * LAYERS) + 1));
 const busy = st => st.phase !== 'idle';
+const COOL_OK = 35;                                            // below this the bed lets the cup go
+// the cup on its way from the bed to the next free spot on the table, lifted in an arc: [x, y, z] of its base
+function movingCup(st){
+  const t = ease(st.move), to = DESKS[st.cups];
+  return [lerp(NX + st.bx, to[0], t), lerp(PCY, to[1], t), lerp(Z0, 0, t) + 16*Math.sin(Math.PI*t)];
+}
+// the heaters off: nozzle and bed fall from n0, b0 to near room temperature as k goes 0 → 1
+function coolTo(st, n0, b0, k){ st.nozT = lerp(n0, ROOM + 6, ease(k)); st.bedT = lerp(b0, ROOM + 6, ease(k)); }
 let ui;
 
 function heatUp(st, ui){
   if (busy(st)) return ui.flash('Wait for the printer to finish this step');
+  if (st.part === 'bed') return ui.flash('Take the cup off the bed first');
   if (st.nozT >= NOZ_HOT - 1) return ui.flash(`Already hot: the nozzle is at ${NOZ_HOT} °C`);
   st.phase = 'heat'; const n0 = st.nozT, b0 = st.bedT; let t = 0;
-  ui.animate(dt => { t = Math.min(1, t + dt/6);                // 6 s: the heating caption needs that long to read
+  ui.animate(dt => { t = Math.min(1, t + dt/HEAT_T);
     st.nozT = lerp(n0, NOZ_HOT, ease(t)); st.bedT = lerp(b0, BED_HOT, ease(t));
     if (t >= 1){ st.phase = 'idle'; return false; } return true; });
 }
@@ -168,69 +205,65 @@ function loadFilament(st, ui){
   if (busy(st)) return ui.flash('Wait for the printer to finish this step');
   if (st.loaded) return ui.flash('The filament is already loaded');
   if (st.nozT < 180) return ui.flash("Heat up first: cold plastic can't be pushed through the nozzle");
-  st.phase = 'load'; let t = 0;
-  ui.animate(dt => { t = Math.min(1, t + dt/11);               // two captions, about 5.5 s each
-    st.fil = clamp01(t / .5); st.purge = clamp01((t - .5) / .15); st.spin += t < .5 ? dt * 1.2 : 0;
-    if (t >= 1){ st.phase = 'idle'; st.loaded = true; return false; } return true; });
+  st.phase = 'load'; const s0 = st.spin; let t = 0;
+  ui.animate(dt => { t = Math.min(LOAD_E[1], t + dt);         // push down the tube, then melt and ooze
+    st.fil = clamp01(t / LOAD_E[0]); st.purge = clamp01((t - LOAD_E[0]) / 1.2); st.spin = s0 + 1.2 * Math.min(t, LOAD_E[0]);   // from t, so a skipped step ends the same
+    if (t >= LOAD_E[1]){ st.phase = 'idle'; st.loaded = true; return false; } return true; });
 }
 function print(st, ui){
   if (busy(st)) return ui.flash('Wait for the printer to finish this step');
-  if (st.part === 'bed') return ui.flash('Take the last part off the bed first');
+  if (st.part === 'bed') return ui.flash('Take the last cup off the bed first');
   if (st.nozT < 180) return ui.flash('Heat up first: the plastic has to melt');
   if (!st.loaded) return ui.flash('Load the filament first');
-  st.phase = 'print'; st.part = 'bed'; st.partH = 0; st.prog = 0; st.purge = 0;
-  const z0 = st.zt, T_DOWN = .8, T_PRINT = 8, T_UP = .8; let t = 0;
+  if (st.cups >= DESKS.length) return ui.flash('The table is full: two cups is plenty');
+  st.phase = 'print'; st.part = 'bed'; st.partH = 0; st.prog = 0;
+  const z0 = st.zt, u0 = st.used, n0 = st.nozT, b0 = st.bedT, p0 = st.purge, s0 = st.spin;
+  const T1 = T_DOWN, T2 = T1 + T_PRINT, T3 = T2 + T_UP, T4 = T3 + COOL_T; let t = 0;
   ui.animate(dt => { t += dt;
-    if (t < T_DOWN){                                          // move to the start of the first ring
-      const k = ease(t / T_DOWN); st.zt = lerp(z0, Z0 + 1, k); st.bx = lerp(0, -CUP_R, k); st.hy = PCY; return true; }
-    if (t < T_DOWN + T_PRINT){                                // ring after ring; the gantry steps up once per layer
-      st.prog = (t - T_DOWN) / T_PRINT;
+    if (t < T1){                                              // move to the start of the first ring; the bead is wiped into it
+      const k = ease(t / T1); st.zt = lerp(z0, Z0 + 1, k); st.bx = lerp(0, -CUP_R, k); st.hy = PCY; st.purge = p0 * (1 - k); return true; }
+    st.purge = 0;
+    if (t < T2){                                              // ring after ring; the gantry steps up once per layer
+      st.prog = (t - T1) / T_PRINT;
       const a = st.prog * LAYERS * 2 * Math.PI, layer = Math.floor(st.prog * LAYERS);
       st.bx = -CUP_R * Math.cos(a); st.hy = PCY + CUP_R * Math.sin(a);
-      st.partH = st.prog * LAYERS; st.zt = Z0 + layer + 1; st.spin += dt * .9; st.used = st.prog; return true; }
-    st.prog = 1; st.partH = LAYERS;
-    const k = ease(Math.min(1, (t - T_DOWN - T_PRINT) / T_UP));   // lift clear and centre the bed
+      st.partH = st.prog * LAYERS; st.zt = Z0 + layer + 1; st.spin = s0 + .9 * T_PRINT * st.prog; st.used = u0 + st.prog; return true; }
+    st.prog = 1; st.partH = LAYERS; st.used = u0 + 1; st.spin = s0 + .9 * T_PRINT;
+    const k = ease(Math.min(1, (t - T2) / T_UP));               // lift clear and centre the bed
     st.zt = Z0 + LAYERS + 1 + LIFT * k; st.bx = lerp(-CUP_R, 0, k); st.hy = PCY;
-    if (k >= 1){ st.phase = 'idle'; return false; } return true; });
-}
-function coolDown(st, ui){
-  if (busy(st)) return ui.flash(st.phase === 'print' ? 'Wait for the print to finish' : 'Wait for the printer to finish this step');
-  if (st.nozT <= ROOM + 8 && st.bedT <= ROOM + 8) return ui.flash('Already cool');
-  st.phase = 'cool'; const n0 = st.nozT, b0 = st.bedT; let t = 0;
-  ui.animate(dt => { t = Math.min(1, t + dt/5);
-    st.nozT = lerp(n0, ROOM + 6, ease(t)); st.bedT = lerp(b0, ROOM + 6, ease(t));
-    if (t >= 1){ st.phase = 'idle'; return false; } return true; });
+    if (t < T3) return true;
+    st.phase = 'cool'; coolTo(st, n0, b0, Math.min(1, (t - T3) / COOL_T));   // the printer turns its heaters off by itself
+    if (t >= T4){ st.phase = 'idle'; return false; } return true; });
 }
 function removePart(st, ui){
   if (busy(st)) return ui.flash('Wait for the printer to finish this step');
-  if (st.part === 'desk') return ui.flash('The cup is already on the table');
-  if (st.part !== 'bed') return ui.flash('Nothing on the bed yet: print something first');
-  if (st.bedT > 35) return ui.flash('Let it cool first: warm plastic is still soft and bends');
-  st.phase = 'remove'; st.part = 'moving'; st.move = 0; let t = 0;
-  ui.animate(dt => { t += dt; st.move = Math.min(1, t / 1.6);
-    if (st.move >= 1) st.part = 'desk';
-    if (t >= READ_S('The cooled cup pops off the bed.')){ st.phase = 'idle'; return false; } return true; });
+  if (st.part !== 'bed') return ui.flash(st.cups ? 'The cup is already on the table' : 'Nothing on the bed yet: print something first');
+  const lift = () => { st.phase = 'remove'; st.part = 'moving'; st.move = 0; let t = 0;
+    ui.animate(dt => { t += dt; st.move = Math.min(1, t / 1.6);
+      if (t >= LIFT_T){ st.part = 'none'; st.cups++; st.move = 0; st.phase = 'idle'; return false; } return true; }); };
+  if (st.bedT <= COOL_OK) return lift();
+  st.phase = 'wait'; const n0 = st.nozT, b0 = st.bedT; let t = 0;   // still warm (a ?prog=1&hot=1 shot): cool first, then lift
+  ui.animate(dt => { t = Math.min(WAIT_T, t + dt); coolTo(st, n0, b0, t / WAIT_T);
+    if (t >= WAIT_T){ lift(); return false; } return true; });
 }
 
 ui = mountFigure({
-  fig:'04', title:'3D printer', hint:'heat it, load the plastic, print a pencil cup, cool it, take it off',
+  fig:'04', title:'3D printer', hint:'heat it, load the plastic, print a pencil cup, take it off',
   size:[W, D, H],
-  state:{ phase:'idle', nozT:ROOM, bedT:ROOM, fil:0, loaded:false, purge:0, prog:0, partH:0, part:'none', move:0,
+  state:{ phase:'idle', nozT:ROOM, bedT:ROOM, fil:0, loaded:false, purge:0, prog:0, partH:0, part:'none', move:0, cups:0,
           bx:0, hy:PCY, zt:REST_Z, spin:0, used:0 },
   scene,
   caption: st => {
-    if (st.phase === 'heat') return `The heaters warm the nozzle to ${NOZ_HOT} °C and the bed to ${BED_HOT} °C.`;
-    if (st.phase === 'load') return st.fil < 1 ? 'The extruder motor grips the plastic string and pushes it down the tube.'
-      : 'The plastic melts in the hot nozzle, and a little bead oozes out.';
-    if (st.phase === 'print' || (st.part === 'bed' && st.partH < LAYERS)) return `Layer ${layerOf(st)} of ${LAYERS}: the nozzle draws one thin ring of melted plastic, then the gantry lifts it a little higher.`;
-    if (st.phase === 'cool') return 'The nozzle and bed cool down, and the plastic hardens.';
-    if (st.phase === 'remove') return 'The cooled cup pops off the bed.';
-    if (st.part === 'desk') return `A pencil cup, built from ${LAYERS} thin layers of plastic. Press Heat up to print another.`;
-    if (st.part === 'bed') return st.bedT > 35 ? 'Printed! The plastic is still warm and soft. Let it cool before you take it off.'
-      : 'The plastic is hard now. Take the cup off the bed.';
-    if (st.loaded) return st.nozT >= 180 ? 'Melted plastic is ready in the nozzle. Press Print.' : 'Filament is loaded, but the printer is cold. Heat it up to print.';
-    return st.nozT >= 180 ? 'Hot and ready. Load the filament: a long string of plastic wound on the spool.'
-      : 'The printer is cold and the plastic is still on the spool. Heat it up first.';
+    if (st.phase === 'heat') return CAP.heat;
+    if (st.phase === 'load') return st.fil < 1 ? CAP.push : CAP.ooze;
+    if (st.phase === 'print') return capLayer(layerOf(st));
+    if (st.phase === 'cool') return CAP.cool;
+    if (st.phase === 'wait') return CAP.warm;
+    if (st.phase === 'remove') return CAP.lift;
+    if (st.part === 'bed') return st.prog < 1 ? capLayer(layerOf(st)) : st.bedT > COOL_OK ? CAP.warm : CAP.take;
+    if (st.cups) return st.cups >= DESKS.length ? CAP.two : CAP.desk;
+    if (st.loaded) return st.nozT >= 180 ? CAP.ready : CAP.coldLoaded;
+    return st.nozT >= 180 ? CAP.hot : CAP.cold;
   },
   stats: st => [ { label:'Nozzle', value:`${Math.round(st.nozT)} °C` }, { label:'Bed', value:`${Math.round(st.bedT)} °C`, small:true },
                  st.part === 'bed' && { label:'Layer', value:`${layerOf(st)} / ${LAYERS}`, small:true } ],
@@ -239,20 +272,21 @@ ui = mountFigure({
     { label:'Heat up', onClick:heatUp, predict:`The nozzle has to reach about ${NOZ_HOT} °C. Why does it need to be so hot?` },
     { label:'Load filament', onClick:loadFilament, predict:'The filament is a solid plastic string. What will happen when it reaches the hot nozzle?' },
     { label:'Print', onClick:print, predict:'The nozzle only ever moves in a flat circle. How will the cup get taller?' },
-    { label:'Cool down', onClick:coolDown, predict:'Why should you wait before you take the cup off the bed?' },
-    { label:'Remove part', onClick:removePart },
+    { label:'Remove part', onClick:removePart, predict:'The cup stuck tight to the warm bed while it printed. Why will it come off now?' },
   ],
+  walk:['Heat up', 'Load filament', 'Print', 'Remove part'],
   acts:{ heat:(st,el,ui) => heatUp(st,ui), spool:(st,el,ui) => loadFilament(st,ui), bed:(st,el,ui) => removePart(st,ui) },
   params:(st, q) => {
-    if (q.get('hot') === '1' || q.has('prog') || q.get('loaded') === '1'){ st.nozT = NOZ_HOT; st.bedT = BED_HOT; }
-    if (q.get('loaded') === '1' || q.has('prog')){ st.loaded = true; st.fil = 1; }
-    if (q.has('prog')){                                      // a print in progress, frozen: ?prog=0.5
-      st.prog = clamp01(+q.get('prog')); st.part = 'bed'; st.partH = st.prog * LAYERS;
-      const a = st.prog * LAYERS * 2 * Math.PI; st.bx = -CUP_R * Math.cos(a); st.hy = PCY + CUP_R * Math.sin(a);
-      st.zt = Z0 + Math.floor(st.prog * LAYERS) + 1; st.used = st.prog;
-      if (st.prog >= 1){ st.bx = 0; st.hy = PCY; st.zt = Z0 + LAYERS + 1 + LIFT; } }
-    if (q.get('cool') === '1'){ st.nozT = st.bedT = ROOM + 6; }
-    if (q.get('desk') === '1'){ st.part = 'desk'; st.loaded = true; st.fil = 1; st.partH = 0; st.zt = Z0 + LAYERS + 1 + LIFT; st.used = 1; }
+    const prog = q.has('prog') ? clamp01(+q.get('prog')) : null;
+    if (q.get('hot') === '1' || q.get('loaded') === '1' || (prog !== null && prog < 1)){ st.nozT = NOZ_HOT; st.bedT = BED_HOT; }
+    if (q.get('loaded') === '1' || prog !== null){ st.loaded = true; st.fil = 1; }
+    if (prog !== null){                                      // a print in progress, frozen: ?prog=0.5 (1 = printed and cooled)
+      st.prog = prog; st.part = 'bed'; st.partH = prog * LAYERS;
+      const a = prog * LAYERS * 2 * Math.PI; st.bx = -CUP_R * Math.cos(a); st.hy = PCY + CUP_R * Math.sin(a);
+      st.zt = Z0 + Math.floor(prog * LAYERS) + 1; st.used = prog;
+      if (prog >= 1){ st.bx = 0; st.hy = PCY; st.zt = Z0 + LAYERS + 1 + LIFT; } }
+    if (q.has('cups')){ st.cups = Math.max(0, Math.min(DESKS.length, Math.round(+q.get('cups')))); st.loaded = true; st.fil = 1;
+      st.zt = Z0 + LAYERS + 1 + LIFT; st.used = st.cups; }
   },
 });
 </script>
