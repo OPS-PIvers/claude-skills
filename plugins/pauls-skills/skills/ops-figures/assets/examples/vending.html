@@ -8,20 +8,32 @@
 <body>
 <script src="core.js"></script>
 <script>
+/* A how-it-works figure: labels on the working parts, a Predict question before each key step, and a walk-through.
+   The real sequence, and where the money and the drink are after each step:
+   1 Insert 50c (x4)   each coin slides into the slot; the machine checks it   money: hand → slot → coin box, credit $2.00
+   2 Choose a drink    A then 1 on the keypad: the spiral behind A1 turns once and pushes the front can off the shelf;
+                       it drops behind the glass into the pickup tray       drink: shelf → tray, credit $2.00 → $0.50
+   3 Take your drink   pull the pickup door down, lift the can out; the door falls shut   drink: tray → you
+   4 Return change     the credit not spent drops down a chute into the coin cup   money: coin box → cup, credit $0
+   (5 Take coins       the change comes out of the cup                      money: cup → you) */
+
 /* ---------- geometry (x = depth, y = width, z = height) ---------- */
 const W = 90, D = 130, H = 232, R = 8, T = 6;
 const WIN = [40,62,122,196];          // glass window on the front: y0,z0,y1,z1
 const TRAY = [44,16,118,42];          // pickup opening
 const CUP = [12,64,30,80];            // coin-return cup under the return button
-const SHELF_X = 82;                   // front edge of the shelves
-const ITEM_X = 70, ITEM_STEP = 16;    // front item depth, spacing of the items queued behind it
+const SHELF_X = 74;                   // front edge of the shelves: the gap to the glass is wide enough for a can to fall
+const ITEM_X = 58, ITEM_STEP = 16;    // front item depth, spacing of the items queued behind it (= one turn of the spiral)
+const FALL_X = 80.5;                  // depth of a product falling in the gap between the shelves and the glass
 const COL_Y = [92,72,52,32];          // columns 1-4, left to right on screen
 const ROWS = [
-  { code:'A', s:148, kind:'can',    price:1.5, cols:['#e2473a','#2f6fd6','#f2c230','#38a565'] },
-  { code:'B', s:116, kind:'can',    price:1.5, cols:['#8c4bd1','#f08a2b','#ece6d6','#33302c'] },
-  { code:'C', s:84,  kind:'bottle', price:2.0, cols:['#f07b2a','#5cc0e8','#d94f86','#9ccc3c'] },
-  { code:'D', s:52,  kind:'snack',  price:1.0, cols:['#f2c230','#e2473a','#3e86d9','#8a5a3c'] },
+  { code:'A', s:142, kind:'can',    price:1.5, cols:['#e2473a','#2f6fd6','#f2c230','#38a565'] },
+  { code:'B', s:110, kind:'can',    price:1.5, cols:['#8c4bd1','#f08a2b','#ece6d6','#33302c'] },
+  { code:'C', s:78,  kind:'bottle', price:2.0, cols:['#f07b2a','#5cc0e8','#d94f86','#9ccc3c'] },
+  { code:'D', s:46,  kind:'snack',  price:1.0, cols:['#f2c230','#e2473a','#3e86d9','#8a5a3c'] },
 ];
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+const trayY = c => clamp(COL_Y[c], 52, 90);   // where a product from column c lands in the tray (a sloped bin guides it)
 
 
 /* ---------- turn-aware helpers ---------- */
@@ -65,11 +77,25 @@ function snack(x,y,z,col){
     + shape(on(PX(x+3.6),rectUV(y-5.5,z+7,y+5.5,z+13)),'#fbf7ea',.8);
 }
 const ITEM = { can, bottle, snack };
-// the same products lying in the pickup tray
-function lying(kind,col){
-  const m=matOf(col), x=W-9;
-  if (kind === 'snack') return boxV(W-15,60,14,W-4,82,18,m,toneI,1.1);
-  const r = kind==='can' ? 6.5 : 6, y0 = kind==='can' ? 66 : 60, y1 = kind==='can' ? 86 : 88, z = 14+r;
+// the wire spiral a column of products sits in: a helix along x around them. Turning it once pushes every product
+// forward one slot (adv = how far it has turned, in units of x). Split into short pieces so each sorts by depth with
+// the products: the near half of each loop draws in front of them, the far half behind.
+const COIL_R = 7.2;
+function coil(y, zs, adv){
+  const zc = zs + COIL_R + .3, parts = [], N = 10;
+  const at = x => { const a = 2*Math.PI*(x - ITEM_X - adv)/ITEM_STEP + Math.PI;   // at a product's centre the wire is underneath it
+    return [x, y + COIL_R*Math.sin(a), zc + COIL_R*Math.cos(a)]; };
+  for (let x0 = T+3; x0 < SHELF_X-1; x0 += ITEM_STEP/N){
+    const x1 = Math.min(SHELF_X-1, x0 + ITEM_STEP/N), pts = [at(x0), at((x0+x1)/2), at(x1)];
+    parts.push({ at: pts[1], svg: `<path d="${pd(pts,false)}" fill="none" stroke="#8b979d" stroke-width="1" stroke-linecap="round"/>` });
+  }
+  return parts;
+}
+// the same products lying in the pickup tray, centred on y = yc (dx moves them toward the viewer as they're lifted out)
+function lying(kind,col,yc,dx=0,dz=0){
+  const m=matOf(col), x=W-9+dx;
+  if (kind === 'snack') return boxV(W-15+dx,yc-11,14+dz,W-4+dx,yc+11,18+dz,m,toneI,1.1);
+  const r = kind==='can' ? 6.5 : 6, h = kind==='can' ? 10 : 14, y0 = yc-h, y1 = yc+h, z = 14+r+dz;
   const A=on(PY(y0),ellUV(x,z,r,r)), B=on(PY(y1),ellUV(x,z,r,r));
   const capM = kind==='can' ? METAL : matOf(mix(col,'#000000',.25));
   const [E, n] = facing([0,1,0]) ? [B,[0,1,0]] : [A,[0,-1,0]];       // the end cap toward the viewer
@@ -78,15 +104,18 @@ function lying(kind,col){
 
 
 /* ---------- state ---------- */
-const st = { credit:0, returned:0, sel:'', msg:'', drop:null, tray:null, press:null, flap:0, flapTarget:0,
-             stock: ROWS.map(() => COL_Y.map(() => 3)) };
+// flying: coins on their way into the slot (0..1 each); drop: a product being vended; take: the drink being lifted
+// out; chg: change dropping into the cup; msg/msgN: a short note on the machine's own screen
+const st = { credit:0, returned:0, sel:'', msg:'', msgN:0, drop:null, tray:null, take:null, got:'', chg:null, flying:[],
+             press:null, flap:0, flapTarget:0, stock: ROWS.map(() => COL_Y.map(() => 3)) };
 
 /* ---------- coins in the return cup ---------- */
 const COIN = { l:'#f0d27a', m:'#d2ad4a', d:'#9a7a2a' };
 const COIN_SPOTS = [[-3.4,21],[-4.6,16.5],[-4.2,25.6],[-2.2,17.8],[-2.4,24.4],[-5.6,20.8]];
-function coins(n){
+// coins from index `from` on are still falling: drawn `drop` units higher, coming down the chute at the back of the cup
+function coins(n, from=n, drop=0){
   const pts = [];
-  for (let i=0; i<Math.min(n,18); i++){ const [dx,y] = COIN_SPOTS[i % 6]; pts.push([W+dx, y, CUP[1] + .1 + Math.floor(i/6)*1.1]); }
+  for (let i=0; i<Math.min(n,18); i++){ const [dx,y] = COIN_SPOTS[i % 6]; pts.push([W+dx, y, CUP[1] + .1 + Math.floor(i/6)*1.1 + (i >= from ? drop : 0)]); }
   pts.sort((a,b) => (a[2]-b[2]) || (depthOf([a[0],a[1],0])-depthOf([b[0],b[1],0])));
   let s = '';
   for (const [x,y,z] of pts){
@@ -94,6 +123,20 @@ function coins(n){
     s += loft(A,B,n=>toneI(n,COIN)) + fill(pd(B),COIN.l) + ink(sp(hull([...A,...B].map(p=>P(...p)))),.7) + ink(pd(on(PZ(z+.95),ellUV(x,y,1.5,1.5,12))),.4);
   }
   return s;
+}
+// a coin on its way into the slot (t 0..1): held on edge, it comes in from the customer's side and slides through the
+// slit. The part already through the front (x < W + .5) is cut off, so it disappears into the machine.
+const SLOT = [21.2, 106];               // the slit's centre (y, z) on the coin plate
+function flyingCoin(t){
+  const e = ease(Math.min(1, t)), cx = W + 26 - 30*e, r = 3.1, xMin = W + .5;
+  const disc = ellUV(cx, SLOT[1], r, r, 20), cut = [];
+  disc.forEach((p, i) => { const q = disc[(i+1) % disc.length];        // keep the part in front of the face
+    if (p[0] >= xMin) cut.push(p);
+    if ((p[0] >= xMin) !== (q[0] >= xMin)){ const k = (xMin - p[0])/(q[0] - p[0]); cut.push([xMin, p[1] + k*(q[1]-p[1])]); } });
+  if (cut.length < 3) return '';
+  const near = on(PY(SLOT[0] + .5), cut), op = Math.min(1, t/.2);
+  return `<g opacity="${op.toFixed(2)}">${fill(pd(on(PY(SLOT[0] - .5), cut)), COIN.d)}${shape(near, COIN.l, .8)}`
+    + (cx - 1.8 > xMin ? ink(pd(on(PY(SLOT[0] + .55), ellUV(cx, SLOT[1], 1.8, 1.8, 14))), .4) : '') + `</g>`;
 }
 
 /* ---------- pickup door: a slab hinged along its bottom edge, drops open toward the viewer ---------- */
@@ -164,6 +207,18 @@ function scene(){
   if (BF) s += ink(pd(on(PX(0),OUT)),2.2);
   s += hullInk([...on(PX(0),OUT), ...on(PX(W),OUT)], 2.8);
   if (BF) s += powerCord();            // the cord lies on the viewer's side of the back panel
+
+  for (const c of st.flying) s += flyingCoin(c.t);   // after the shell: the coin is in front of it until it goes in
+
+  // labels on the working parts, pills out in the empty paper to the right of the machine
+  if (FF){
+    const dr = st.drop;
+    s += tag([W, SLOT[0], SLOT[1]], 76, -44, 'COIN SLOT', st.flying.length > 0);
+    s += tag([W, 21, 130], 76, -54, 'KEYPAD', !!st.sel || !!st.press);
+    s += tag([ITEM_X+ITEM_STEP/2, COL_Y[3], ROWS[3].s+2*COIL_R+.3], 104, -59, 'SPIRAL', !!dr && dr.h < DROP.turn);   // along the gap over RET
+    s += tag([W, 21, 70], 70, 34, 'COIN CUP', !!st.chg);
+    s += tag([W, 54, 26], 68, 70, 'PICKUP TRAY', !!st.tray || !!st.take);
+  }
   return s;
 }
 
@@ -177,23 +232,31 @@ function frontAssembly(m){
   let it = fill(pd(on(PX(T),IN)), '#e8eef0');
   it += loft(on(PX(T),IN), on(PX(W-3),IN), n => n[2]>.7 ? '#d3dbde' : '#dfe7e9', true);
   it += fill(pd(on(PY(LW ? T+.2 : D-T-.2),rectUV(T+10,60,W-10,206))), '#ffffff', 'opacity=".8"');   // light strip on the visible side wall
+  // the product being vended: on the shelf while its spiral turns (it is the front one of its column, one slot ahead),
+  // then falling in the gap between the shelf fronts and the glass
+  const dr = st.drop, turned = dr ? ease(Math.min(1, dr.h/DROP.turn)) * ITEM_STEP : 0;
+  const falling = dr && dr.h > DROP.turn, fallK = falling ? Math.min(1, (dr.h - DROP.turn)/DROP.fall) : 0;
   for (let r = ROWS.length-1; r >= 0; r--){
     const row = ROWS[r], z = row.s;
     it += shape([[T,T,z],[SHELF_X,T,z],[SHELF_X,D-T,z],[T,D-T,z]], '#cfd6d8', 0);
-    const items = [];
-    COL_Y.forEach((y,c) => { for (let k = st.stock[r][c]-1; k >= 0; k--) items.push({ x:ITEM_X-k*ITEM_STEP, y, c }); });
-    items.sort((a,b) => depthOf([a.x,a.y,0]) - depthOf([b.x,b.y,0]));
-    for (const o of items) it += `<g data-act="item" data-r="${r}" data-c="${o.c}">${ITEM[row.kind](o.x,o.y,z,row.cols[o.c])}</g>`;
+    const parts = [];
+    COL_Y.forEach((y,c) => {
+      const here = dr && dr.r === r && dr.c === c, adv = here ? turned : 0;
+      parts.push(...coil(y, z, adv));
+      for (let k = st.stock[r][c]-1; k >= 0; k--){ const x = ITEM_X - (here ? k+1 : k)*ITEM_STEP + adv;
+        parts.push({ at:[x,y,z+10], svg:`<g data-act="item" data-r="${r}" data-c="${c}">${ITEM[row.kind](x,y,z,row.cols[c])}</g>` }); }
+      if (here && !falling) parts.push({ at:[ITEM_X+adv,y,z+10], svg:ITEM[row.kind](ITEM_X+adv,y,z,row.cols[c]) });
+    });
+    it += byDepth(parts);
     it += shape([[SHELF_X,T,z-3],[SHELF_X,D-T,z-3],[SHELF_X,D-T,z],[SHELF_X,T,z]], '#a9b1b4', 1);
     COL_Y.forEach((y,c) => {
       it += shape(on(PX(SHELF_X+.2),rectUV(y-5,z-2.7,y+5,z-.3)), st.stock[r][c] ? '#fffdf5' : '#f3c6bd', .6);
       it += tx(SHELF_X+.3, y, z-.9, row.code+(c+1), 2.1, INK);
     });
   }
-  if (st.drop){
-    const { r, c } = st.drop, t = st.drop.t, row = ROWS[r];
-    const slide = Math.min(1, t/.25) * 10, fall = t > .25 ? 260*Math.pow((t-.25)/.75, 2) : 0;
-    it += ITEM[row.kind](ITEM_X+slide, COL_Y[c], row.s-fall, row.cols[c]);
+  if (falling && fallK < 1){                      // nearer than every shelf front, so it draws over all of them
+    const row = ROWS[dr.r], x = SHELF_X + (FALL_X - SHELF_X)*Math.min(1, fallK*4);
+    it += ITEM[row.kind](x, COL_Y[dr.c] + (trayY(dr.c) - COL_Y[dr.c])*fallK, row.s - (row.s - 14)*fallK*fallK, row.cols[dr.c]);
   }
   s += `<g clip-path="url(#cWin)">${it}</g>`;
 
@@ -210,7 +273,9 @@ function frontAssembly(m){
   let tr = shape(on(PX(tb),rectUV(TRAY[0],14,TRAY[2],TRAY[3])), m.d, 0);
   tr += face(pd([[tb,ty,14],[W,ty,14],[W,ty,TRAY[3]],[tb,ty,TRAY[3]]]), mix(m.d,'#000000',.25));
   tr += face(pd([[tb,TRAY[0],14],[W,TRAY[0],14],[W,TRAY[2],14],[tb,TRAY[2],14]]), mix(m.d,'#ffffff',.12));
-  if (st.tray) tr += lying(st.tray.kind, st.tray.col);
+  const tk = st.take, lifted = tk && tk.h > TAKE.open;
+  if (st.tray) tr += lying(st.tray.kind, st.tray.col, st.tray.yc);
+  else if (tk && !lifted) tr += lying(tk.kind, tk.col, tk.yc);
   s += `<g clip-path="url(#cTray)" data-act="tray">${fill(pd(on(PX(W),tray)),'transparent')}${tr}</g>`;
 
   // coin-return cup: small cavity with the refunded coins lying in it
@@ -219,7 +284,8 @@ function frontAssembly(m){
   let cp = shape(on(PX(cb),cup), mix(METAL.d,'#000000',.45), 0);
   cp += face(pd([[cb,cy,CUP[1]],[W,cy,CUP[1]],[W,cy,CUP[3]],[cb,cy,CUP[3]]]), mix(METAL.d,'#000000',.3));
   cp += face(pd([[cb,CUP[0],CUP[1]],[W,CUP[0],CUP[1]],[W,CUP[2],CUP[1]],[cb,CUP[2],CUP[1]]]), METAL.m);
-  cp += coins(Math.round(st.returned / .5));
+  const nC = Math.round(st.returned / .5);
+  cp += st.chg ? coins(nC, st.chg.from, 14*(1 - Math.min(1, st.chg.t)**2)) : coins(nC);
   s += `<g clip-path="url(#cCup)" data-act="cup">${fill(pd(on(PX(W),cup)),'transparent')}${cp}</g>`;
 
   // front face with its openings
@@ -229,6 +295,10 @@ function frontAssembly(m){
   s += shape(on(PX(W+.3),rrUV(10,62,32,82,3)), 'none', 1);   // metal bezel line
   s += ink(pd([[W,36,8],[W,36,200]],false),1) + ink(pd([[W,36,200],[W,124,200]],false),1);
   s += pickupDoor();
+  if (lifted){                                    // the drink comes up out of the tray, over the open door, to you
+    const k = Math.min(1, (tk.h - TAKE.open)/TAKE.lift);
+    if (k < 1) s += `<g opacity="${(1 - k*k).toFixed(2)}">${lying(tk.kind, tk.col, tk.yc, 22*ease(k), 16*ease(k))}</g>`;
+  }
 
   // header sign
   const F = PX(W+.3);
@@ -332,60 +402,106 @@ function powerCord(){
 /* ---------- behaviour ---------- */
 let ui;
 const render = () => ui.render();
-// the caption under the figure: what is happening, in one plain sentence
-const captionText = st => st.got && !st.credit && !st.tray ? `You have your ${st.got}. The machine is ready for the next customer.`
-    : st.drop ? `The spiral turns and ${st.drop.code} falls to the tray.`
-    : st.tray ? (st.flap === 1 ? `${st.tray.code} is in the tray. Take your drink.` : `${st.tray.code} landed in the tray behind the pickup door.`)
-    : st.returned > 0 ? `${money(st.returned)} dropped into the coin cup.`
-    : st.credit > 0 ? `The machine has counted ${money(st.credit)}. Choose a drink.` : 'Insert coins to start. The machine counts every coin.';
-let msgTimer = 0, pressTimer = 0;
-const flash = (text, ms=1400) => { st.msg = text; clearTimeout(msgTimer); msgTimer = setTimeout(() => { st.msg=''; render(); }, ms); render(); };
-const press = k => { st.press = k; clearTimeout(pressTimer); pressTimer = setTimeout(() => { st.press=null; render(); }, 160); };
+// the caption under the figure, one plain sentence per phase of the real process. A caption the figure replaces on its
+// own (vend, take) holds its phase for READ_S of itself, so rewording a caption re-times its phase.
+const CAP = {
+  idle:    () => 'Insert coins to start. The machine counts every coin.',
+  coin:    c => `The machine checks each coin's size and metal, then adds it to your credit: ${c}.`,
+  vend:    code => `The spiral behind ${code} turns once and pushes the front drink off the shelf.`,
+  landed:  code => `${code} dropped into the pickup tray. Take your drink.`,
+  take:    code => `You pull the pickup door down and lift out ${code}.`,
+  left:    (code, c) => `You have your ${code}. Press Return change to get your ${c} back.`,
+  change:  c => `Your ${c} change drops down a chute into the coin cup.`,
+  done:    code => `You have your ${code}. The machine is ready for the next customer.`,
+};
+const DROP = { turn:1.0, fall:.55 };          // seconds: the spiral's turn, then the fall into the tray
+const TAKE = { open:.55, lift:.7, shut:.55 }; // seconds: door down, drink out, door falls shut at the end of the phase
+const captionText = st => st.take ? CAP.take(st.take.code)
+    : st.drop ? CAP.vend(st.drop.code)
+    : st.tray ? CAP.landed(st.tray.code)
+    : st.returned > 0 ? CAP.change(money(st.returned))
+    : st.got && st.credit > 0 ? CAP.left(st.got, money(st.credit))
+    : st.got && !st.flying.length ? CAP.done(st.got)
+    : st.credit > 0 || st.flying.length ? CAP.coin(money(st.credit)) : CAP.idle();
+
+// a short note on the machine's own screen ("SOLD OUT"): part of the state, cleared by ui.after so Back and Next
+// handle it like the rest of the step. It doesn't render: the press or animation that calls it does, and a render from
+// inside Next's skip would count as a caption shown too briefly
+const flash = (text, sec=1.4) => { st.msg = text; const n = ++st.msgN; ui.after(sec, () => { if (st.msgN === n) st.msg = ''; }); };
+// a key lights up for 160 ms when pressed: purely cosmetic, so a plain timer is fine
+let pressTimer = 0;
+const press = k => { st.press = k; clearTimeout(pressTimer); pressTimer = setTimeout(() => { st.press = null; render(); }, 160); };
 
 function vend(r, c){
   const row = ROWS[r], code = row.code + (c+1);
-  if (st.drop) return;
+  if (st.drop) return ui.flash('Wait for this drink to drop');
   if (st.tray) return flash('TAKE|ITEM');
   if (!st.stock[r][c]) return flash('SOLD|OUT');
   if (st.credit < row.price - 1e-9) return flash('INSERT|' + money(row.price - st.credit));
-  st.credit -= row.price; st.stock[r][c]--; st.sel = '';
-  st.drop = { r, c, code, t:0, h:0 };
-  const hold = READ_S(captionText(st));                  // the item rests in the tray until the caption has been read
+  st.credit -= row.price; st.stock[r][c]--; st.sel = ''; st.got = '';
+  st.drop = { r, c, code, h:0 };
+  const hold = READ_S(CAP.vend(code));                   // the drink lands early; the phase lasts until its caption is read
   ui.animate(dt => {
-    st.drop.h += dt; st.drop.t = Math.min(1, st.drop.h/1.1);
-    if (st.drop.h >= hold){ st.tray = { kind:row.kind, col:row.cols[c], code }; st.drop = null; return false; }
+    st.drop.h += dt;
+    if (!st.tray && st.drop.h >= DROP.turn + DROP.fall) st.tray = { kind:row.kind, col:row.cols[c], code, yc:trayY(c) };
+    if (st.drop.h >= hold){ st.drop = null; return false; }
     return true;
   });
 }
 function key(k){
   press(k);
   if (/[A-D]/.test(k)){ st.sel = k; render(); return; }
-  if (!st.sel){ flash('PICK|A–D'); return; }
+  if (!st.sel){ flash('PICK|A-D'); return; }
   const r = 'ABCD'.indexOf(st.sel); st.sel = ''; vend(r, +k-1); render();
 }
-const coin = () => { if (st.credit >= 5) return flash('MAX|$5.00'); st.credit += .5; st.got = ''; render(); };
+// a coin from your hand: it slides into the slot, and the machine counts it once it is inside
+const coin = () => {
+  if (st.credit + st.flying.length*.5 >= 5) return flash('MAX|$5.00');
+  st.got = ''; const c = { t:0 }; st.flying.push(c);
+  ui.animate(dt => {
+    c.t += dt/.7;
+    if (c.t < 1) return true;
+    st.flying.splice(st.flying.indexOf(c), 1); st.credit += .5; return false;
+  });
+};
 const refund = () => {
   st.sel = '';
-  if (st.credit <= 0) return render();
+  if (st.credit <= 0) return ui.flash('There is no credit to return');
+  st.chg = { from: Math.round(st.returned/.5), t:0 };
   st.returned += st.credit; st.credit = 0; flash('COINS|BELOW');
+  ui.animate(dt => { st.chg.t += dt/.45; if (st.chg.t < 1) return true; st.chg = null; return false; });
 };
-const takeCoins = () => { if (st.returned <= 0) return; const amt = st.returned; st.returned = 0; flash('THANK|YOU'); ui.flash(`Collected ${money(amt)}`); };
+const takeCoins = () => {
+  if (st.returned <= 0) return ui.flash('The coin cup is empty');
+  if (st.chg) return ui.flash('Wait for the coins to land');
+  const amt = st.returned; st.returned = 0; flash('THANK|YOU'); ui.flash(`Collected ${money(amt)}`);
+};
+// the door on its own (tap it): drops open or swings shut
 function swing(target){
   if (st.flapTarget === target) return;
   st.flapTarget = target;
   ui.animate(dt => {
     const sg = Math.sign(st.flapTarget - st.flap); if (!sg) return false;
-    st.flap += sg * dt/.55;
+    st.flap += sg * dt/TAKE.open;
     if ((st.flapTarget - st.flap)*sg <= 0) st.flap = st.flapTarget;
     return st.flap !== st.flapTarget;
   });
 }
-const toggleFlap = () => swing(st.flapTarget ? 0 : 1);
-const collect = () => {
-  if (!st.tray || st.flap < 1) return;
-  const code = st.tray.code; st.tray = null; st.got = code; flash('ENJOY|' + code);
-  ui.after(.9, () => swing(0));                         // door falls shut on its own
-};
+const toggleFlap = () => st.take ? ui.flash('Wait: the door shuts on its own') : swing(st.flapTarget ? 0 : 1);
+// Take your drink: one thing a person does. Pull the door down, lift the drink out; the door falls shut by itself.
+function takeDrink(){
+  if (st.take) return ui.flash('You are already taking it');
+  if (!st.tray) return ui.flash(st.drop ? 'Wait for the drink to drop' : 'Nothing in the tray yet');
+  const { kind, col, code, yc } = st.tray;
+  st.take = { kind, col, code, yc, h:0 }; st.tray = null; st.flapTarget = 1;
+  const f0 = st.flap, end = READ_S(CAP.take(code));
+  ui.animate(dt => {
+    const h = st.take.h += dt;
+    st.flap = h < end - TAKE.shut ? Math.max(f0, Math.min(1, h/TAKE.open)) : Math.max(0, (end - h)/TAKE.shut);
+    if (h < end) return true;
+    st.flap = st.flapTarget = 0; st.got = code; st.take = null; flash('ENJOY|' + code); return false;
+  });
+}
 
 
 ui = mountFigure({
@@ -393,30 +509,35 @@ ui = mountFigure({
   size:[W,D,H], state:st,
   scene: () => scene(),
   caption: captionText,
-  walk: ['Insert', 'Insert', 'Insert', 'Choose a drink>A1', 'Open pickup door', 'Take your drink'],
+  walk: ['Insert', 'Insert', 'Insert', 'Insert', 'Choose a drink>A1', 'Take your drink', 'Return change'],
   stats: st => [ { label:'Credit', value: money(st.credit) }, st.returned > 0 && { label:'Change in the cup', value: money(st.returned), small:true } ],
   buttonsLabel:'Machine',
   buttons:[
-    { label:'Insert 50c', onClick: coin },
+    { label:'Insert 50c', onClick: coin,
+      predict:'The slot cannot see. How could the machine tell a real 50c coin from a metal washer?' },
     { label:'Choose a drink', choices: st => ROWS.flatMap((row,r) => COL_Y.map((_,c) => ({
-        label:`${row.code}${c+1} ${money(row.price)}`, disabled: !st.stock[r][c] || st.credit < row.price - 1e-9,
-        why: !st.stock[r][c] ? `${row.code}${c+1} is sold out` : `insert ${money(row.price - st.credit)} more`, onClick: () => vend(r,c) }))) },
-    { label:'Open pickup door', onClick: () => { if (st.flapTarget) return ui.flash('The door is already open'); swing(1); } },
-    { label:'Take your drink', onClick: () => st.tray ? (st.flap < 1 ? ui.flash('Open the pickup door first') : collect()) : ui.flash('Nothing in the tray yet') },
-    { label:'Return change', onClick: refund },
-    { label:'Take coins', onClick: () => st.returned > 0 ? takeCoins() : ui.flash('The coin cup is empty') },
+        label:`${row.code}${c+1} ${money(row.price)}`,
+        disabled: !!st.drop || !!st.tray || !st.stock[r][c] || st.credit < row.price - 1e-9,
+        why: st.drop ? 'wait for this drink to drop' : st.tray ? 'take your drink out of the tray first'
+           : !st.stock[r][c] ? `${row.code}${c+1} is sold out` : `insert ${money(row.price - st.credit)} more`,
+        onClick: () => vend(r,c) }))),
+      predict:'Your drink stands on a shelf behind the glass. How will the machine move just that one drink to you?' },
+    { label:'Take your drink', onClick: takeDrink },
+    { label:'Return change', onClick: refund,
+      predict:'Your coins are inside the machine now. How will the money you did not spend get back to you?' },
+    { label:'Take coins', onClick: takeCoins },
   ],
   acts:{
     key:  (st,a) => key(a.dataset.k),
     item: (st,a) => vend(+a.dataset.r, +a.dataset.c),
-    coin, ret: refund, tray: collect, flap: toggleFlap, cup: takeCoins,
+    coin, ret: refund, tray: takeDrink, flap: toggleFlap, cup: takeCoins,
   },
   params:(st,q) => {
     if (q.has('credit')) st.credit = +q.get('credit');
     if (q.get('flap') === '1') st.flap = st.flapTarget = 1;
     if (q.has('returned')) st.returned = +q.get('returned');
     const tq = /^([A-D])([1-4])$/.exec(q.get('tray') || '');
-    if (tq){ const r = 'ABCD'.indexOf(tq[1]), row = ROWS[r]; st.tray = { kind:row.kind, col:row.cols[+tq[2]-1], code:tq[0] }; }
+    if (tq){ const r = 'ABCD'.indexOf(tq[1]), c = +tq[2]-1, row = ROWS[r]; st.tray = { kind:row.kind, col:row.cols[c], code:tq[0], yc:trayY(c) }; }
   },
 });
 </script>

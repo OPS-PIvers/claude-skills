@@ -299,7 +299,7 @@ targets(st).forEach((y, i) => { st.tiles[i].y = y; });
 ui = mountFigure({
 fig:'08', title:'Word machine: how an LLM writes',
 hint:'cut the sentence, number the tokens, score, pick, keep going, then ask about strawberry',
-size:[LX, BW, 49], palette:'blue',
+size:[LX, BW, 49],
 state:{ busy:false, ph:'idle', cap:'', stage:0, mode:'careful', tiles:[], gone:[], card:'p', cardZ:0, chop:0, cy:CY_HOME, press:0, sv:0,
 scan:-1, lt:-1, ob:'careful', oi:-1, og:0, pk:-1, flat:0, hl:[], nIn:0, nOut:0, gi:0, sp:0, round:0, bt:0 },
 scene,

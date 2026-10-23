@@ -137,9 +137,16 @@ place to read from the back of a classroom:
   sits under the row. The buttons still work in any order. Pickers open upward, and a `ui.flash` note pops up above
   the button that was pressed. The row stays on one line: its text shrinks from 18px toward 12px until it fits
   beside the longest Next label, and it only wraps if even 12px can't fit.
-- **Narrow screens** (760px or less: a phone, a split screen, a portrait tablet) have no room beside the figure: the
-  title goes back to the top line, the stats become a compact row over the figure, the caption is smaller so a whole sentence fits, the buttons wrap into rows
-  above Back / Next, and labels stay normal size.
+- **Phones** (a window 760px wide or less, or 500px tall or less and wider than tall: a phone, a split screen, a
+  SpartBoard widget) get one phone layout, Present or not; the Present switch is hidden there. A one-line tag
+  (FIG. 01 · WASHING MACHINE) sits over the caption wheel; the figure is framed to the drawing itself and centred in
+  the space left, with the stats as a small overlay on its top-right corner and labels at normal size. On a touch
+  screen the buttons are one row you swipe sideways, and the button Next will press is always scrolled to its centre;
+  a sideways swipe on the figure presses Next or Back. A mouse gets the buttons wrapped in rows instead. The bar under
+  them reads **← · 3 / 5 · Next →**, a gear at the top right opens the settings as a sheet, and pickers float above
+  their button. A phone on its side puts the figure on the left and the tag, caption, buttons and bar on the right.
+  Nothing to do in the figure: keep button labels short, since the row shows two or three at a time. `?touch=1` tests
+  the touch controls with a mouse.
 - **Clicker keys:** → / Page Down / Space press Next (or Show me, while a Predict question is up), and ← / Page Up
   press Back. Next never waits for a step to finish: it skips the rest of it.
 
@@ -340,8 +347,9 @@ Each round is just:
    each step, and a `Back` press should return to the state before the last step.
 4. **One Present shot** (the default layout) of the busiest stage at a short, wide window (`--window-size=1366,650`, a Chromebook):
    labels must still clear each other and the moving parts, nothing should need scrolling, and the button row must
-   be one line at a readable size (if it shrank to 12px, shorten the button labels). Headless Chrome won't make a
-   window narrower than 500px, so to see a phone width, shoot a page holding the figure in an iframe that wide.
+   be one line at a readable size (if it shrank to 12px, shorten the button labels). Then **one phone shot**:
+   Headless Chrome won't make a window narrower than 500px, so shoot a page holding the figure in a 390×844 iframe
+   (`figure.html?touch=1`) and check the stats corner and the labels stay clear of each other.
 5. **One 3× crop of the part most likely to go wrong** (a row of keys, a glass container, a joint): nearer parts must
    cover farther ones. Rows of identical parts are where order bugs hide: draw them far to near.
 6. **Errors:** run the press URL once with `--dump-dom` and check `<html data-errors="…">` (script errors, unknown

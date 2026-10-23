@@ -329,17 +329,71 @@ const CORE_CSS = `
   html.present .toast{position:fixed;font-size:17px;max-width:340px;transform:translate(-50%,-100%)}
   html.present .stat .v{font-size:40px} html.present .stat.small .v{font-size:26px}
   @media (max-width:560px){body{padding:10px 12px}header .hint,.actions .cap{display:none}.actions{flex-direction:row;flex-wrap:wrap;gap:6px}.act{font-size:12px;padding:5px 11px}.stats{position:static;flex-direction:row;justify-content:flex-end;gap:18px;margin-bottom:4px}.actions{position:static;max-width:none;margin:6px 0 4px}.chips{left:0;top:calc(100% + 8px)}.narr{font-size:15px}.controls{gap:8px 14px}}
-  /* Present on a narrow screen (a phone, a split screen, a portrait tablet) has no room beside the figure: the stats
-     are a compact row under the caption, the caption is smaller so a whole sentence fits, the buttons wrap in rows
-     above Back / Next, and labels stay at their normal size. */
-  @media (max-width:760px){
-    html.present header h1{font-size:20px}
-    html.present .narr{font-size:17px;height:5.6em;-webkit-mask-image:linear-gradient(#000 calc(100% - .9em),transparent);mask-image:linear-gradient(#000 calc(100% - .9em),transparent)}
-    html.present .stats{position:static;transform:none;flex-direction:row;justify-content:center;align-items:flex-end;gap:22px;margin:0 0 4px}
-    html.present .stat .v{font-size:26px} html.present .stat.small .v{font-size:18px}
-    html.present .walk{--act-fs:15px;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"acts acts acts" "back pos next";gap:10px 8px}
-    html.present .actions,html.present .actions.wrap{flex-wrap:wrap;gap:8px}
-    html.present .walk .pos{min-width:0;white-space:nowrap}}`;
+  /* the phone-only pieces stay out of the way everywhere else */
+  .figtag,.sheethead,.scrim,.rowpad,.setbtn .gear{display:none}
+  /* The phone layout (html.phone: a window 760px wide or less, or a landscape phone; PHONE in the script decides it).
+     Always Present, with no Present switch. Top: a one-line FIG. 01 · TITLE tag, then the caption box (about three
+     lines). Middle: the figure, as big as the room left allows, with the stats as a small overlay in its top-right
+     corner. Bottom: the figure's buttons, then ← · 3 / 5 · Next →. On a touch screen (html.touch) the buttons are one
+     row that scrolls sideways and keeps the next-up button centred, and a swipe on the figure presses Next or Back;
+     with a mouse they wrap in rows. The settings are a gear at the top right that opens a bottom sheet (html.sheet).
+     A landscape phone (html.land) puts the figure on the left and all of that in a panel on the right. */
+  html.phone body{font-size:15px;gap:6px;padding:8px 12px max(10px,env(safe-area-inset-bottom))}
+  html.phone header{display:none}
+  html.phone .figtag{display:block;order:-1;flex:none;width:100%;margin:3px 0 0;padding:0 40px;text-align:center;
+    font:700 11px/1.3 var(--head);letter-spacing:.12em;text-transform:uppercase;color:var(--red-light)}
+  html.phone .figtag b{color:var(--ink);font-weight:600}
+  html.phone .narr{font-size:17px;height:4.5em;-webkit-mask-image:linear-gradient(#000 calc(100% - .9em),transparent);mask-image:linear-gradient(#000 calc(100% - .9em),transparent)}
+  html.phone .stats{position:absolute;top:2px;right:0;left:auto;transform:none;flex-direction:column;align-items:flex-end;gap:6px;margin:0;pointer-events:none}
+  html.phone .stat .k{font-size:10px} html.phone .stat .v{font-size:20px} html.phone .stat.small .v{font-size:15px}
+  html.phone .walk{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"acts acts acts" "back pos next";align-items:center;gap:8px 10px}
+  html.phone .actions{margin:0;gap:8px;min-width:0}
+  html.phone .act{font-size:14px;padding:.5em .85em}
+  html.phone:not(.touch) .actions{flex-wrap:wrap;justify-content:center}
+  html.phone.touch .actions{flex-wrap:nowrap;justify-content:flex-start;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;
+    scroll-snap-type:x proximity;padding:7px 0;margin:-4px -12px 0;
+    -webkit-mask-image:linear-gradient(90deg,transparent,#000 26px,#000 calc(100% - 26px),transparent);mask-image:linear-gradient(90deg,transparent,#000 26px,#000 calc(100% - 26px),transparent)}
+  html.phone.touch .actions::-webkit-scrollbar{display:none}
+  html.phone.touch .stepwrap,html.phone.touch .rowpad{flex:none} html.phone.touch .rowpad{display:block;height:1px}
+  html.phone.touch .act{font-size:15px;scroll-snap-align:center}
+  html.phone.touch .stage{touch-action:pan-y pinch-zoom}
+  html.phone #wback{width:48px;height:44px;padding:0;font-size:0}
+  html.phone #wback::before{content:'\\2190';font:500 20px/1 var(--head)}
+  html.phone #wnext{height:44px;padding:0 22px;font-size:17px}
+  html.phone .walk .pos{min-width:0;white-space:nowrap;font:600 15px/1.2 var(--head);color:var(--ink)}
+  html.phone .chips.float{display:flex;position:fixed;top:auto;transform:none;z-index:6;max-width:calc(100vw - 16px)}
+  html.phone .toast{font-size:15px;max-width:min(340px,calc(100vw - 24px))}
+  html.phone .controls{position:fixed;top:4px;right:6px;width:auto;max-width:none;border:0;padding:0;z-index:5}
+  html.phone:not(.sheet) .controls > .ctl{display:none}
+  html.phone .setbtn{width:34px;height:34px;padding:0;border-radius:50%;display:grid;place-items:center;color:var(--muted)}
+  html.phone .setbtn .gear{display:block;width:20px;height:20px}
+  html.phone .setbtn .lbl{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+  html.phone.sheet .scrim{display:block;position:fixed;inset:0;z-index:4;background:rgba(29,42,93,.28)}
+  html.phone.sheet .controls{top:auto;left:0;right:0;bottom:0;display:flex;flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:0;
+    max-height:88%;overflow-y:auto;justify-content:flex-start;background:#fff;border-radius:18px 18px 0 0;box-shadow:0 -10px 40px rgba(29,42,93,.25);
+    padding:8px 20px max(16px,env(safe-area-inset-bottom));animation:sheetUp .28s cubic-bezier(.2,.8,.3,1)}
+  @keyframes sheetUp{from{transform:translateY(100%)}}
+  @media (prefers-reduced-motion:reduce){html.phone.sheet .controls{animation:none}}
+  html.phone.sheet .controls::before{content:'';flex:none;align-self:center;width:40px;height:4px;border-radius:2px;background:var(--rule);margin:0 0 6px}
+  html.phone.sheet .sheethead{display:flex;justify-content:space-between;align-items:center;font:600 17px/1.3 var(--head);color:var(--ink)}
+  .sheethead button{width:44px;height:44px;margin-right:-10px;padding:0;border:0;background:none;font-size:26px;line-height:1;color:var(--muted)}
+  .sheethead button:hover{background:none;color:var(--ink)}
+  html.phone.sheet .controls > .ctl:not([hidden]){display:flex;justify-content:space-between;gap:16px;min-height:48px;border-bottom:1px solid var(--blue-lighter)}
+  html.phone.sheet .controls > .ctl label{font-size:12px;color:var(--ink)}
+  html.phone.sheet .ctl .row button{font-size:14px;padding:6px 16px}
+  html.phone.sheet .ctl input[type=range]{width:140px}
+  html.phone.sheet #prsctl,html.phone.sheet .setbtn{display:none}
+  html.phone.land body{display:grid;grid-template-columns:minmax(0,59fr) minmax(0,41fr);grid-template-rows:auto auto minmax(0,1fr) auto;
+    align-items:start;column-gap:18px;row-gap:6px;padding:8px 14px}
+  html.phone.land .stage{grid-column:1;grid-row:1 / -1;align-self:stretch;min-height:0}
+  html.phone.land .figtag{grid-column:2;grid-row:1;padding:0 40px 0 0;text-align:left;margin:9px 0 0}
+  html.phone.land .narr{grid-column:2;grid-row:2;font-size:15px}
+  html.phone.land .walk{grid-column:2;grid-row:4}
+  html.phone.land .controls{top:4px;right:8px}`;
+/* The phone layout's conditions, in one place: the script turns them into classes on <html> (phone, land, touch) and
+   follows them as the window is resized or the phone turned. */
+const PHONE = { on:'(max-width:760px), (max-height:500px) and (orientation:landscape)',
+  land:'(max-height:500px) and (orientation:landscape)', touch:'(pointer:coarse)' };
 
 const WOBBLE = .6;   // the hand-drawn wobble a figure starts with (the settings slider goes 0–6)
 const SPEEDS = [.25, .5, .75, 1, 1.5, 2, 3];   // the settings speed slider's stops; 1 = as written
@@ -393,19 +447,22 @@ function mountFigure(cfg){
       <div class="toast" id="toast" role="status"></div>
       <svg id="fig" role="img" aria-label="${cfg.title}"><defs id="fdefs"></defs><g id="art" filter="url(#hand)"></g></svg>
     </div>
+    <div class="figtag" id="figtag"><span class="no">Fig. ${cfg.fig}</span> &middot; <b>${cfg.title}</b></div>
     <div class="narr" id="narr">
       <ol class="caplog" id="caplog" aria-label="Earlier in this step"></ol>
       <p class="caption" id="caption" aria-live="polite"></p>
       <div class="predict" id="predict" hidden><p><strong>Predict</strong><span id="pq"></span></p><button class="primary" id="pgo">Show me</button></div>
     </div>
-    <div class="walk" id="walkbar" hidden><button id="wback">Back</button><span class="pos" id="wpos"></span><button class="primary" id="wnext">Next</button></div>
+    <div class="walk" id="walkbar" hidden><button id="wback" aria-label="Back">Back</button><span class="pos" id="wpos"></span><button class="primary" id="wnext">Next</button></div>
     <div class="controls" id="controls">
+      <div class="sheethead"><span>Settings</span><button id="sheetx" aria-label="Close settings">&times;</button></div>
       <div class="ctl"><label for="wb">Hand-drawn wobble</label><input id="wb" type="range" min="0" max="6" step="0.1" value="${WOBBLE}"></div>
       <div class="ctl"><label for="spd">Speed</label><input id="spd" type="range" min="0" max="${SPEEDS.length - 1}" step="1" value="${SPEEDS.indexOf(1)}"><output id="spdv" for="spd">1×</output></div>
       <div class="ctl"><label>Colour</label><div class="row" id="pals"></div></div>
       ${tog('lbl', 'Labels', true)}${tog('prd', 'Predict first', !hasPredict)}${tog('wlk', 'Walk through', walkList.length < 2)}${tog('prs', 'Present', false)}
-      <button class="setbtn" id="setbtn" aria-expanded="true" aria-controls="controls">Hide settings</button>
-    </div>`;
+      <button class="setbtn" id="setbtn" aria-expanded="true" aria-controls="controls"><svg class="gear" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span class="lbl">Hide settings</span></button>
+    </div>
+    <div class="scrim" id="scrim"></div>`;
   const st = cfg.state || {};            // kept as the same object, so a figure may hold on to it
   if (!st.pal) st.pal = 'blue';
   if (st.az == null) st.az = 105;
@@ -472,12 +529,15 @@ function mountFigure(cfg){
       statsEl.querySelectorAll('.v').forEach(v => { if (prevStats[v.dataset.k] != null && prevStats[v.dataset.k] !== v.textContent) v.classList.add('bump'); prevStats[v.dataset.k] = v.textContent; }); fitSides(); } };
   // Present stands the title in a column left of the figure and the stats in one on its right, leaving the top to the
   // caption. The stage keeps the wider column's room clear on both sides, so the figure stays centred and never runs
-  // under either; the room only grows, so a changing value can't make it jump. A narrow screen has no room beside the
-  // figure: the title goes back to the header.
+  // under either; the room only grows, so a changing value can't make it jump. The phone layout has no room beside the
+  // figure: the title goes back to the (hidden) header, and the fig tag over the caption shows it instead.
   let sideRoom = 0;
-  const narrow = () => innerWidth <= 760;     // matches the narrow Present @media in CORE_CSS
+  // the phone layout (see PHONE): isPhone follows the window; ?touch=1 / ?touch=0 force the touch-screen path (testing)
+  const mq = { on: matchMedia(PHONE.on), land: matchMedia(PHONE.land), touch: matchMedia(PHONE.touch) };
+  let isPhone = false;
+  const touchOn = () => q.get('touch') === '1' || (q.get('touch') !== '0' && mq.touch.matches);
   const titleEl = document.querySelector('header h1');
-  function fitSides(reset){ const stage = svg.parentElement, beside = presenting() && !narrow();
+  function fitSides(reset){ const stage = svg.parentElement, beside = presenting() && !isPhone;
     if (beside !== (titleEl.parentElement === stage)){ if (beside) stage.prepend(titleEl); else document.querySelector('header').prepend(titleEl); }
     if (reset || !beside){ sideRoom = 0; stage.style.removeProperty('padding-inline'); if (!beside) return; }
     const w = Math.ceil(Math.max(titleEl.offsetWidth, statsEl ? statsEl.offsetWidth : 0)) + 24;
@@ -486,7 +546,8 @@ function mountFigure(cfg){
   const toast = $('toast');
   ui.flash = (text, ms=1800) => { toast.textContent = text;
     if (presenting()){ const r = (lastAct && lastAct.isConnected && !lastAct.hidden ? lastAct : $('walkbar')).getBoundingClientRect();
-      toast.style.left = Math.max(180, Math.min(innerWidth - 180, r.left + r.width/2)) + 'px'; toast.style.top = (r.top - 10) + 'px'; }
+      const m = isPhone ? toast.offsetWidth/2 + 8 : 180;   // keep the note on screen
+      toast.style.left = Math.max(m, Math.min(innerWidth - m, r.left + r.width/2)) + 'px'; toast.style.top = (r.top - 10) + 'px'; }
     else { toast.style.left = ''; toast.style.top = (($('btns') ? $('btns').offsetTop + $('btns').offsetHeight : 0) + 8) + 'px'; }
     toast.classList.add('show');
     clearTimeout(flashT); flashT = setTimeout(() => toast.classList.remove('show'), ms); };
@@ -528,16 +589,18 @@ function mountFigure(cfg){
 
   // clickable parts react on press, not on click: while something animates, the scene is redrawn every frame, so the
   // element under the pointer is replaced between press and release and a 'click' would never fire
+  // (partPress: this press started a part's action, so the swipe watcher on the stage ignores it)
+  let partPress = false, wantCentre = false;
   svg.addEventListener('pointerdown', e => { if (e.button) return; const a = e.target.closest('[data-act]'); if (!a || !cfg.acts || !cfg.acts[a.dataset.act]) return;
-    e.preventDefault(); lastAct = null; hidePredict(); userStep(() => cfg.acts[a.dataset.act](st, a, ui)); ui.render(); });
+    e.preventDefault(); lastAct = null; partPress = wantCentre = true; hidePredict(); userStep(() => cfg.acts[a.dataset.act](st, a, ui)); ui.render(); });
   const btns = $('btns'), actEls = new Map();   // button config -> its .act element
   if (btns) buttons.forEach(b => {
     const wrap = document.createElement('div'); wrap.className = 'stepwrap';
     const el = document.createElement('button'); el.className = 'act';
     el.innerHTML = `${b.label}${b.choices ? '<span class="car">▾</span>' : ''}`;
     wrap.appendChild(el); btns.appendChild(wrap); actEls.set(b, el);
-    if (!b.choices){ el.onclick = () => { closeChips(); lastAct = el; withPredict(b, () => userStep(() => b.onClick(st, ui))); ui.render(); }; return; }
-    const chips = document.createElement('div'); chips.className = 'chips'; wrap.appendChild(chips);
+    if (!b.choices){ el.onclick = () => { closeChips(); lastAct = el; wantCentre = true; withPredict(b, () => userStep(() => b.onClick(st, ui))); ui.render(); }; return; }
+    const chips = document.createElement('div'); chips.className = 'chips'; wrap.appendChild(chips); el._chips = chips;
     el.onclick = e => { e.stopPropagation(); const open = !wrap.classList.contains('open'); closeChips();
       if (!open) return;
       chips.innerHTML = '';
@@ -546,13 +609,20 @@ function mountFigure(cfg){
       //   disabled:true = not possible right now (shown faded); a press says why (c.why, or a generic note)
       for (const c of b.choices(st)){ const ch = document.createElement('button'); ch.className = 'chip' + (c.current ? ' current' : c.disabled ? ' off' : ''); ch.textContent = c.label;
         if (c.current) ch.setAttribute('aria-pressed', 'true');
-        ch.onclick = ev => { ev.stopPropagation(); closeChips(); lastAct = el;
+        ch.onclick = ev => { ev.stopPropagation(); closeChips(); lastAct = el; wantCentre = true;
           if (c.current) return ui.flash(`${c.label} is already set`);
           if (c.disabled) return ui.flash(c.why || `${c.label} isn't possible right now`);
           withPredict(b, () => userStep(() => c.onClick(st, ui))); ui.render(); }; chips.appendChild(ch); }
-      wrap.classList.add('open'); };
+      wrap.classList.add('open');
+      // on a phone the picker floats over the page above its button (the button row scrolls, and would clip it),
+      // kept inside the screen
+      if (isPhone){ document.body.appendChild(chips); chips.classList.add('float');
+        const r = el.getBoundingClientRect(), w = chips.offsetWidth;
+        chips.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.left + r.width/2 - w/2)) + 'px';
+        chips.style.bottom = (innerHeight - r.top + 10) + 'px'; } };
   });
-  function closeChips(){ document.querySelectorAll('.stepwrap.open').forEach(w => w.classList.remove('open')); }
+  function closeChips(){ document.querySelectorAll('.stepwrap.open').forEach(w => { w.classList.remove('open');
+    const c = w.firstChild._chips; if (c && c.classList.contains('float')){ c.classList.remove('float'); c.style.left = c.style.bottom = ''; w.appendChild(c); } }); }
   document.addEventListener('click', closeChips);
 
   // Walk through: Next runs the real button for each step, in order; Back restores the state saved before that step
@@ -580,11 +650,36 @@ function mountFigure(cfg){
     walkbar.hidden = !walkOn && !presenting(); wback.hidden = wnext.hidden = wpos.hidden = !walkOn;
     const nb = walkOn && wi < walkList.length ? buttons.find(b => starts(b.label, walkList[wi].split('>')[0])) : null;
     actEls.forEach((el, b) => el.classList.toggle('nextup', b === nb));
+    // the phone's button row scrolls the next-up button to its centre whenever the step changes or a button is pressed
+    const at = walkOn ? wi : -1;
+    if (at !== centredAt || wantCentre){ wantCentre = false; const first = centredAt === null; centredAt = at; if (nb) centreNext(first); }
     if (!walkOn) return;
-    const n = walkList.length, pos = wi === 0 ? `${n} steps` : `Step ${wi} of ${n}`, nx = wi >= n ? 'Start over' : `Next: ${stepName(walkList[wi])}`;
+    // a phone shows "3 / 5" and "Next →"; the aria-labels always say it in full
+    const n = walkList.length, posL = wi === 0 ? `${n} steps` : `Step ${wi} of ${n}`, nxL = wi >= n ? 'Start over' : `Next: ${stepName(walkList[wi])}`;
+    const pos = isPhone && wi > 0 ? `${wi} / ${n}` : posL, nx = isPhone && wi < n ? 'Next' : nxL;
     if (wpos.textContent !== pos) wpos.textContent = pos;
     if (wnext.textContent !== nx) wnext.textContent = nx;
+    if (wpos.getAttribute('aria-label') !== posL) wpos.setAttribute('aria-label', posL);
+    if (wnext.getAttribute('aria-label') !== nxL) wnext.setAttribute('aria-label', nxL);
     wnext.disabled = false; wback.disabled = !hist.length; }
+  let centredAt = null;
+  function centreNext(instant){ if (!btns || !isPhone || !touchOn()) return;
+    const up = btns.querySelector('.act.nextup'); if (!up) return;
+    const r = up.getBoundingClientRect(), br = btns.getBoundingClientRect();
+    const left = btns.scrollLeft + r.left + r.width/2 - (br.left + br.width/2);
+    if (Math.abs(left - btns.scrollLeft) < 1) return;
+    btns.scrollTo({ left, behavior: instant || matchMedia('(prefers-reduced-motion:reduce)').matches ? 'auto' : 'smooth' }); }
+  // spacers at both ends of the phone's button row, so even the first and last button can scroll to the centre
+  const padL = document.createElement('span'), padR = document.createElement('span');
+  padL.className = padR.className = 'rowpad';
+  if (btns){ btns.insertBefore(padL, btns.querySelector('.stepwrap')); btns.appendChild(padR); }
+  function padRow(){ if (!btns || !isPhone || !touchOn()) return;
+    const acts = btns.querySelectorAll('.stepwrap'), cw = btns.clientWidth, gap = parseFloat(getComputedStyle(btns).columnGap) || 0;
+    if (!acts.length) return;
+    padL.style.width = Math.max(0, (cw - acts[0].offsetWidth)/2 - gap) + 'px';
+    padR.style.width = Math.max(0, (cw - acts[acts.length - 1].offsetWidth)/2 - gap) + 'px';
+    // with no next-up button (Walk through off) the row starts at its first button
+    if (!btns.querySelector('.act.nextup')) btns.scrollLeft = padL.offsetWidth - 14; }
   // Next never makes you wait: during a Predict question it answers Show me, and while a step is still running it
   // finishes that step at once and goes straight on to the next one
   wnext.onclick = () => { if (pending) return pgo.click();
@@ -592,6 +687,19 @@ function mountFigure(cfg){
     if (wi >= walkList.length){ restore(startSnap); hist.length = 0; wi = 0; ui.render(); return; }
     hist.push(JSON.stringify(st)); wi++; runWalk(wi - 1); ui.render(); };
   wback.onclick = () => { if (!hist.length) return; restore(hist.pop()); wi--; ui.render(); };
+  // a phone's touch screen: a sideways swipe on the figure (at least 40px, more across than down) presses Next (to the
+  // left) or Back (to the right). A press that started a part's action isn't a swipe, and up-and-down still scrolls.
+  let swipe = null;
+  const stageEl = svg.parentElement;
+  stageEl.addEventListener('pointerdown', e => { const acted = partPress; partPress = false;
+    swipe = isPhone && touchOn() && e.isPrimary && !acted ? { id: e.pointerId, x: e.clientX, y: e.clientY } : null; });
+  stageEl.addEventListener('pointerup', e => { const s = swipe; swipe = null;
+    if (!s || e.pointerId !== s.id || !walkOn) return;
+    const dx = e.clientX - s.x, dy = e.clientY - s.y;
+    if (Math.abs(dx) < 40 || Math.abs(dx) <= Math.abs(dy)) return;
+    const b = dx < 0 ? wnext : wback;
+    if (!b.hidden && !b.disabled) b.click(); });
+  stageEl.addEventListener('pointercancel', () => { swipe = null; });
 
   // switches under the figure
   const setTog = (id, on) => { const b = $(id); b.textContent = on ? 'On' : 'Off'; b.setAttribute('aria-pressed', on); };
@@ -602,37 +710,71 @@ function mountFigure(cfg){
   const setWalk = on => { walkOn = on; setTog('wlk', on); restore(startSnap); hist.length = 0; wi = 0; asked.clear(); ui.render(); };
   $('wlk').onclick = () => setWalk(!walkOn);
   const setSettings = open => { $('controls').classList.toggle('closed', !open);
-    $('setbtn').textContent = open ? 'Hide settings' : 'Settings'; $('setbtn').setAttribute('aria-expanded', open); };
-  $('setbtn').onclick = () => setSettings($('controls').classList.contains('closed'));
+    $('setbtn').lastChild.textContent = open ? 'Hide settings' : 'Settings'; $('setbtn').setAttribute('aria-expanded', open); };
+  // on a phone the Settings button is a gear that opens the switches as a bottom sheet; the backdrop, × and Escape close it
+  const sheetOpen = () => document.documentElement.classList.contains('sheet');
+  const setSheet = open => { if (sheetOpen() === open) return;
+    document.documentElement.classList.toggle('sheet', open); $('setbtn').setAttribute('aria-expanded', open);
+    if (open) $('sheetx').focus({ preventScroll:true }); else if (isPhone) $('setbtn').focus({ preventScroll:true }); };
+  $('setbtn').onclick = () => isPhone ? setSheet(true) : setSettings($('controls').classList.contains('closed'));
+  $('sheetx').onclick = $('scrim').onclick = () => setSheet(false);
   // Present keeps the button row on one line: its text (buttons, Back and Next together) shrinks from 18px down to
   // 12px until it fits.
   // It is measured with the longest Next label, so the buttons keep one size through the whole walk.
   function fitRow(){ if (!btns) return; walkbar.style.removeProperty('--act-fs'); btns.classList.remove('wrap');
-    if (!presenting()) return;
+    if (!presenting() || isPhone) return;     // a phone's row scrolls (touch) or wraps (mouse) at a set size
     const label = wnext.textContent, longest = walkList.map(s => `Next: ${stepName(s)}`).reduce((a, b) => b.length > a.length ? b : a, 'Start over');
     if (walkOn) wnext.textContent = longest;
     const over = () => btns.scrollWidth > btns.clientWidth + 1;
     for (let px = 17; px >= 12 && over(); px--) walkbar.style.setProperty('--act-fs', px + 'px');
     btns.classList.toggle('wrap', over()); wnext.textContent = label; }
-  addEventListener('resize', () => { fitRow(); fitSides(true);
-    const k = presenting() && !narrow() ? 1.35 : 1; if (k !== TAG_K){ TAG_K = k; ui.render(); } });
-  if (document.fonts) document.fonts.ready.then(() => { fitRow(); fitSides(true); });
+  // The figure's frame. Present shifts it to centre the figure (no button column to clear). A phone frames the drawing
+  // itself (its outline, labels and shadow as drawn now, at most a quarter of the usual frame past any side of it), so
+  // the figure fills the width or height that's left instead of keeping the usual frame's margins. A portrait phone is
+  // taller than the figure: it is centred between the caption and the buttons, the room left over split above and below.
+  function setView(){ let vb = [presenting() ? vbW*.06 : 0, 0, vbW, vbH];
+    if (isPhone) try { const b = art.getBBox(), p = Math.max(b.width, b.height) * .025;
+      const x0 = Math.max(-vbW*.25, b.x - p), y0 = Math.max(-vbH*.25, b.y - p), x1 = Math.min(vbW*1.25, b.x + b.width + p), y1 = Math.min(vbH*1.25, b.y + b.height + p);
+      if (x1 - x0 > vbW*.2 && y1 - y0 > vbH*.2) vb = [x0, y0, x1 - x0, y1 - y0]; } catch (e) {}
+    const s = vb.map(f).join(' '); if (svg.getAttribute('viewBox') !== s) svg.setAttribute('viewBox', s);
+    placeStats(); }
+  // …and the stats stay on the drawn figure's top-right corner, not at the top of that room
+  function placeStats(){ if (!statsEl) return;
+    const par = svg.getAttribute('preserveAspectRatio'), vb = svg.viewBox.baseVal, r = svg.getBoundingClientRect();
+    const h = vb && vb.width ? Math.min(r.height, r.width * vb.height / vb.width) : r.height;
+    statsEl.style.top = par && r.height - h > 8 ? (r.bottom - h - svg.parentElement.getBoundingClientRect().top + 2) + 'px' : ''; }
+  if (window.ResizeObserver) new ResizeObserver(placeStats).observe(svg);
+  // everything that depends on the window: the phone layout (turned on or off as the window crosses PHONE.on, which
+  // forces Present on), the label size, the frame, the title and stats columns, and the button row
+  function relayout(){ const root = document.documentElement, on = mq.on.matches;
+    root.classList.toggle('land', on && mq.land.matches); root.classList.toggle('touch', on && touchOn());
+    if (on !== isPhone){ isPhone = on; root.classList.toggle('phone', on); centredAt = null;
+      if (!on){ setSheet(false); $('setbtn').setAttribute('aria-expanded', !$('controls').classList.contains('closed')); }
+      if (presenting() !== (on || presentWant)) return setPresent(on || presentWant);
+      ui.render(); }
+    fitAll(); }
+  function fitAll(){ const k = presenting() && !isPhone ? 1.35 : 1; if (k !== TAG_K){ TAG_K = k; ui.render(); }
+    setView(); fitSides(true); fitRow(); padRow(); centreNext(true); }
+  addEventListener('resize', relayout);
+  for (const m of Object.values(mq)) m.addEventListener('change', relayout);
+  if (document.fonts) document.fonts.ready.then(() => { if (isPhone) setView(); fitRow(); fitSides(true); padRow(); centreNext(true); });
   // Present moves the buttons into the Back / Next row, the title and stats into columns either side of the figure,
-  // centres the figure (no button column to clear), and turns Walk through on from the start; turning it off puts back whatever
-  // Walk through was.
-  let walkWas = false;
-  const setPresent = on => { if (presenting() === on) return;
-    document.documentElement.classList.toggle('present', on); TAG_K = on && !narrow() ? 1.35 : 1; setTog('prs', on);
-    svg.setAttribute('viewBox', `${f(on ? vbW*.06 : 0)} 0 ${f(vbW)} ${f(vbH)}`);
+  // centres the figure (no button column to clear), and turns Walk through on from the start (unless the page opened
+  // with ?steps=0); turning it off puts back whatever Walk through was. A phone is always in Present: presentWant is
+  // what the switch (or ?present=) asks for, and it applies again once the window is wider.
+  let walkWas = false, presentWant = true;
+  const setPresent = (on, keepWalk) => { if (presenting() === on) return;
+    document.documentElement.classList.toggle('present', on); setTog('prs', on);
     if (on){ if (btns) walkbar.insertBefore(btns, wnext);
-      walkWas = walkOn; setSettings(false); setWalk(walkList.length > 1); }
+      walkWas = walkOn; setSettings(false); if (!keepWalk) setWalk(walkList.length > 1); }
     else { if (btns) svg.parentElement.prepend(btns);
       if (!walkWas) setWalk(false); }
-    fitSides(true); ui.render(); fitRow(); };
-  $('prs').onclick = () => setPresent(!presenting());
+    TAG_K = on && !isPhone ? 1.35 : 1; ui.render(); fitAll(); };
+  $('prs').onclick = () => { presentWant = !presenting(); setPresent(presentWant || isPhone); };
   // with Walk through on, a clicker or the keyboard runs it: → / Page Down / Space = Next (or Show me), ← / Page Up = Back
   document.addEventListener('keydown', e => {
-    if (!walkOn || e.altKey || e.ctrlKey || e.metaKey || e.target.closest('input, .chips') || document.querySelector('.stepwrap.open')) return;
+    if (e.key === 'Escape' && sheetOpen()){ e.preventDefault(); return setSheet(false); }
+    if (!walkOn || sheetOpen() || e.altKey || e.ctrlKey || e.metaKey || e.target.closest('input, .chips') || document.querySelector('.stepwrap.open')) return;
     const k = e.key, fwd = k === 'ArrowRight' || k === 'PageDown' || (k === ' ' && !e.target.closest('button')), back = k === 'ArrowLeft' || k === 'PageUp';
     if (!fwd && !back) return;
     e.preventDefault();
@@ -659,15 +801,19 @@ function mountFigure(cfg){
     setTimeout(() => { const b = [...document.querySelectorAll('.act, #walkbar button')].find(b => starts(b.textContent, label));
       if (!b) return noteErr(`no button "${label}"`);
       b.click();
-      if (choice != null){ const c = [...b.parentElement.querySelectorAll('.chip')].find(c => starts(c.textContent, choice));
+      if (choice != null){ const c = [...(b._chips || b.parentElement).querySelectorAll('.chip')].find(c => starts(c.textContent, choice));
         if (c) c.click(); else return noteErr(`no choice "${choice}" in "${label}"`); }
       if (pending) pgo.click(); }, +ms || 0); });
   setPredict(predictOn);
   if (q.get('settings') === '0') setSettings(false);
   setLight(st.az); ui.render();
   if (art.querySelector('.tag')){ $('lblctl').hidden = false; setLabels(q.get('labels') !== '0'); }
-  // a figure opens in Present with Walk through on; ?present=0 / ?steps=0 open it without them
+  // a figure opens in Present with Walk through on; ?present=0 / ?steps=0 open it without them (a phone is always in
+  // Present)
   if (q.get('steps') !== '0' && walkList.length > 1) setWalk(true);
-  if (q.get('present') !== '0') setPresent(true);
+  presentWant = q.get('present') !== '0';
+  isPhone = mq.on.matches; document.documentElement.classList.toggle('phone', isPhone);
+  if (presentWant || isPhone) setPresent(true, q.get('steps') === '0');
+  relayout();
   return ui;
 }

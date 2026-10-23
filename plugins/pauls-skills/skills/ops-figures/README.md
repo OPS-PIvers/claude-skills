@@ -17,6 +17,10 @@ Built for two audiences: students (teacher-led, projected or on Chromebooks) and
 - **Present**, which every figure opens in: laid out for projecting. The caption has the top to itself, where the back of a classroom reads best,
   with the newest caption on top. The title stands in a column left of the figure and the stats in one on its right. The buttons sit in one row under the
   figure, with Back and Next at its ends, and a clicker's Page Up / Page Down work them.
+- **A phone layout** for phones and narrow windows (and a phone turned sideways, figure left, controls right): a small
+  FIG tag over the caption, the figure as big as the space allows with its stats in the corner, the buttons in one row
+  you swipe sideways with the next one always centred, ← 3 / 5 Next →, a swipe on the figure for Next or Back, and the
+  settings in a sheet behind a gear
 - **Settings** fold away into one small button (Present does this itself), leaving more room for the figure
 - The page fits the window or the SpartBoard frame: the figure scales to the space left, so there's no scrolling
   between the buttons, the picture and the caption
@@ -24,7 +28,8 @@ Built for two audiences: students (teacher-led, projected or on Chromebooks) and
   Speed slider (¼× to 3×) for every animation
 
 How-it-works figures also get part labels and **Predict first** questions (off until a teacher turns them on). URL
-switches: `?present=0`, `?steps=0`, `?labels=0`, `?predict=1`, `?speed=2`, `?settings=0`, `?pal=red`.
+switches: `?present=0`, `?steps=0`, `?labels=0`, `?predict=1`, `?speed=2`, `?settings=0`, `?pal=red`, and `?touch=1`
+to test the phone layout's touch controls with a mouse.
 
 ## Try
 
