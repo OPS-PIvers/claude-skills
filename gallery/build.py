@@ -37,7 +37,7 @@ def find_chrome():
         if c and os.path.exists(c): return c
 
 def shoot(chrome, page_path, png_path, profile):
-    url = 'file:///' + os.path.abspath(page_path).replace('\\', '/').lstrip('/') + '?settings=0'
+    url = 'file:///' + os.path.abspath(page_path).replace('\\', '/').lstrip('/') + '?present=0&steps=0&settings=0'
     subprocess.run([chrome, '--headless=new', '--hide-scrollbars', '--no-sandbox', f'--user-data-dir={profile}',
                     '--window-size=1000,720', '--virtual-time-budget=2500', f'--screenshot={os.path.abspath(png_path)}', url],
                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=90)
@@ -59,7 +59,7 @@ def card(f):
     return f'''    <li class="card">
       <a class="open" href="{f["slug"]}.html">{img}<h2>{no}{html.escape(f["title"])}</h2></a>
       {hint}
-      <p class="ways"><a href="{f["slug"]}.html?steps=1">Walk through</a><a href="{f["slug"]}.html?present=1">Present</a></p>
+      <p class="ways"><a href="{f["slug"]}.html?present=0&amp;steps=0">Explore freely</a></p>
     </li>'''
 
 INDEX = '''<!doctype html>
@@ -94,8 +94,8 @@ INDEX = '''<!doctype html>
 <body><main>
   <header>
     <h1>OPS Figures</h1>
-    <p>Interactive drawings of everyday machines. Press the buttons to run each one the way the real thing works.
-      Walk through goes step by step, and Present lays it out for a projector.</p>
+    <p>Interactive drawings of everyday machines. Each one opens ready to project: Next (or the → key) runs the real
+      steps in order, and the buttons work in any order. Explore freely opens it without the step-by-step bar.</p>
   </header>
   <ul>
 __CARDS__

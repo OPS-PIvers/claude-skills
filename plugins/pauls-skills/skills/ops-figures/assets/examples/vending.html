@@ -78,7 +78,7 @@ function lying(kind,col){
 
 
 /* ---------- state ---------- */
-const st = { pal:'red', credit:0, returned:0, sel:'', msg:'', drop:null, tray:null, press:null, flap:0, flapTarget:0,
+const st = { credit:0, returned:0, sel:'', msg:'', drop:null, tray:null, press:null, flap:0, flapTarget:0,
              stock: ROWS.map(() => COL_Y.map(() => 3)) };
 
 /* ---------- coins in the return cup ---------- */
@@ -390,7 +390,7 @@ const collect = () => {
 
 ui = mountFigure({
   fig:'03', title:'Vending machine', hint:'insert a coin, punch a code or tap a product',
-  size:[W,D,H], palette:'red', state:st,
+  size:[W,D,H], state:st,
   scene: () => scene(),
   caption: captionText,
   walk: ['Insert', 'Insert', 'Insert', 'Choose a drink>A1', 'Open pickup door', 'Take your drink'],

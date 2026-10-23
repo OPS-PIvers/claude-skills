@@ -287,6 +287,7 @@ const CORE_CSS = `
   .ctl{display:flex;align-items:center;gap:8px}
   .ctl .row button{padding:3px 10px;font-size:12px}
   input[type=range]{width:110px;accent-color:var(--blue)}
+  .ctl output{min-width:2.6em;font:500 12px var(--body);color:var(--ink);font-variant-numeric:tabular-nums}
   .row{display:flex;gap:6px;flex-wrap:wrap}
   .sw{width:22px;height:22px;padding:0;border-radius:50%;border:1.5px solid var(--rule)} .sw:hover{filter:brightness(1.05)}
   .sw[aria-pressed=true]{outline:2px solid var(--ink);outline-offset:2px}
@@ -340,9 +341,11 @@ const CORE_CSS = `
     html.present .actions,html.present .actions.wrap{flex-wrap:wrap;gap:8px}
     html.present .walk .pos{min-width:0;white-space:nowrap}}`;
 
+const WOBBLE = .6;   // the hand-drawn wobble a figure starts with (the settings slider goes 0–6)
+const SPEEDS = [.25, .5, .75, 1, 1.5, 2, 3];   // the settings speed slider's stops; 1 = as written
 const filterFor = k => `<filter id="hand" x="-3%" y="-3%" width="106%" height="106%" color-interpolation-filters="sRGB">
   <feTurbulence type="fractalNoise" baseFrequency="${(0.045/k).toFixed(4)}" numOctaves="2" seed="4" result="warp"/>
-  <feDisplacementMap id="wob" in="SourceGraphic" in2="warp" scale="${(1.6*k).toFixed(2)}" xChannelSelector="R" yChannelSelector="G" result="wob"/>
+  <feDisplacementMap id="wob" in="SourceGraphic" in2="warp" scale="${(WOBBLE*k).toFixed(2)}" xChannelSelector="R" yChannelSelector="G" result="wob"/>
   <feTurbulence type="fractalNoise" baseFrequency="${(0.9/k).toFixed(4)}" numOctaves="3" seed="11" result="n1"/>
   <feColorMatrix in="n1" type="matrix" values=".3 0 0 0 .84  .3 0 0 0 .84  .3 0 0 0 .84  0 0 0 0 1" result="grain"/>
   <feTurbulence type="fractalNoise" baseFrequency="${(0.012/k).toFixed(4)}" numOctaves="2" seed="7" result="n2"/>
@@ -353,8 +356,7 @@ const filterFor = k => `<filter id="hand" x="-3%" y="-3%" width="106%" height="1
 /* mountFigure({
      fig:'03', title:'Photo booth', hint:'click the curtain…',
      size:[W,D,H],                 // bounding box, used to frame the view (shadow range included)
-     palette:'blue',               // default PALS key: blue | red | gray | white
-     state:{...},                  // figure state (st.pal is built in). Keep it plain JSON: Walk through's Back saves copies of it
+     state:{...},                  // figure state (st.pal is built in: every figure starts blue). Keep it plain JSON: Walk through's Back saves copies of it
      scene: (st, m) => svgString,  // m = current palette {l,m,d}
      caption: st => 'sentence',    // shown under the figure: what is happening right now, in plain words
               //   a caption the figure changes on its own must stay up READ_S(it) seconds; earlier captions of the
@@ -398,13 +400,14 @@ function mountFigure(cfg){
     </div>
     <div class="walk" id="walkbar" hidden><button id="wback">Back</button><span class="pos" id="wpos"></span><button class="primary" id="wnext">Next</button></div>
     <div class="controls" id="controls">
-      <div class="ctl"><label for="wb">Hand-drawn wobble</label><input id="wb" type="range" min="0" max="6" step="0.1" value="1.6"></div>
+      <div class="ctl"><label for="wb">Hand-drawn wobble</label><input id="wb" type="range" min="0" max="6" step="0.1" value="${WOBBLE}"></div>
+      <div class="ctl"><label for="spd">Speed</label><input id="spd" type="range" min="0" max="${SPEEDS.length - 1}" step="1" value="${SPEEDS.indexOf(1)}"><output id="spdv" for="spd">1×</output></div>
       <div class="ctl"><label>Colour</label><div class="row" id="pals"></div></div>
       ${tog('lbl', 'Labels', true)}${tog('prd', 'Predict first', !hasPredict)}${tog('wlk', 'Walk through', walkList.length < 2)}${tog('prs', 'Present', false)}
       <button class="setbtn" id="setbtn" aria-expanded="true" aria-controls="controls">Hide settings</button>
     </div>`;
   const st = cfg.state || {};            // kept as the same object, so a figure may hold on to it
-  if (!st.pal) st.pal = cfg.palette || 'blue';
+  if (!st.pal) st.pal = 'blue';
   if (st.az == null) st.az = 105;
   const q = new URLSearchParams(location.search);
   if (PALS[q.get('pal')]) st.pal = q.get('pal');
@@ -437,9 +440,9 @@ function mountFigure(cfg){
   function setCaption(c){
     const prev = capEl.textContent;
     if (capKey(prev) !== capKey(c)){
-      if (!capFresh && prev){
+      if (!capFresh && !inPress && prev){
         const up = (performance.now() - capSince) / 1000, need = READ_S(prev);
-        if (up < need - .25) noteErr(`caption up ${up.toFixed(1)} s, needs ${need.toFixed(1)} s: "${prev.slice(0, 48)}"`);
+        if (up < need / speed - .25) noteErr(`caption up ${up.toFixed(1)} s, needs ${need.toFixed(1)} s: "${prev.slice(0, 48)}"`);
         capLog.push(prev); if (capLog.length > 4) capLog.shift();
         logEl.replaceChildren(...capLog.map((t, i) => { const li = document.createElement('li');
           li.textContent = t; li.style.setProperty('--d', capLog.length - i); return li; }));
@@ -452,7 +455,11 @@ function mountFigure(cfg){
   // a press that changes the state or starts an animation begins a new step: the history clears and its first
   // caption isn't timed (a press that only flashes why it can't run leaves both alone)
   const newStep = () => { capLog.length = 0; logEl.replaceChildren(); capFresh = true; };
-  const userStep = fn => { const before = JSON.stringify(st), r0 = ui.running; fn(); if (ui.running > r0 || JSON.stringify(st) !== before) newStep(); };
+  // (a caption a press replaces is the reader moving on, so it isn't timed either)
+  let inPress = false;
+  const userStep = fn => { const before = JSON.stringify(st), r0 = ui.running; inPress = true;
+    try { fn(); } finally { inPress = false; }
+    if (ui.running > r0 || JSON.stringify(st) !== before) newStep(); };
   const ui = { st, running: 0 };
   ui.render = () => { _clipN = 0; art.innerHTML = inkScale(cfg.scene(st, PALS[st.pal]));
     const c = cfg.caption ? cfg.caption(st) || '' : ''; if (capEl.textContent !== c) setCaption(c);
@@ -485,19 +492,29 @@ function mountFigure(cfg){
     clearTimeout(flashT); flashT = setTimeout(() => toast.classList.remove('show'), ms); };
   // animations run on a ~60 fps timer rather than requestAnimationFrame, so they also run in headless test shots.
   // ui.running counts the ones in flight (Walk through waits for 0); stopAll cancels them (Back does this).
-  let gen = 0;
-  ui.animate = step => { const g = gen; ui.running++; let last = performance.now();
-    const loop = () => { if (g !== gen) return;
-      const now = performance.now(), dt = Math.max(0, Math.min(.05,(now-last)/1000)); last = now;
-      let more = false; try { more = step(dt) !== false; } finally { if (!more) ui.running = Math.max(0, ui.running - 1); }
+  // The Speed setting scales every animation's time (and so every ui.after delay). ui.finish() runs whatever is in
+  // flight to its end at once, including anything it starts on the way, so Next can skip the rest of a step.
+  let gen = 0, speed = 1;
+  const live = new Set();
+  ui.animate = step => { const g = gen, a = { step, done: false }; live.add(a); ui.running++; let last = performance.now();
+    const end = () => { a.done = true; live.delete(a); ui.running = Math.max(0, ui.running - 1); };
+    const loop = () => { if (g !== gen || a.done) return;
+      const now = performance.now(), dt = Math.max(0, Math.min(.05,(now-last)/1000)) * speed; last = now;
+      let more = false; try { more = step(dt) !== false; } finally { if (!more) end(); }
       ui.render(); if (more) setTimeout(loop, 16); };
-    setTimeout(loop, 16); };
+    a.end = end; setTimeout(loop, 16); };
   ui.after = (sec, fn) => { let t = 0; ui.animate(dt => { t += dt; if (t < sec) return true; fn(); return false; }); };
-  ui.stopAll = () => { gen++; ui.running = 0; };
+  ui.stopAll = () => { gen++; ui.running = 0; live.clear(); };
+  ui.finish = () => { if (!live.size) return;
+    for (let guard = 0; live.size && guard < 200000; guard++){
+      const a = live.values().next().value; let more = false;
+      try { more = a.step(.05) !== false; } finally { if (!more) a.end(); } }
+    if (live.size){ noteErr('finish: an animation never ended'); ui.stopAll(); }
+    capFresh = true; ui.render(); };
 
   // Predict first: a button with `predict` asks its question before its first press; "Show me" then does the step
   const predictEl = $('predict'), pgo = $('pgo'), asked = new Set();
-  let predictOn = hasPredict && q.get('predict') !== '0', pending = null, pendingLabel = '';
+  let predictOn = hasPredict && q.get('predict') === '1', pending = null, pendingLabel = '';
   const hidePredict = () => { pending = null; predictEl.hidden = true; };
   function withPredict(b, go){
     if (predictOn && b.predict && !asked.has(b.label)){
@@ -567,8 +584,11 @@ function mountFigure(cfg){
     const n = walkList.length, pos = wi === 0 ? `${n} steps` : `Step ${wi} of ${n}`, nx = wi >= n ? 'Start over' : `Next: ${stepName(walkList[wi])}`;
     if (wpos.textContent !== pos) wpos.textContent = pos;
     if (wnext.textContent !== nx) wnext.textContent = nx;
-    wnext.disabled = ui.running > 0 || !!pending; wback.disabled = !hist.length; }
-  wnext.onclick = () => { if (ui.running || pending) return;
+    wnext.disabled = false; wback.disabled = !hist.length; }
+  // Next never makes you wait: during a Predict question it answers Show me, and while a step is still running it
+  // finishes that step at once and goes straight on to the next one
+  wnext.onclick = () => { if (pending) return pgo.click();
+    ui.finish();
     if (wi >= walkList.length){ restore(startSnap); hist.length = 0; wi = 0; ui.render(); return; }
     hist.push(JSON.stringify(st)); wi++; runWalk(wi - 1); ui.render(); };
   wback.onclick = () => { if (!hist.length) return; restore(hist.pop()); wi--; ui.render(); };
@@ -610,14 +630,16 @@ function mountFigure(cfg){
       if (!walkWas) setWalk(false); }
     fitSides(true); ui.render(); fitRow(); };
   $('prs').onclick = () => setPresent(!presenting());
-  // in Present a clicker or the keyboard runs the walk: → / Page Down / Space = Next (or Show me), ← / Page Up = Back
+  // with Walk through on, a clicker or the keyboard runs it: → / Page Down / Space = Next (or Show me), ← / Page Up = Back
   document.addEventListener('keydown', e => {
-    if (!presenting() || e.altKey || e.ctrlKey || e.metaKey || e.target.closest('input, .chips') || document.querySelector('.stepwrap.open')) return;
+    if (!walkOn || e.altKey || e.ctrlKey || e.metaKey || e.target.closest('input, .chips') || document.querySelector('.stepwrap.open')) return;
     const k = e.key, fwd = k === 'ArrowRight' || k === 'PageDown' || (k === ' ' && !e.target.closest('button')), back = k === 'ArrowLeft' || k === 'PageUp';
     if (!fwd && !back) return;
     e.preventDefault();
-    if (fwd){ if (pending) pgo.click(); else if (walkOn && !wnext.disabled) wnext.click(); }
-    else if (walkOn && !wback.disabled) wback.click(); });
+    if (fwd) wnext.click(); else if (!wback.disabled) wback.click(); });
+  const setSpeed = i => { speed = SPEEDS[i]; $('spd').value = i; $('spdv').textContent = speed + '×'; };
+  $('spd').oninput = e => setSpeed(+e.target.value);
+  if (SPEEDS.includes(+q.get('speed'))) setSpeed(SPEEDS.indexOf(+q.get('speed')));
   $('wb').oninput = e => $('wob').setAttribute('scale', (e.target.value * INK_K).toFixed(2));
   const pals = $('pals');
   for (const [k,p] of Object.entries(PALS)){
@@ -628,10 +650,10 @@ function mountFigure(cfg){
   }
   // testing: ?press=Label@ms,Label@ms clicks the buttons whose text starts with Label at those times after load
   // (any order, repeats allowed); Label>Choice picks a choice from a picker button (?press=Speed>3@300).
-  // With ?steps=1, Next and Back press the Walk through buttons (?steps=1&press=Next@300,Next@3000,Back@6000).
+  // Next and Back press the Walk through buttons (?press=Next@300,Next@3000,Back@6000).
   // A Predict question that comes up is answered with "Show me". Script errors and unknown labels are recorded on
-  // <html data-errors="…">, and so is every caption replaced before READ_S(it) had passed. Other params: ?labels=0 ?predict=0 ?steps=1 (Walk through on) ?present=1 ?pal=red
-  // ?settings=0 (switches folded away)
+  // <html data-errors="…">, and so is every caption replaced before READ_S(it) had passed. Other params: ?labels=0 ?predict=1 (Predict first on)
+  // ?steps=0 (Walk through off) ?present=0 (the normal layout) ?pal=red ?settings=0 (switches folded away) ?speed=2
   window.__st = st;
   if (q.has('press')) q.get('press').split(',').forEach(item => { const [what, ms] = item.split('@'), [label, choice] = what.split('>');
     setTimeout(() => { const b = [...document.querySelectorAll('.act, #walkbar button')].find(b => starts(b.textContent, label));
@@ -644,7 +666,8 @@ function mountFigure(cfg){
   if (q.get('settings') === '0') setSettings(false);
   setLight(st.az); ui.render();
   if (art.querySelector('.tag')){ $('lblctl').hidden = false; setLabels(q.get('labels') !== '0'); }
-  if (q.get('steps') === '1' && walkList.length > 1) setWalk(true);
-  if (q.get('present') === '1') setPresent(true);
+  // a figure opens in Present with Walk through on; ?present=0 / ?steps=0 open it without them
+  if (q.get('steps') !== '0' && walkList.length > 1) setWalk(true);
+  if (q.get('present') !== '0') setPresent(true);
   return ui;
 }
