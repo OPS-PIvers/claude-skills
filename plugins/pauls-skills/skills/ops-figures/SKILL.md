@@ -121,18 +121,19 @@ the real sequence needs a picker choice, a repeated press (three coins) or skips
 ### Present mode (automatic)
 A Present switch (and `?present=1`) lays the page out for projecting, where the top of the screen is the easiest
 place to read from the back of a classroom:
-- **Top:** the title, then the caption box: the newest caption rolls in from above, and the step's earlier captions
-  move down under it, tilting back and fading toward the figure. A Predict question takes over that box.
-- **Middle:** the figure, centred (there's no button column to clear) and labels 1.35× larger. The stats stand as
-  big readouts in a column on its right, vertically centred, and the figure keeps that much room clear on both sides
-  so it never runs under them.
+- **Top:** the caption box alone: the newest caption rolls in from above, and the step's earlier captions move down
+  under it, tilting back and fading toward the figure. A Predict question takes over that box.
+- **Middle:** the figure, centred, with labels 1.35× larger. The title stands in a column on its left (a small red
+  FIG. 06 over the title, which wraps to fit, and a short red rule under it) and the stats as big readouts in a column
+  on its right, both vertically centred. The figure keeps the wider column's room clear on both sides, so it stays
+  centred and never runs under either. Keep titles short enough to read in two or three lines there.
 - **Bottom:** one row: **← Back**, the figure's buttons, **Next: Add soap →**. Walk through turns on from the start
   (turning Present off puts it back how it was), the button Next will press is outlined in red, and "Step 2 of 5"
   sits under the row. The buttons still work in any order. Pickers open upward, and a `ui.flash` note pops up above
   the button that was pressed. The row stays on one line: its text shrinks from 18px toward 12px until it fits
   beside the longest Next label, and it only wraps if even 12px can't fit.
 - **Narrow screens** (760px or less: a phone, a split screen, a portrait tablet) have no room beside the figure: the
-  stats become a compact row over it, the caption is smaller so a whole sentence fits, the buttons wrap into rows
+  title goes back to the top line, the stats become a compact row over the figure, the caption is smaller so a whole sentence fits, the buttons wrap into rows
   above Back / Next, and labels stay normal size.
 - **Clicker keys:** → / Page Down / Space press Next (or Show me, while a Predict question is up), and ← / Page Up
   press Back.
