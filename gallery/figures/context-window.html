@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Context window</title>
+</head>
+<body>
+<script src="core.js"></script>
+<script>
+const SLOT = 6, NS = 20, YL = 138, Y_IN = 18;
+const BX0 = 15.5, BX1 = 28.5, BZ = 19.5, BH = 6;
+const PAD_H = 7.5, PAD_UP = BZ + BH + 1.2, PAD_DN = BZ + .2, PAD_X = [15, 29], PAD_OFF = .5 / 6;
+const RAIL_X = 11.5, RAIL_Z = 41, U_PARK = 19.5;
+const BIN = [37, 53, 80, 136, 11];
+const MON = [38, 40.5, 6, 62, 3, 22];
+const HOUSE = [9, 33, 4, 18, 18, 44];
+const BASE = [9, 33, 4, 142, 18];
+const BRD = [0, 0, 57, 144, 3, 6];
+const ROLL_MAX = 20, COMPACT_AT = 18;
+const KM = { sys:{ l:'#8c8c8c', m:'#707070', d:'#474747' }, you:PALS.red, ai:{ l:'#ffffff', m:'#e1e4ef', d:'#b4bad0' }, file:matOf('#e9b949') };
+const KTXT = { you:['YOU', '#ffffff'], ai:['AI', INK], file:['FILE', INK] };
+const SCREEN = '#1d2a26', LCD = '#8af0ae', BEAM = '#ffd25a';
+const clamp01 = t => Math.max(0, Math.min(1, t));
+const lerp = (a, b, t) => a + (b - a) * t;
+
+const MSGS = [
+{ t:'I teach 7th grade science: 28 students, and 3 have IEPs that need read-aloud.', key:true },
+{ t:'Plan a two-week unit on ecosystems.' },
+{ t:'Make day 3 a lab with a short reading.' },
+{ t:'Add an exit ticket for each day.' },
+{ t:'Shorten the day 3 reading.' },
+{ t:'Write a quiz for days 1 to 5.' },
+];
+const REPLIES = [
+{ n:1, t:'Got it: 7th grade science, 28 students, 3 who need read-aloud.' },
+{ n:3, t:'Here is a 10-day ecosystems unit: food webs, energy flow and cycles.' },
+{ n:3, t:'Day 3 lab: build a pond food web from a one-page reading.' },
+{ n:3, t:'Here are 10 exit tickets, one for each day of the unit.' },
+{ n:2, t:'Done. The day 3 reading is now half as long.' },
+{ n:2, t:'Here is a 12-question quiz on days 1 to 5.' },
+];
+const FILES = [
+{ name:'state science standards', file:'standards.pdf', n:6, msg:'Tag each day with the standard it covers.',
+reply:{ n:2, t:'Done. Each day now lists the standard it covers.' } },
+{ name:'pond life reading', file:'pond-reading.pdf', n:4, msg:'Use this reading for the day 3 lab.',
+reply:{ n:2, t:'Done. The day 3 lab now uses your pond reading.' } },
+];
+const QUESTION = 'How many of my students need read-aloud?';
+
+const CAP = {
+introRoll:'Rolling window. The tray is everything the AI can see at once, starting with its pinned instructions.',
+introCompact:'Auto-compact. The tray is everything the AI can see at once, starting with its pinned instructions.',
+msgKey:'Your first message joins the window. Note the detail: 3 students need read-aloud.',
+msg:'Your message joins the end of the window.',
+attach:f => `The ${f.name} file is attached. It goes into the window when you send.`,
+msgFile:'Your message goes in right after the file.',
+scan:'The model keeps no memory between turns. To reply, it re-reads every block in the window.',
+reply:'Its reply is written into the window too, so replies use up space as well.',
+file:f => `The ${f.name} file goes in whole: ${f.n * 10}k tokens in one block.`,
+rollFull:'No room left. In a rolling window the oldest blocks fall out, but the pinned instructions stay.',
+rollAgain:'Full again, so the next-oldest block falls out.',
+lost:'Your first message is gone, and the detail it held went with it.',
+lostFile:name => `The ${name} file is gone too. Later replies can't use it, and nothing warns you.`,
+sumFile:name => `The ${name} file is now just a line in the summary. Its details are gone.`,
+cTrigger:'The window is past 90% full, so auto-compact runs before anything new goes in.',
+cPress:'The press squeezes the whole conversation into one short summary.',
+cKept:'Only the summary is left. It keeps the gist, but the exact words and details are gone.',
+ask:'You ask about a detail from your very first message.',
+};
+const ANSWERS = {
+exact:{ t:'3 of your students need read-aloud.', cap:'The first message is still in the window, so the AI reads off the exact answer.' },
+gist:{ t:"Some of your students need read-aloud. I don't have the exact number.", cap:'Only the summary is left. It says some students need read-aloud, not how many.' },
+guess:{ t:'2 of your students need read-aloud.', cap:"That message fell out of the window. The AI doesn't say so: it guesses, and sounds sure." },
+none:{ t:"You haven't told me about your class yet.", cap:'Nothing in the window says how many, so the AI asks.' },
+};
+
+const fresh = mode => ({ mode, blocks:[{ k:'sys', n:1, u:0 }], bin:[], mi:0, fi:0, phase:'idle', act:'', capText:'',
+scr:{ who:'', t:'Ready.' }, head:U_PARK, scanU:-1, padU:null, padZ:PAD_UP, padA:0, att:null, drops:0, keySent:false });
+const used = st => st.blocks.reduce((s, b) => s + b.n, 0);
+const busy = st => st.phase !== 'idle';
+const targets = st => { let u = 0; return st.blocks.map(b => { const t = u; u += b.n; return t; }); };
+const ySpan = (u, n) => [YL - (u + n) * SLOT + .3, YL - u * SLOT - .3];
+
+function slider(st){ const from = st.blocks.map(b => b.u), to = targets(st);
+return k => st.blocks.forEach((b, i) => { b.u = lerp(from[i], to[i], ease(k)); }); }
+
+function feed(b, cap, scr){
+let to = 0;
+return { cap, tm:1.4, act:'feed',
+start: st => { to = used(st); b.u = NS; st.blocks.push(b); st.scr = scr; if (b.key) st.keySent = true; },
+go: (st, k) => { b.u = lerp(NS, to, ease(k)); }, end: () => { b.u = to; } };
+}
+const scanStep = () => ({ cap:CAP.scan, tm:5, act:'scan',
+go: (st, k) => { const end = Math.max(.5, used(st) - .5);
+if (k < .12){ st.head = lerp(U_PARK, .5, ease(k / .12)); st.scanU = -1; }
+else if (k < .88){ st.head = lerp(.5, end, (k - .12) / .76); st.scanU = st.head; }
+else { st.head = lerp(end, U_PARK, ease((k - .88) / .12)); st.scanU = -1; } },
+end: st => { st.head = U_PARK; st.scanU = -1; } });
+
+const makeRoom = n => st => st.mode === 'roll' ? rollRoom(st, n) : compactRoom(st, n);
+function rollRoom(st, n){
+if (used(st) + n <= ROLL_MAX) return null;
+let free = ROLL_MAX - used(st), cnt = 0;
+while (free < n && 1 + cnt < st.blocks.length){ free += st.blocks[1 + cnt].n; cnt++; }
+const gone = st.blocks.slice(1, 1 + cnt), lostKey = gone.some(b => b.key), lostFiles = gone.filter(b => b.k === 'file');
+let slide = null;
+const out = [{ cap:st.drops ? CAP.rollAgain : CAP.rollFull, tm:2.6, act:'drop',
+go: (st, k) => {
+if (k < .6){ gone.forEach(b => { b.drop = k / .6; }); return; }
+if (!slide){ const z0 = st.bin.length;
+gone.forEach((b, i) => st.bin.push({ k:b.k, n:b.n, u:b.u, lv:Math.min(3, z0 + i) }));
+st.blocks = st.blocks.filter(b => !gone.includes(b)); slide = slider(st); }
+slide((k - .6) / .4); },
+end: st => { st.drops++; } }];
+if (lostKey) out.push({ cap:CAP.lost, tm:.4, act:'drop' });
+for (const b of lostFiles) out.push({ cap:CAP.lostFile(b.t), tm:.4, act:'drop' });
+return out;
+}
+function compactRoom(st, n){
+if (used(st) + n <= COMPACT_AT) return null;
+const cp = st.blocks.filter(b => b.k !== 'sys');
+if (!cp.length) return rollRoom(st, n);
+const len = cp.reduce((s, b) => s + b.n, 0), edge = 1 + len + .05;
+const bands = cp.flatMap(b => b.k === 'sum' ? b.bands : [b.k]).slice(-8);
+const u0 = cp.map(b => b.u), newer = st.blocks.filter(b => b.k !== 'sys' && !cp.includes(b)), nu0 = newer.map(b => b.u);
+const gap = Math.min(1, NS - used(st)), padAt = (st, u) => { st.padU = u; st.head = u + PAD_OFF; };
+let sum = null, slide = null, from = 0;
+return [
+
+{ cap:CAP.cTrigger, tm:2.2, act:'press', start: st => { from = st.head - PAD_OFF; },
+go: (st, k) => { const a = ease(clamp01(k / .5));
+newer.forEach((b, i) => { b.u = nu0[i] + gap * a; }); padAt(st, lerp(from, edge, a)); st.padA = clamp01(k / .3);
+st.padZ = lerp(PAD_UP, PAD_DN, ease(clamp01((k - .5) / .5))); } },
+
+{ cap:CAP.cPress, tm:3.4, act:'press',
+go: (st, k) => {
+if (k < .7){ const w = lerp(len, 1, ease(k / .7)), s = w / len; padAt(st, 1 + w + .05);
+cp.forEach((b, i) => { b.u = 1 + (u0[i] - 1) * s; b.wv = b.n * s; }); return; }
+if (!sum){ sum = { k:'sum', n:1, u:1, bands, gist:cp.some(b => b.key || b.gist) };
+const i = st.blocks.indexOf(cp[0]); st.blocks = st.blocks.filter(b => !cp.includes(b)); st.blocks.splice(i, 0, sum); }
+st.padZ = lerp(PAD_DN, PAD_UP, ease((k - .7) / .3)); },
+end: st => { st.padZ = PAD_UP; } },
+
+{ cap:CAP.cKept, tm:1.4, act:'press', start: st => { slide = slider(st); from = st.padU; },
+go: (st, k) => { slide(k); padAt(st, lerp(from, U_PARK - PAD_OFF, ease(k))); st.padA = 1 - clamp01((k - .5) / .5); },
+end: st => { st.padU = null; st.head = U_PARK; st.padA = 0; } },
+...cp.filter(b => b.k === 'file').map(b => ({ cap:CAP.sumFile(b.t), tm:.4, act:'press' })),
+st => rollRoom(st, n),
+];
+}
+function answerOf(st){
+if (st.blocks.some(b => b.key)) return ANSWERS.exact;
+if (st.blocks.some(b => b.gist)) return ANSWERS.gist;
+return st.keySent ? ANSWERS.guess : ANSWERS.none;
+}
+
+function buildAttach(st){
+if (st.att != null) return 'A file is already attached: send your message to use it';
+const i = st.fi % FILES.length, f = FILES[i]; st.fi++;
+return [{ cap:CAP.attach(f), tm:.6, start: st => { st.att = i; st.scr = { who:'YOU', t:`[file] ${f.file} attached` }; } }];
+}
+
+function buildSend(st){
+let out, r;
+if (st.att != null){ const f = FILES[st.att], fs = feed({ k:'file', n:f.n, t:f.name }, CAP.file(f), { who:'YOU', t:`[file] ${f.file}` }), s0 = fs.start;
+fs.start = st => { st.att = null; s0(st); };
+out = [makeRoom(f.n + 1), fs, feed({ k:'you', n:1, t:f.msg }, CAP.msgFile, { who:'YOU', t:f.msg })]; r = f.reply; }
+else { const i = st.mi < MSGS.length ? st.mi : 4 + (st.mi - 4) % 2, m = MSGS[i]; st.mi++;
+out = [makeRoom(1), feed({ k:'you', n:1, t:m.t, key:!!m.key }, m.key ? CAP.msgKey : CAP.msg, { who:'YOU', t:m.t })]; r = REPLIES[i]; }
+return [...out, makeRoom(r.n), scanStep(), feed({ k:'ai', n:r.n, t:r.t }, CAP.reply, { who:'AI', t:r.t })];
+}
+function buildAsk(st){
+if (!st.keySent) return 'Send your first message before you ask about it';
+if (st.att != null) return 'Send the attached file first';
+return [makeRoom(1), feed({ k:'you', n:1, t:QUESTION, q:true }, CAP.ask, { who:'YOU', t:QUESTION }),
+makeRoom(1), scanStep(), st => { const a = answerOf(st); return feed({ k:'ai', n:1, t:a.t }, a.cap, { who:'AI', t:a.t }); }];
+}
+
+function run(st, ui, list){
+const q = list.slice(); let cur = null, t = 0;
+const next = () => { while (q.length){ let s = q.shift(); if (typeof s === 'function') s = s(st); if (!s) continue;
+if (Array.isArray(s)){ q.unshift(...s); continue; }
+cur = s; t = 0; if (s.start) s.start(st); st.capText = s.cap; st.act = s.act || ''; return true; }
+return false; };
+if (!next()) return;
+st.phase = 'busy';
+ui.animate(dt => { t += dt; const tm = cur.tm || 1, dur = Math.max(tm + .3, READ_S(cur.cap));
+if (cur.go) cur.go(st, Math.min(1, t / tm));
+if (t >= dur){ if (cur.end) cur.end(st); if (!next()){ st.phase = 'idle'; st.act = ''; return false; } }
+return true; });
+}
+
+function runNow(st, list){
+const q = list.slice();
+while (q.length){ let s = q.shift(); if (typeof s === 'function') s = s(st); if (!s) continue;
+if (Array.isArray(s)){ q.unshift(...s); continue; }
+if (s.start) s.start(st); if (s.go) s.go(st, 1); if (s.end) s.end(st); st.capText = s.cap; }
+}
+const action = build => (st, ui) => {
+if (busy(st)) return ui.flash('Wait for this step to finish');
+const r = build(st); if (typeof r === 'string') return ui.flash(r);
+run(st, ui, r);
+};
+
+function wrap(str, max){ const out = []; let line = '';
+for (const w of str.split(' ')){ if (line && (line + ' ' + w).length > max){ out.push(line); line = w; } else line = line ? line + ' ' + w : w; }
+if (line) out.push(line); return out; }
+function drawBlock(st, b, o = {}){
+let [y0, y1] = ySpan(b.u, b.wv || b.n); y0 = Math.max(y0, Y_IN); if (y1 - y0 < .2) return '';
+const dx = o.dx || 0, x0 = BX0 + dx, x1 = BX1 + dx, z0 = o.z != null ? o.z : BZ;
+const h = BH;
+let s = '';
+if (b.k === 'sum'){ const nb = b.bands.length;
+b.bands.forEach((k, i) => { s += box(x0, y0 + (y1 - y0) * i / nb, z0, x1, y0 + (y1 - y0) * (i + 1) / nb, z0 + h, KM[k], tone, .5); });
+s += hullInk(boxPts(x0, y0, z0, x1, y1, z0 + h), 1.2);
+} else s += box(x0, y0, z0, x1, y1, z0 + h, KM[b.k], tone, .9);
+if (st.scanU >= b.u && st.scanU < b.u + b.n && !o.dx)
+s += fill(pd([[x0, y0, z0 + h], [x1, y0, z0 + h], [x1, y1, z0 + h], [x0, y1, z0 + h]]), BEAM, 'opacity=".75"');
+const lab = KTXT[b.k];
+if (lab && h > 4 && y1 - y0 > 4.5) s += tx(x1 + .05, (y0 + y1) / 2, z0 + h / 2 - .8, lab[0], 2.2, lab[1], 700);
+if (b.k === 'sys'){ const c = [(x0 + x1) / 2, (y0 + y1) / 2, z0 + h];
+s += rod(c, [c[0], c[1], c[2] + 3.4], .3, METAL, toneI, .6);
+const [X, Y] = P(c[0], c[1], c[2] + 3.8); s += `<circle cx="${f(X)}" cy="${f(Y)}" r="1.5" fill="#e2483d" stroke="${INK}" stroke-width=".8"/>`; }
+return s;
+}
+function reader(st, m){
+const y = YL - st.head * SLOT, zt = BZ + BH;
+let s = '';
+if (st.padA > 0){ s += `<g opacity="${f(st.padA)}">`;
+for (const x of [19.5, 22.5]) s += rod([x, y, st.padZ + PAD_H], [x, y, RAIL_Z - 5], .45, METAL, toneI, .7);
+s += '</g>'; }
+s += box(RAIL_X - 2, y - 3, RAIL_Z - 2.5, RAIL_X + 2, y + 3, RAIL_Z + 3, m, tone, 1);
+s += box(RAIL_X + 2, y - 1, RAIL_Z, 21, y + 1, RAIL_Z + 2, METAL, toneI, .8);
+s += box(18, y - 2.5, RAIL_Z - 5, 24, y + 2.5, RAIL_Z + 1.5, DARK, tone, 1);
+const on_ = st.scanU >= 0;
+s += shape(on(PX(24.05), ellUV(y, RAIL_Z - 1.8, 1.5, 1.5, 14)), on_ ? '#ffd27a' : DARK.d, .7);
+if (on_) s += fill(sp(hull([[18, y - 2.5, RAIL_Z - 5], [24, y - 2.5, RAIL_Z - 5], [24, y + 2.5, RAIL_Z - 5], [18, y + 2.5, RAIL_Z - 5],
+[BX0, y - 3, zt], [BX1, y - 3, zt], [BX1, y + 3, zt], [BX0, y + 3, zt]].map(p => P(...p)))), BEAM, 'opacity=".6" pointer-events="none"');
+return s;
+}
+
+const padU = st => st.padU != null ? st.padU : st.head - PAD_OFF;
+function paddle(st){
+const y = YL - padU(st) * SLOT;
+return `<g opacity="${f(st.padA)}">${box(PAD_X[0], y - 1, st.padZ, PAD_X[1], y, st.padZ + PAD_H, METAL, tone, 1.2)}</g>`;
+}
+function monitor(st){
+const [x0, x1, y0, y1, z0, z1] = MON;
+let s = box(35, 28, 0, 45, 40, 1, DARK, tone, 1) + box(36.5, 32, 1, 38, 36, z0 + 2, DARK, tone, .9);
+s += box(x0, y0, z0, x1, y1, z1, DARK, tone, 1.2);
+s += shape(on(PX(x1 + .05), rrUV(y0 + 2, z0 + 1.6, y1 - 2, z1 - 1.6, 1.2)), SCREEN, 1);
+const lines = wrap((st.scr.who ? st.scr.who + ': ' : '') + st.scr.t, 30).slice(0, 4);
+lines.forEach((ln, i) => { s += tx(x1 + .1, (y0 + y1) / 2, z1 - 5.2 - i * 3.4, ln, 2.8, st.scr.who === 'AI' ? '#ffd27a' : LCD, 600, FONT_MONO); });
+return s + hullInk([[x0, y0, z0], [x1, y1, z1], [x0, y1, z1], [x1, y0, z0], [x0, y0, z1], [x1, y1, z0]], 2);
+}
+function binBack(){
+const [x0, x1, y0, y1, h] = BIN, G = PALS.gray;
+return fill(pd([[x0 + 1, y0 + 1, 1], [x1 - 1, y0 + 1, 1], [x1 - 1, y1 - 1, 1], [x0 + 1, y1 - 1, 1]]), mix(G.d, '#000000', .2))
++ fill(pd([[x0 + 1, y0 + 1, 1], [x0 + 1, y1 - 1, 1], [x0 + 1, y1 - 1, h], [x0 + 1, y0 + 1, h]]), G.d)
++ fill(pd([[x0 + 1, y0 + 1, 1], [x1 - 1, y0 + 1, 1], [x1 - 1, y0 + 1, h], [x0 + 1, y0 + 1, h]]), G.m);
+}
+function binFront(){
+const [x0, x1, y0, y1, h] = BIN, G = PALS.gray;
+const outer = [[x0, y0, h], [x1, y0, h], [x1, y1, h], [x0, y1, h]], inner = [[x0 + 1, y0 + 1, h], [x1 - 1, y0 + 1, h], [x1 - 1, y1 - 1, h], [x0 + 1, y1 - 1, h]];
+let s = face(pd([[x1, y0, 0], [x1, y1, 0], [x1, y1, h], [x1, y0, h]]), tone([1, 0, 0], G))
++ face(pd([[x0, y1, 0], [x1, y1, 0], [x1, y1, h], [x0, y1, h]]), tone([0, 1, 0], G))
++ `<path d="${pd(outer)}${pd(inner)}" fill="${G.l}" fill-rule="evenodd"/>` + ink(pd(inner), 1);
+s += line([[x1, y0, 0], [x1, y0, h]], 1) + line([[x1, y1, 0], [x1, y1, h]], 1);
+return s + hullInk([[x0, y0, 0], [x1, y0, 0], [x1, y1, 0], [x0, y1, 0], ...outer], 2.2);
+}
+const boxPts = (x0, y0, z0, x1, y1, z1) => { const o = []; for (const x of [x0, x1]) for (const y of [y0, y1]) for (const z of [z0, z1]) o.push([x, y, z]); return o; };
+
+function scene(st, m){
+let s = '';
+
+OY += BRD[4]; s += board(...BRD); OY -= BRD[4];
+const onBoard = on(PZ(0), rrUV(BRD[0], BRD[1], BRD[2], BRD[3], BRD[5]));
+s += clipTo(onBoard, castShadow(boxPts(BASE[0], BASE[2], 0, BASE[1], BASE[3], BASE[4])) + castShadow(boxPts(HOUSE[0], HOUSE[2], 0, HOUSE[1], HOUSE[3], HOUSE[5]))
++ castShadow(boxPts(MON[0], MON[2], 0, MON[1], MON[3], MON[5])) + castShadow(boxPts(BIN[0], BIN[2], 0, BIN[1], BIN[3], BIN[4])));
+
+s += box(BASE[0], BASE[2], 0, BASE[1], BASE[3], BASE[4], m, tone, 1.2) + hullInk(boxPts(BASE[0], BASE[2], 0, BASE[1], BASE[3], BASE[4]), 2.6);
+s += tx(BASE[1] + .1, 112, 13, '1 SLOT = 10K TOKENS', 2.4, m === PALS.white ? INK : '#ffffff', 700);
+s += box(14, Y_IN, BASE[4], 30, 140, BZ, DARK, tone, 1);
+for (let i = 0; i <= NS; i++){ const y = YL - i * SLOT; s += `<path d="${pd([[30.05, y, 18.3], [30.05, y, 19.2]], false)}" stroke="#c4c9d6" stroke-width=".7" fill="none"/>`; }
+if (st.mode === 'compact'){ const y = YL - COMPACT_AT * SLOT;
+s += `<path d="${pd([[14, y, BZ + .05], [30, y, BZ + .05], [30, y, 18]], false)}" stroke="#e2483d" stroke-width="1.4" fill="none"/>`; }
+
+const [hx0, hx1, hy0, hy1, hz0, hz1] = HOUSE;
+s += box(hx0, hy0, hz0, hx1, hy1, hz1, m, tone, 1.1);
+s += shape(on(PY(hy1 + .05), rectUV(14.5, BZ, 29.5, BZ + BH + 1.5)), '#1a1d24', 1);
+s += tx(hx1 + .1, (hy0 + hy1) / 2, 33, 'CHAT', 3.2, m === PALS.white ? INK : '#ffffff', 700);
+s += hullInk(boxPts(hx0, hy0, hz0, hx1, hy1, hz1), 2.2);
+
+s += box(RAIL_X - 1, 138.5, BASE[4], RAIL_X + 1, 140.5, RAIL_Z + 1, m, tone, .9);
+s += rod([RAIL_X, hy1, RAIL_Z], [RAIL_X, 140, RAIL_Z], .9, METAL, toneI, .8);
+
+if (st.att != null) s += drawBlock(st, { k:'file', n:FILES[st.att].n, u:19.65 });
+const onTray = st.blocks.filter(b => !b.drop).slice().sort((a, b) => b.u - a.u), pu = padU(st);
+let padDone = !(st.padA > 0);
+for (const b of onTray){ if (!padDone && b.u < pu){ s += paddle(st); padDone = true; } s += drawBlock(st, b); }
+if (!padDone) s += paddle(st);
+
+s += reader(st, m);
+
+s += monitor(st);
+
+s += binBack();
+for (const b of st.bin) s += drawBlock(st, { ...b, u:b.u }, { dx:BIN[0] + 1.2 - BX0, z:1 + b.lv * 1.2 });
+for (const b of st.blocks.filter(b => b.drop)){ const k = b.drop, dx = (BIN[0] + 1.2 - BX0) * ease(clamp01(k / .5));
+const z = k < .5 ? BZ : lerp(BZ, 1 + Math.min(3, st.bin.length) * 1.2, ((k - .5) / .5) ** 2);
+s += drawBlock(st, b, { dx, z }); }
+s += binFront();
+
+const a = st.act, sys = st.blocks[0], sum = st.blocks.find(b => b.k === 'sum');
+s += tag([BX1, YL - 3, BZ + BH], -40, 46, 'INSTRUCTIONS');
+s += tag([30, YL - 12.5 * SLOT, 18.6], 58, 66, 'CONTEXT WINDOW', a === 'feed');
+s += tag([24, YL - st.head * SLOT, RAIL_Z], -46, -40, 'READER', a === 'scan');
+if (a === 'press') s += tag([PAD_X[1], YL - padU(st) * SLOT - 1, st.padZ + PAD_H], -140, -52, 'PRESS', true);
+s += tag([BIN[1], 116, BIN[4]], 54, 22, 'BIN', a === 'drop');
+if (sum && !sum.wv) s += tag([BX1, ySpan(sum.u, 1)[0] + 3, BZ + BH], -112, 6, 'SUMMARY', a === 'press');
+return s;
+}
+
+const BTN = { attach:action(buildAttach), send:action(buildSend), ask:action(buildAsk) };
+const setMode = mode => (st, ui) => { Object.assign(st, fresh(mode)); };
+mountFigure({
+fig:'07', title:'Context window', hint:'pick a mode, attach a file, send messages, ask about the start',
+size:[57, 144, 46],
+state:fresh('roll'),
+scene,
+caption: st => st.capText || (st.mode === 'roll' ? CAP.introRoll : CAP.introCompact),
+stats: st => [ { label:'Tokens', value:`${used(st) * 10}k / 200k` },
+{ label:'Mode', value:st.mode === 'roll' ? 'Rolling' : 'Auto-compact', small:true } ],
+buttonsLabel:'Conversation',
+buttons:[
+{ label:'Mode', choices: st => [
+{ label:'Rolling', current:st.mode === 'roll', disabled:busy(st), why:'Wait for this step to finish', onClick:setMode('roll') },
+{ label:'Auto-compact', current:st.mode === 'compact', disabled:busy(st), why:'Wait for this step to finish', onClick:setMode('compact') } ] },
+{ label:'Attach file', onClick:BTN.attach, predict: st => used(st) + FILES[st.fi % FILES.length].n + 1 > (st.mode === 'roll' ? ROLL_MAX : COMPACT_AT)
+? 'This file needs more room than the window has left. When you send it, what will the machine do to fit it in?'
+: 'A file is much bigger than a message. When you send it, how much of the window will it take?' },
+{ label:'Send message', onClick:BTN.send, predict:'The model keeps no memory between turns. How will it know what you said earlier?' },
+{ label:'Ask about the start', onClick:BTN.ask, predict:'Your first message said 3 students need read-aloud. Will the AI still know that?' },
+],
+walk:['Send', 'Send', 'Send', 'Send', 'Attach', 'Send', 'Ask',
+'Mode>Auto', 'Send', 'Send', 'Send', 'Send', 'Attach', 'Send', 'Ask'],
+params:(st, q) => {
+if (q.get('mode') === 'compact') Object.assign(st, fresh('compact'));
+const B = { send:buildSend, attach:buildAttach, ask:buildAsk };
+if (q.has('pre')) for (const name of q.get('pre').split('.')){ const r = B[name] && B[name](st); if (Array.isArray(r)) runNow(st, r); }
+},
+});
+</script>
+</body>

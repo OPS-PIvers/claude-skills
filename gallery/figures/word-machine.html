@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Word machine</title>
+</head>
+<body>
+<script src="core.js"></script>
+<script>
+const BX = 24, BW = 155, BH = 27;
+const LX = 34;
+const TX0 = 25.5, TX1 = 31, TZ = 9, TH = 10;
+const TRAY_L = 152, GAP = .9, CAP_N = 10, CY_HOME = 21, SPEED = 70;
+const BRD = [-6, -6, 40, 166, 3, 6];
+const GEN = { l:'#f8dcda', m:'#ecc2be', d:'#c98f8a' };
+const LCD = '#1d2a26', LCD_T = '#8af0ae', HLR = '#ad2122', PICKR = '#e2483d';
+const clamp01 = t => Math.max(0, Math.min(1, t));
+const lerp = (a, b, t) => a + (b - a) * t;
+const PROMPT = [['Photos',32872],['ynthesis',74767],[' is',374],[' how',1268],[' plants',11012]];
+const QUESTION = [['How',4438],[' many',1690],[' r',436],["'s",596],[' are',527],[' in',304],[' strawberry',73700],['?',30]];
+const END_T = ['END', 100257];
+const careful = [
+{ odds:[[' make',41],[' use',22],[' turn',12],[' convert',9]], tok:[' make',1304] },
+{ odds:[[' food',46],[' their',31],[' sugar',8],[' energy',6]], tok:[' food',3691] },
+{ odds:[[' from',52],[' using',27],[' with',9],[' by',5]], tok:[' from',505] },
+{ odds:[[' sunlight',63],[' light',21],[' the',8],[' sun',4]], tok:[' sunlight',40120] },
+{ odds:[['.',58],[',',17],[' and',12],[' through',6]], tok:['.',13] },
+{ odds:[['END',71],[' They',12],[' This',9],[' Plants',4]], tok:END_T },
+];
+const BR = {
+careful,
+creative:[
+{ odds:careful[0].odds, tok:[' turn',2543], pick:2 },
+{ odds:[[' light',48],[' sunlight',30],[' energy',11],[' water',5]], tok:[' light',3177] },
+{ odds:[[' into',62],[' energy',18],[' and',9],[' to',5]], tok:[' into',1139] },
+{ odds:[[' sugar',44],[' food',33],[' energy',12],[' glucose',6]], tok:[' sugar',13465] },
+{ odds:[['.',55],[',',19],[' and',14],[' they',5]], tok:['.',13] },
+{ odds:[['END',70],[' They',12],[' This',9],[' Plants',4]], tok:END_T },
+],
+ans:[
+{ odds:[[' Two',54],[' Three',31],[' There',8],[' One',3]], tok:[' Two',9220] },
+{ odds:[['.',66],[' r',14],[',',9],[' times',5]], tok:['.',13] },
+{ odds:[['END',80],[' Is',6],[' Let',4],[' The',3]], tok:END_T },
+],
+};
+const disp = t => t.replace(/^ /, '·');
+const tokW = k => Math.max(1.6 + 2.1 * disp(k.t).length - (k.t[0] === ' ' ? 1 : 0), 1.8 + 1.7 * String(k.id).length);
+function oddsOf(st){
+const e = BR[st.ob][st.oi], p = e.odds.map(o => o[1]);
+if (st.flat <= 0) return e.odds.map((o, i) => [o[0], p[i]]);
+const T = 1 + 1.2 * st.flat, q = p.map(v => Math.pow(v, 1 / T)), sum = p.reduce((a, b) => a + b, 0), qs = q.reduce((a, b) => a + b, 0);
+return e.odds.map((o, i) => [o[0], q[i] / qs * sum * (1 - .15 * st.flat)]);
+}
+const CAP = {
+cut1:'The cutter slices the sentence into tokens: common chunks of text, not always whole words.',
+cut2:'"Photosynthesis" became two tokens, Photos and ynthesis. A dot marks the space a token carries.',
+num1:"The stamper prints each token's ID, its number in a fixed list of about 100,000 tokens.",
+num2:'From here on the model works only with these numbers. It never sees the letters.',
+score1:'The model reads every number on the belt at once and gives every token it knows a score.',
+score2:'The screen shows the likeliest next tokens. Nothing is looked up: this is a prediction.',
+careful:'Careful takes the top token. Out comes its number, 1304, turned back into the text make.',
+creative:'Creative flattens the odds, then picks turn, a less likely token. The answer branches.',
+round:'Round 1: the whole belt goes back into the model, it scores again, and one more token is added.',
+end:'The machine picked END, a special stop token. That is how it knows the answer is finished.',
+sq1:'A new question goes through the cutter. The belt holds only 10 tokens, so the oldest fall off the end.',
+sq2:'The model can no longer see those tokens. It only reads what is on the belt right now.',
+sq3:'The word strawberry is a single token, number 73700. The letters inside it never reach the model.',
+sq4:'The model scores the next token. Two comes out on top, and the right answer, Three, trails behind.',
+sq5:'It answers Two, with confidence. It predicts a likely answer; it does not count letters it cannot see.',
+};
+const RT = 2.7;
+function targets(st){ const o = []; let y = TRAY_L; for (const k of st.tiles){ o.push(y); y -= tokW(k) + GAP; } return o; }
+function settle(st, dt){
+const tg = targets(st); let moving = false;
+st.tiles.forEach((k, i) => { if (k.y < tg[i]){ k.y = Math.min(tg[i], k.y + SPEED * dt); moving = true; }
+k.o = Math.min(1, k.o + dt * 4);
+if (k.k === 'q' && !k.s && st.sv > .8 && k.y - tokW(k) / 2 >= CY_HOME){ k.s = 1; st.press = 1; } });
+st.gone.forEach(g => { if (g.y - tokW(g) / 2 < BW){ g.y += SPEED * dt; moving = true; }
+else { g.vz += 70 * dt; g.z -= g.vz * dt; g.y += 8 * dt; } });
+st.gone = st.gone.filter(g => g.z > 1.5);
+if (moving) st.bt = (st.bt + SPEED * dt) % 10.5;
+st.press = Math.max(0, st.press - dt * 3);
+if (st.ph === 'sq'){ const want = st.sp < QUESTION.length || st.tiles.some(k => k.k === 'q' && !k.s) ? 1 : 0;
+st.sv = want ? Math.min(1, st.sv + dt * 2.5) : Math.max(0, st.sv - dt * 2.5); }
+}
+const still = st => { const tg = targets(st); return !st.gone.length && st.tiles.every((k, i) => k.y >= tg[i]); };
+function add(st, tok, kind){
+if (tok === END_T){ st.nOut++; return; }
+const k = { t:tok[0], id:tok[1], k:kind, y:0, z:TZ, s:kind === 'g' ? 1 : 0, o:0, vz:0 };
+k.y = 1 + tokW(k);
+st.tiles.push(k);
+if (kind === 'p' || kind === 'q') st.nIn++; else st.nOut++;
+while (st.tiles.length > CAP_N) st.gone.push(st.tiles.shift());
+}
+const txA = (x, y, z, str, size, col, weight, fam, anchor) => tx(x, y, z, str, size, col, weight, fam).replace('text-anchor="middle"', `text-anchor="${anchor}"`);
+function tile(st, k){
+const w = tokW(k), y0 = k.y, y1 = k.y - w, z0 = k.z, mat = k.k === 'g' ? GEN : CERAMIC;
+let s = box(TX0, y1, z0, TX1, y0, z0 + TH, mat, toneI, .8);
+const yc = (y0 + y1) / 2;
+s += tx(TX1 + .05, yc, z0 + (k.s ? 6 : 3.8), disp(k.t), 3.4, k.s ? '#7d86ad' : INK, 600);
+if (k.s) s += tx(TX1 + .05, yc, z0 + 1.9, k.id, 2.8, INK, 700, FONT_MONO);
+if (st.hl.includes(k.id)) s += `<path d="${pd(on(PX(TX1 + .1), rectUV(y1 + .3, z0 + .3, y0 - .3, z0 + TH - .3)))}" fill="none" stroke="${HLR}" stroke-width="1.8"/>`;
+return k.o < 1 ? `<g opacity="${k.o.toFixed(2)}">${s}</g>` : s;
+}
+function card(st){
+if (st.cardZ <= -16) return '';
+const cz = st.cardZ, lines = st.card === 'q' ? ["How many r's are", 'in strawberry?'] : ['Photosynthesis', 'is how plants'];
+const s = shape(on(PX(12), rectUV(0, 29 + cz, 22, 42 + cz)), '#ffffff', .9)
++ tx(12.05, 11, 37.6 + cz, lines[0], 2.3, INK, 600) + tx(12.05, 11, 32.6 + cz, lines[1], 2.3, INK, 600);
+return clipTo(on(PX(12), rectUV(-6, BH + .4, 30, 70)), s);
+}
+function hopper(st, m){
+const A = on(PZ(BH), rectUV(6, 3, 18, 19)), B = on(PZ(34), rectUV(3, -1, 21, 23));
+let s = loft(A, B, n => toneI(n, { l:m.m, m:m.d, d:m.d }), true) + fill(pd(A), m.d);
+s += card(st);
+s += loft(A, B, n => tone(n, m)) + ink(pd(B), 1.2) + hullInk([...A, ...B], 2);
+return act('hopper', s);
+}
+function screen(st){
+let s = box(9, 58, BH, 11, 62, 31, METAL, toneI, .8) + box(7, 34, 31, 12, 86, 49, DARK, toneI, 1.2);
+const X = 12.05;
+s += shape(on(PX(X), rrUV(35, 32, 85, 48, 1.2)), LCD, .8);
+if (st.oi < 0) return s + tx(X + .05, 60, 38.6, 'READY', 3.2, LCD_T, 700, FONT_MONO);
+oddsOf(st).forEach(([lab, p], i) => {
+const z = 44.5 - i * 3.8, pk = st.pk === i, col = pk ? '#ffffff' : LCD_T, len = 14 * Math.min(1, p / 75) * st.og;
+if (pk) s += fill(pd(on(PX(X + .03), rectUV(35.6, z - .9, 84.4, z + 2.9))), HLR);
+s += txA(X + .06, 83.6, z, disp(lab), 3, col, pk ? 700 : 500, FONT_MONO, 'start');
+s += fill(pd(on(PX(X + .06), rectUV(52, z + .1, 66, z + 2))), pk ? '#7a1718' : '#2c4038');
+if (len > .1) s += fill(pd(on(PX(X + .08), rectUV(66 - len, z + .1, 66, z + 2))), pk ? '#ffffff' : LCD_T);
+s += txA(X + .06, 35.6, z, `${Math.round(p * st.og)}%`, 3, col, pk ? 700 : 500, FONT_MONO, 'end');
+});
+return s;
+}
+function model(st, m){
+let s = box(3, BW - 42, BH, 22, BW - 4, 37, m, tone, 1.1);
+s += tx(22.05, BW - 23, 31.6, 'MODEL', 3.6, m === PALS.white ? INK : '#ffffff', 700);
+for (let i = 0; i < 8; i++){
+const lit = st.lt >= 0 && Math.floor(st.lt) % 8 === i;
+s += shape(on(PZ(37.05), ellUV(12.5, BW - 38 + i * 4.6, 1, 1, 12)), lit ? PICKR : DARK.l, .5);
+}
+return act('model', s);
+}
+function stamper(st, top){
+const cy = st.cy;
+if (top) return box(19, cy - 3, BH, 25, cy + 3, BH + 4.5, DARK, toneI, .9);
+if (st.sv <= .01) return '';
+const hz = lerp(BH - 2, TZ + TH + 1.3, ease(st.sv)) - st.press * 1.2;
+return `<g opacity="${st.sv.toFixed(2)}">` + act('stamper', box(25, cy - 1.2, BH + 2, 29.5, cy + 1.2, BH + 4, METAL, toneI, .8)
++ rod([28, cy, BH + 2], [28, cy, hz + 5], .7, METAL, toneI, .7)
++ box(26, cy - 2.6, hz, 30.5, cy + 2.6, hz + 5, matOf('#c13435'), toneI, .9)) + '</g>';
+}
+function scene(st, m){
+let s = '';
+OY += BRD[4]; s += board(...BRD); OY -= BRD[4];
+const onBoard = on(PZ(0), rrUV(BRD[0], BRD[1], BRD[2], BRD[3], BRD[5]));
+const bodyPts = [];
+for (const x of [0, BX]) for (const y of [0, BW]) for (const z of [0, BH]) bodyPts.push([x, y, z]);
+s += clipTo(onBoard, castShadow([...bodyPts, [LX, 0, 0], [LX, BW, 0], [LX, 0, 9], [LX, BW, 9]]));
+const prof = rrUV(0, 0, BW, BH, 4);
+s += extrude(prof, 0, BX, m) + shape(on(PX(BX), prof), m.l, 2.2);
+const win = on(PX(BX + .05), rrUV(2, 18.5, 16, 25.5, 1.2)), bz = 21 - 3 * st.chop;
+s += clipTo(win, fill(pd(win), DARK.l) + shape(on(PX(20), [[3, bz], [16, bz + 2], [16, bz + 5], [3, bz + 5]]), METAL.m, .7));
+s += fill(pd(win), '#cfe9f0', 'opacity=".22" pointer-events="none"')
++ `<path d="${pd(on(PX(BX + .1), [[4, 23], [7.5, 25]]), false)}" stroke="#ffffff" stroke-width="1" opacity=".38" fill="none" pointer-events="none"/>` + ink(pd(win), 1.4);
+s += tx(BX + .05, 92, 21.5, 'WORD MACHINE', 3.6, m === PALS.white ? INK : '#ffffff', 700);
+s += hullInk(bodyPts, 2.8);
+s += byDepth([{ at:[12, 11, 30], svg:hopper(st, m) }, { at:[10, 60, 40], svg:screen(st) }, { at:[12, BW - 23, 32], svg:model(st, m) }]);
+s += box(21, 17, BH, 23, 19, BH + 2.6, METAL, toneI, .7) + box(21, BW - 3, BH, 23, BW - 1, BH + 2.6, METAL, toneI, .7)
++ rod([22, 17, BH + 2.6], [22, BW - 1, BH + 2.6], .7, METAL, toneI, .7);
+s += stamper(st, true);
+s += box(BX, 0, 6, LX, BW, 9, METAL, toneI, 1);
+s += shape(on(PZ(9.02), rectUV(BX + .8, .5, LX - .6, BW - .5)), DARK.m, .6);
+for (let i = 0; i < 15; i++){ const y = 1 + ((i * 10.5 + st.bt) % (BW - 2));
+s += `<path d="${pd(on(PZ(9.05), [[BX + 1, y], [LX - .8, y]]), false)}" stroke="${DARK.l}" stroke-width=".6" fill="none"/>`; }
+for (let i = 0; i < CAP_N; i++){ const y = TRAY_L - 6 - i * 13.5, lit = i < st.tiles.length;
+s += shape(on(PX(LX + .05), ellUV(y, 7.5, .9, .9, 12)), lit ? '#43c25c' : DARK.l, .5); }
+s += byDepth([...st.tiles.map(k => ({ at:[TX1, k.y - tokW(k) / 2, TZ], svg:tile(st, k) })), { at:[28, st.cy, TZ + TH + 1], svg:stamper(st, false) }]);
+s += st.gone.map(g => `<g opacity="${clamp01((g.z - 1.5) / 7).toFixed(2)}">${tile(st, { ...g, o:1 })}</g>`).join('');
+if (st.scan >= 0){ const y = lerp(TRAY_L, 2, st.scan);
+s += `<path d="${pd(on(PX(TX1 + .2), rectUV(y - 1.2, TZ - .5, y + 1.2, TZ + TH + 1)))}" fill="${PICKR}" opacity=".45" pointer-events="none"/>`; }
+const ph = st.ph;
+s += tag([10, 12, 34], -8, -40, 'HOPPER', ph === 'cut' || ph === 'sq' && st.cardZ > -16);
+s += tag([BX, 9, 22], 58, 14, 'CUTTER', st.chop > 0);
+s += tag([22, CY_HOME - 4, BH + 3], 52, -26, 'STAMPER', st.press > 0 || ph === 'num');
+s += tag([22, BW - 8, 33], -38, -30, 'MODEL', st.lt >= 0);
+s += tag([12, 60, 49], 0, -20, 'ODDS', st.og > 0 && st.og < 1 || st.pk >= 0 && ph !== 'idle');
+s += tag([LX, BW - 4, 7.5], -30, 30, 'CONTEXT BELT', st.gone.length > 0 || st.scan >= 0);
+return s;
+}
+let ui;
+function run(st, ui, ph, phases, tick, done){
+st.busy = true; st.ph = ph; st.sp = 0; let T = 0, i = -1, end = 0;
+const enter = k => { i = k; const p = phases[k]; if (p.enter) p.enter(st); st.cap = p.cap; end += Math.max(READ_S(p.cap), p.min || 0); };
+enter(0);
+ui.animate(dt => { T += dt; settle(st, dt); tick(st, dt, T);
+if (T >= end){ if (i < phases.length - 1) enter(i + 1); else if (still(st)){ st.busy = false; st.ph = 'idle'; done(st); return false; } }
+return true; });
+}
+const BUSY = 'Wait for this step to finish';
+function loopTick(st, e, tt, roundNo){
+st.scan = tt < .9 ? tt / .9 : -1; st.lt = tt < 1.2 ? tt * 10 : -1;
+st.og = clamp01((tt - .7) / .6); st.pk = tt > 1.5 ? e.pick || 0 : -1;
+if (tt > 1.75 && st.sp <= roundNo){ add(st, e.tok, 'g'); st.sp++; }
+}
+function cut(st, ui){
+if (st.busy) return ui.flash(BUSY);
+if (st.stage >= 1) return ui.flash('Already cut: the tokens are on the belt');
+run(st, ui, 'cut', [{ cap:CAP.cut1 }, { cap:CAP.cut2, enter:st => { st.hl = [32872, 74767]; } }], (st, dt, T) => {
+st.cardZ = -16 * ease(clamp01(T / 1.6));
+if (st.sp < PROMPT.length && T >= 1.2 + st.sp * .8){ add(st, PROMPT[st.sp], 'p'); st.sp++; }
+st.chop = st.sp < PROMPT.length || T < 1.2 + st.sp * .8 ? (Math.sin(T * 9) + 1) / 2 : 0;
+}, st => { st.hl = []; st.chop = 0; st.stage = 1; });
+}
+function number(st, ui){
+if (st.busy) return ui.flash(BUSY);
+if (st.stage < 1) return ui.flash('Cut the sentence first: there are no tokens to number yet');
+if (st.stage >= 2) return ui.flash('Already numbered');
+const n = st.tiles.length, seg = .85, ctr = i => st.tiles[i].y - tokW(st.tiles[i]) / 2;
+run(st, ui, 'num', [{ cap:CAP.num1 }, { cap:CAP.num2 }], (st, dt, T) => {
+st.sv = T < .5 ? T / .5 : T > n * seg + .3 ? Math.max(0, 1 - (T - n * seg - .3) / .5) : 1;
+const i = Math.floor(T / seg);
+if (i < n){ const j = n - 1 - i, from = i === 0 ? CY_HOME : ctr(j + 1), u = (T - i * seg) / seg;
+if (u < .55){ st.cy = lerp(from, ctr(j), ease(u / .55)); st.press = 0; }
+else { st.cy = ctr(j); st.press = Math.sin(Math.PI * (u - .55) / .45); if (st.press > .6) st.tiles[j].s = 1; } }
+else { st.press = 0; st.cy = lerp(ctr(0), CY_HOME, ease(clamp01((T - n * seg) / .9))); }
+}, st => { st.tiles.forEach(k => { k.s = 1; }); st.cy = CY_HOME; st.stage = 2; });
+}
+function score(st, ui){
+if (st.busy) return ui.flash(BUSY);
+if (st.stage < 2) return ui.flash(st.stage < 1 ? 'Cut the sentence first' : 'Number the tokens first: the model only reads numbers');
+if (st.stage === 3) return ui.flash('Already scored: now pick a token');
+if (st.stage > 3) return ui.flash(st.stage === 4 ? 'Press Keep going: it scores each new token for you' : 'The answer is finished');
+st.ob = 'careful'; st.oi = 0; st.og = 0; st.pk = -1; st.flat = 0;
+run(st, ui, 'score', [{ cap:CAP.score1 }, { cap:CAP.score2 }], (st, dt, T) => {
+st.scan = T < 1.8 ? T / 1.8 : -1; st.lt = T < 2.6 ? T * 10 : -1; st.og = clamp01((T - 2.2) / 1.4);
+}, st => { st.stage = 3; });
+}
+function pick(st, ui, mode){
+st.mode = mode; st.ob = mode; st.gi = 1;
+const e = BR[mode][0];
+run(st, ui, 'pick', [{ cap:CAP[mode] }], (st, dt, T) => {
+const t0 = mode === 'creative' ? 1.4 : 0;
+if (mode === 'creative') st.flat = ease(clamp01(T / 1.2));
+if (T > t0 + .4) st.pk = e.pick || 0;
+if (T > t0 + 1 && !st.sp){ add(st, e.tok, 'g'); st.sp = 1; }
+}, st => { st.stage = 4; });
+}
+function pickWhy(st){ return st.busy ? BUSY : st.stage < 3 ? 'Score first: there are no odds to pick from yet' : 'Already picked: press Keep going'; }
+function keepGoing(st, ui){
+if (st.busy) return ui.flash(BUSY);
+if (st.stage < 4) return ui.flash(st.stage === 3 ? 'Pick the first token first' : 'Cut, number and score first');
+if (st.stage >= 5) return ui.flash('The answer is finished: the machine picked END');
+const br = BR[st.mode], g0 = st.gi, N = br.length - g0;
+run(st, ui, 'loop', [{ cap:CAP.round, min:N * RT }, { cap:CAP.end }], (st, dt, T) => {
+const r = Math.floor(T / RT);
+if (r < N){ if (st.oi !== g0 + r){ st.oi = g0 + r; st.gi = g0 + r + 1; }
+st.round = r + 1; if (st.cap.startsWith('Round')) st.cap = CAP.round.replace('1', st.round);
+loopTick(st, br[g0 + r], T - r * RT, r); }
+else { st.scan = st.lt = -1; }
+}, st => { st.stage = 5; });
+}
+function countR(st, ui){
+if (st.busy) return ui.flash(BUSY);
+if (st.stage < 5) return ui.flash('Finish the first answer first: press Keep going');
+if (st.stage >= 6) return ui.flash('Already asked: the answer is on the belt');
+const E = []; let acc = 0;
+for (const k of ['sq1', 'sq2', 'sq3', 'sq4', 'sq5']) E.push(acc += READ_S(CAP[k]));
+const spawnAt = i => 1.2 + i * .75;
+run(st, ui, 'sq', [
+{ cap:CAP.sq1, enter:st => { st.card = 'q'; st.cardZ = 0; st.oi = -1; st.pk = -1; st.og = 0; st.flat = 0; st.ob = 'ans'; } },
+{ cap:CAP.sq2 },
+{ cap:CAP.sq3, enter:st => { st.hl = [73700]; } },
+{ cap:CAP.sq4, enter:st => { st.oi = 0; } },
+{ cap:CAP.sq5 },
+], (st, dt, T) => {
+st.cardZ = -16 * ease(clamp01(T / 1.4));
+if (st.sp < QUESTION.length && T >= spawnAt(st.sp)){ add(st, QUESTION[st.sp], 'q'); st.sp++; }
+st.chop = st.sp < QUESTION.length ? (Math.sin(T * 9) + 1) / 2 : 0;
+if (T >= E[2] && T < E[3]){ const tt = T - E[2];
+st.scan = tt < 1.8 ? tt / 1.8 : -1; st.lt = tt < 2.6 ? tt * 10 : -1; st.og = clamp01((tt - 2.2) / 1.4); }
+if (T >= E[3]){ const tt = T - E[3] + 1.5, r = Math.min(2, Math.floor(tt / 2.2));
+if (st.oi !== r) st.oi = r;
+loopTick(st, BR.ans[r], tt - r * 2.2, QUESTION.length + r); }
+}, st => { st.hl = []; st.scan = st.lt = -1; st.stage = 6; });
+}
+function jumpTo(st, n, mode){
+const put = (tok, kind, s) => { if (tok !== END_T) st.tiles.push({ t:tok[0], id:tok[1], k:kind, y:0, z:TZ, s, o:1, vz:0 }); };
+if (n >= 1){ PROMPT.forEach(t => put(t, 'p', n >= 2 ? 1 : 0)); st.cardZ = -16; st.nIn = 5; }
+if (n >= 3){ st.ob = 'careful'; st.oi = 0; st.og = 1; }
+if (n >= 4){ st.mode = mode; st.ob = mode; st.pk = BR[mode][0].pick || 0; st.flat = mode === 'creative' ? 1 : 0;
+const k = n >= 5 ? BR[mode].length : 1; for (let i = 0; i < k; i++){ const t = BR[mode][i].tok; put(t, 'g', 1); }
+st.gi = k; st.oi = k - 1; st.nOut = k; if (n >= 5) st.pk = 0; }
+if (n >= 6){ st.card = 'q'; QUESTION.forEach(t => put(t, 'q', 1)); BR.ans.forEach(e => put(e.tok, 'g', 1));
+st.tiles = st.tiles.slice(-CAP_N); st.nIn = 13; st.nOut += 3; st.ob = 'ans'; st.oi = 2; st.flat = 0; st.pk = 0; }
+st.stage = n;
+targets(st).forEach((y, i) => { st.tiles[i].y = y; });
+}
+ui = mountFigure({
+fig:'08', title:'Word machine: how an LLM writes',
+hint:'cut the sentence, number the tokens, score, pick, keep going, then ask about strawberry',
+size:[LX, BW, 49], palette:'blue',
+state:{ busy:false, ph:'idle', cap:'', stage:0, mode:'careful', tiles:[], gone:[], card:'p', cardZ:0, chop:0, cy:CY_HOME, press:0, sv:0,
+scan:-1, lt:-1, ob:'careful', oi:-1, og:0, pk:-1, flat:0, hl:[], nIn:0, nOut:0, gi:0, sp:0, round:0, bt:0 },
+scene,
+caption: st => {
+if (st.busy) return st.cap;
+const answer = st.mode === 'creative' ? 'turn light into sugar' : 'make food from sunlight';
+return [
+'A sentence waits in the hopper. Press Cut to feed it in.',
+'Five tokens sit on the belt. Next, each one gets its number.',
+'The model now sees five numbers: 32872, 74767, 374, 1268, 11012. Press Score.',
+'These odds are an example. Pick the next token: Careful or Creative.',
+'One token written. Press Keep going to run the loop until the answer is done.',
+`"Photosynthesis is how plants ${answer}." Six tokens out, one at a time. Now ask it to count letters.`,
+'Real models hold hundreds of thousands of tokens, but the limit and the guessing work the same way.',
+][st.stage];
+},
+stats: st => [ { label:'Tokens in', value:st.nIn }, { label:'Tokens out', value:st.nOut }, { label:'Belt', value:`${st.tiles.length} / ${CAP_N}`, small:true } ],
+buttonsLabel:'Word machine',
+buttons:[
+{ label:'Cut', onClick:cut, predict:'Will the machine cut this sentence into whole words?' },
+{ label:'Number', onClick:number, predict:'What does the model actually read: the letters, or something else?' },
+{ label:'Score', onClick:score, predict:'Does the model look the next word up, or do something else?' },
+{ label:'Pick', choices:st => ['careful', 'creative'].map(mode => ({ label:mode === 'careful' ? 'Careful' : 'Creative',
+onClick:(st, ui) => pick(st, ui, mode), disabled:st.busy || st.stage !== 3, why:pickWhy(st) })) },
+{ label:'Keep going', onClick:keepGoing, predict:'How does the machine know when to stop writing?' },
+{ label:"Count r's", onClick:countR, predict:"Ask it how many r's are in strawberry. What will it answer, and why?" },
+],
+walk:['Cut', 'Number', 'Score', 'Pick>Careful', 'Keep going', 'Count'],
+acts:{ hopper:(st, el, ui) => cut(st, ui), stamper:(st, el, ui) => number(st, ui), model:(st, el, ui) => score(st, ui) },
+params:(st, q) => { if (q.has('at')) jumpTo(st, +q.get('at'), q.get('mode') === 'creative' ? 'creative' : 'careful'); },
+});
+</script>
+</body>
+</html>
