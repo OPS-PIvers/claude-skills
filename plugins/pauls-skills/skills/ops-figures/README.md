@@ -13,9 +13,9 @@ Built for two audiences: students (teacher-led, projected or on Chromebooks) and
 - A caption under the figure: one plain sentence about what is happening right now, held long enough to read, with
   the step's earlier captions on a wheel above it, tilting back and fading, so nothing is lost
 - **Walk through**: Back / Step 2 of 5 / Next, which runs the real steps in order
-- **Present**: laid out for projecting. The caption and stats are at the top, where the back of a classroom reads
-  best, with the newest caption on top. The buttons sit in one row under the figure, with Back and Next at its ends,
-  and a clicker's Page Up / Page Down work them.
+- **Present**: laid out for projecting. The caption is at the top, where the back of a classroom reads best, with
+  the newest caption on top. The stats stand in a column beside the figure. The buttons sit in one row under the
+  figure, with Back and Next at its ends, and a clicker's Page Up / Page Down work them.
 - **Settings** fold away into one small button (Present does this itself), leaving more room for the figure
 - The page fits the window or the SpartBoard frame: the figure scales to the space left, so there's no scrolling
   between the buttons, the picture and the caption
@@ -40,7 +40,8 @@ Claude saves an `.html` file and offers to save it to SpartBoard as a mini-app.
 - `assets/core.js`: the engine (projection, 3D shapes and shading, ink, labels, the OPS page shell, caption,
   Predict, Walk through, Present mode)
 - `assets/examples/`: complete figures to learn from (3D printer, Bluetooth headphones, washing machine, vending machine)
-- `scripts/build.py`: makes one self-contained file: `python scripts/build.py figure.html OUT.html`
+- `scripts/build.py`: makes one self-contained file: `python scripts/build.py figure.html OUT.html`. Add
+  `--strip-comments` to drop the scripts' comments and blank lines (about a fifth smaller, for a SpartBoard mini-app)
 
 Figures load Lexend and Roboto from Google Fonts and fall back to system fonts offline. Nothing else is fetched.
 

@@ -182,7 +182,7 @@ let _clipN = 0;
 // and Present mode draws them larger (TAG_K).
 let TAG_K = 1;
 function tag(p3, dx, dy, text, on=false){
-  const k = INK_K, [X,Y] = P(...p3), fs = 8.6*k*TAG_K, w = text.length*fs*.66 + fs*1.6, h = fs*1.85, cx = X + dx*k, cy = Y + dy*k;
+  const k = INK_K, [X,Y] = P(...p3), fs = 8.6*k*TAG_K, w = text.length*fs*.8 + fs*2.6, h = fs*1.85, cx = X + dx*k, cy = Y + dy*k;
   return `<g class="tag${on ? ' on' : ''}"><path d="M${f(X)} ${f(Y)}L${f(cx)} ${f(cy)}" fill="none" stroke="${INK}" stroke-width="1"/>`
     + `<circle cx="${f(X)}" cy="${f(Y)}" r="${f(1.3*k)}" fill="${INK}"/>`
     + `<rect x="${f(cx-w/2)}" y="${f(cy-h/2)}" width="${f(w)}" height="${f(h)}" rx="${f(h/2)}" fill="${on ? ACCENT : '#ffffff'}" stroke="${INK}" stroke-width="1.2"/>`
@@ -297,7 +297,7 @@ const CORE_CSS = `
   html.present body{font-size:17px}
   html.present header{order:-2;align-items:center} html.present header .hint{display:none}
   html.present header h1{font-size:26px}
-  html.present header .stats{position:static;flex-direction:row;align-items:flex-end;gap:28px}
+  html.present .stats{top:50%;transform:translateY(-50%);gap:18px}
   html.present .narr{order:-1;font-size:26px;height:4.4em;flex-direction:column;
     -webkit-mask-image:linear-gradient(#000 calc(100% - 1.4em),transparent);mask-image:linear-gradient(#000 calc(100% - 1.4em),transparent)}
   html.present .caption{order:-1;margin:2px auto}
@@ -323,7 +323,18 @@ const CORE_CSS = `
   html.present .walk > button{font-size:calc(var(--act-fs,18px) + 1px);padding:.47em 1em}
   html.present .toast{position:fixed;font-size:17px;max-width:340px;transform:translate(-50%,-100%)}
   html.present .stat .v{font-size:40px} html.present .stat.small .v{font-size:26px}
-  @media (max-width:560px){body{padding:10px 12px}header .hint,.actions .cap{display:none}.actions{flex-direction:row;flex-wrap:wrap;gap:6px}.act{font-size:12px;padding:5px 11px}.stats{position:static;flex-direction:row;justify-content:flex-end;gap:18px;margin-bottom:4px}.actions{position:static;max-width:none;margin:6px 0 4px}.chips{left:0;top:calc(100% + 8px)}.narr{font-size:15px}.controls{gap:8px 14px}}`;
+  @media (max-width:560px){body{padding:10px 12px}header .hint,.actions .cap{display:none}.actions{flex-direction:row;flex-wrap:wrap;gap:6px}.act{font-size:12px;padding:5px 11px}.stats{position:static;flex-direction:row;justify-content:flex-end;gap:18px;margin-bottom:4px}.actions{position:static;max-width:none;margin:6px 0 4px}.chips{left:0;top:calc(100% + 8px)}.narr{font-size:15px}.controls{gap:8px 14px}}
+  /* Present on a narrow screen (a phone, a split screen, a portrait tablet) has no room beside the figure: the stats
+     are a compact row under the caption, the caption is smaller so a whole sentence fits, the buttons wrap in rows
+     above Back / Next, and labels stay at their normal size. */
+  @media (max-width:760px){
+    html.present header h1{font-size:20px}
+    html.present .narr{font-size:17px;height:5.6em;-webkit-mask-image:linear-gradient(#000 calc(100% - .9em),transparent);mask-image:linear-gradient(#000 calc(100% - .9em),transparent)}
+    html.present .stats{position:static;transform:none;flex-direction:row;justify-content:center;align-items:flex-end;gap:22px;margin:0 0 4px}
+    html.present .stat .v{font-size:26px} html.present .stat.small .v{font-size:18px}
+    html.present .walk{--act-fs:15px;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"acts acts acts" "back pos next";gap:10px 8px}
+    html.present .actions,html.present .actions.wrap{flex-wrap:wrap;gap:8px}
+    html.present .walk .pos{min-width:0;white-space:nowrap}}`;
 
 const filterFor = k => `<filter id="hand" x="-3%" y="-3%" width="106%" height="106%" color-interpolation-filters="sRGB">
   <feTurbulence type="fractalNoise" baseFrequency="${(0.045/k).toFixed(4)}" numOctaves="2" seed="4" result="warp"/>
@@ -447,7 +458,15 @@ function mountFigure(cfg){
   ui.drawStats = () => { if (!statsEl) return;
     const list = cfg.stats(st).filter(Boolean), html = list.map(x => `<div class="stat${x.small ? ' small' : ''}"><div class="k">${x.label}</div><div class="v" data-k="${x.label}">${x.value}</div></div>`).join('');
     if (statsEl._html !== html){ statsEl._html = html; statsEl.innerHTML = html;
-      statsEl.querySelectorAll('.v').forEach(v => { if (prevStats[v.dataset.k] != null && prevStats[v.dataset.k] !== v.textContent) v.classList.add('bump'); prevStats[v.dataset.k] = v.textContent; }); } };
+      statsEl.querySelectorAll('.v').forEach(v => { if (prevStats[v.dataset.k] != null && prevStats[v.dataset.k] !== v.textContent) v.classList.add('bump'); prevStats[v.dataset.k] = v.textContent; }); fitStats(); } };
+  // Present stands the stats in a column right of the figure. The stage keeps that much room clear on both sides, so
+  // the figure stays centred and never runs under them; the room only grows, so a changing value can't make it jump.
+  let statsRoom = 0;
+  const narrow = () => innerWidth <= 760;     // matches the narrow Present @media in CORE_CSS
+  function fitStats(reset){ if (!statsEl) return; const stage = svg.parentElement;
+    if (reset || !presenting() || narrow()){ statsRoom = 0; stage.style.removeProperty('padding-inline'); if (!presenting() || narrow()) return; }
+    const w = Math.ceil(statsEl.offsetWidth) + 20;
+    if (w > statsRoom){ statsRoom = w; stage.style.paddingInline = w + 'px'; } }
   let flashT = 0, lastAct = null;   // lastAct: the button just pressed, so Present can show the note above it
   const toast = $('toast');
   ui.flash = (text, ms=1800) => { toast.textContent = text;
@@ -567,19 +586,21 @@ function mountFigure(cfg){
     const over = () => btns.scrollWidth > btns.clientWidth + 1;
     for (let px = 17; px >= 12 && over(); px--) walkbar.style.setProperty('--act-fs', px + 'px');
     btns.classList.toggle('wrap', over()); wnext.textContent = label; }
-  addEventListener('resize', fitRow);
+  addEventListener('resize', () => { fitRow(); fitStats(true);
+    const k = presenting() && !narrow() ? 1.35 : 1; if (k !== TAG_K){ TAG_K = k; ui.render(); } });
   if (document.fonts) document.fonts.ready.then(fitRow);
-  // Present moves the stats into the header and the buttons into the Back / Next row, centres the figure (no button
-  // column to clear), and turns Walk through on from the start; turning it off puts back whatever Walk through was.
+  // Present moves the buttons into the Back / Next row and the stats into a column right of the figure, centres the
+  // figure (no button column to clear), and turns Walk through on from the start; turning it off puts back whatever
+  // Walk through was.
   let walkWas = false;
   const setPresent = on => { if (presenting() === on) return;
-    document.documentElement.classList.toggle('present', on); TAG_K = on ? 1.35 : 1; setTog('prs', on);
+    document.documentElement.classList.toggle('present', on); TAG_K = on && !narrow() ? 1.35 : 1; setTog('prs', on);
     svg.setAttribute('viewBox', `${f(on ? vbW*.06 : 0)} 0 ${f(vbW)} ${f(vbH)}`);
-    if (on){ if (btns) walkbar.insertBefore(btns, wnext); if (statsEl) document.querySelector('header').appendChild(statsEl);
+    if (on){ if (btns) walkbar.insertBefore(btns, wnext);
       walkWas = walkOn; setSettings(false); setWalk(walkList.length > 1); }
-    else { if (btns) svg.parentElement.prepend(btns); if (statsEl) svg.parentElement.insertBefore(statsEl, toast);
+    else { if (btns) svg.parentElement.prepend(btns);
       if (!walkWas) setWalk(false); }
-    ui.render(); fitRow(); };
+    fitStats(true); ui.render(); fitRow(); };
   $('prs').onclick = () => setPresent(!presenting());
   // in Present a clicker or the keyboard runs the walk: → / Page Down / Space = Next (or Show me), ← / Page Up = Back
   document.addEventListener('keydown', e => {

@@ -146,8 +146,8 @@ function scene(st, m){
   const ph = st.phase;
   s += tag([SPOOL[0], 39, SPOOL[1] + 6], -64, -14, 'SPOOL', ph === 'load' || ph === 'print');
   s += tag([NX-2, st.hy - 4, st.zt + 16], 66, -40, 'EXTRUDER', ph === 'load' || ph === 'print');
-  s += tag([NX, st.hy, st.zt + .5], 78, 22, 'NOZZLE', ph === 'heat' || ph === 'load' || ph === 'print');
-  s += tag([NX + 18 + bx, 13, Z0], 50, 40, 'BED', ph === 'heat' || ph === 'cool');
+  s += tag([NX, st.hy, st.zt + .5], 92, 12, 'NOZZLE', ph === 'heat' || ph === 'load' || ph === 'print');
+  s += tag([NX + 18 + bx, 13, Z0], 60, 50, 'BED', ph === 'heat' || ph === 'cool');
   return s;
 }
 

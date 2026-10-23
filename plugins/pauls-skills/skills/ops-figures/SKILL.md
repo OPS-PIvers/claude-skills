@@ -59,7 +59,9 @@ A built figure is one self-contained HTML file of roughly 60–80k characters, w
 (limit 120k). After handing over the file, offer once: "Want it on SpartBoard as a mini-app?" On a yes, follow the
 **spartboard** skill's mini-app flow: call `get_mini_app_spec` first and do what it says, show the figure as an
 artifact for the teacher to try, and save that exact HTML with `create_mini_app` when they say to. A figure doesn't
-collect results, so don't set `collects_results`. If the build is over 120k characters, say so and leave it as a file.
+collect results, so don't set `collects_results`. If the build is over 120k characters, build again with
+`--strip-comments` (drops the scripts' comments and blank lines, about a fifth smaller); if it's still over, say so
+and leave it as a file.
 
 ## The teaching layer
 
@@ -119,15 +121,19 @@ the real sequence needs a picker choice, a repeated press (three coins) or skips
 ### Present mode (automatic)
 A Present switch (and `?present=1`) lays the page out for projecting, where the top of the screen is the easiest
 place to read from the back of a classroom:
-- **Top:** the title, with the stats as big readouts on the right of the same line. Under it is the caption box: the
-  newest caption rolls in from above, and the step's earlier captions move down under it, tilting back and fading
-  toward the figure. A Predict question takes over that box.
-- **Middle:** the figure, centred (there's no button column to clear) and labels 1.35× larger.
+- **Top:** the title, then the caption box: the newest caption rolls in from above, and the step's earlier captions
+  move down under it, tilting back and fading toward the figure. A Predict question takes over that box.
+- **Middle:** the figure, centred (there's no button column to clear) and labels 1.35× larger. The stats stand as
+  big readouts in a column on its right, vertically centred, and the figure keeps that much room clear on both sides
+  so it never runs under them.
 - **Bottom:** one row: **← Back**, the figure's buttons, **Next: Add soap →**. Walk through turns on from the start
   (turning Present off puts it back how it was), the button Next will press is outlined in red, and "Step 2 of 5"
   sits under the row. The buttons still work in any order. Pickers open upward, and a `ui.flash` note pops up above
   the button that was pressed. The row stays on one line: its text shrinks from 18px toward 12px until it fits
   beside the longest Next label, and it only wraps if even 12px can't fit.
+- **Narrow screens** (760px or less: a phone, a split screen, a portrait tablet) have no room beside the figure: the
+  stats become a compact row over it, the caption is smaller so a whole sentence fits, the buttons wrap into rows
+  above Back / Next, and labels stay normal size.
 - **Clicker keys:** → / Page Down / Space press Next (or Show me, while a Predict question is up), and ← / Page Up
   press Back.
 
@@ -244,6 +250,16 @@ then anything drawn over everything (a tube). Write the order as numbered commen
   need one, use `pointerdown`. In a picker, mark the option in use with `current: true` and an option that can't be
   chosen right now with `disabled: true, why: 'the program is locked while it runs'`. Never leave a control that
   silently ignores a press.
+- **Buttons follow what a person really presses.** A step the machine always does right after another (the AI always
+  replies to a sent message) is part of that button, not a button of its own. A preparation step that really is
+  separate (attaching a file before sending) gets its own button, before the main one: its result waits where it can
+  be seen (the file sits at the door) and doesn't count in the stats until the main action carries it in.
+- **Tools come from somewhere and leave when they're done.** A working part needed for only one phase never pops out
+  of a surface or hangs in the scene the rest of the time. Mount it on a part that's already there (a press paddle
+  hanging under a reader head on its rail), and fade it in with a `<g opacity>` driven by state as it travels to the
+  work, then out on the way back. Make room before it arrives (step the neighbours back a slot so it drops into a
+  real gap, not through a block), and draw it at its depth: inside the loop over the things it sits between, not
+  after all of them.
 - **Out-of-order presses** must do something sensible: run the missing step first, or say why not with
   `ui.flash('Heat up first: the plastic has to melt')` (a short note under the buttons, sentence case) or on the object
   itself (a display, a light). `stats` (big numbers top right) suit a measured quantity: credit, temperature, litres,
@@ -309,12 +325,15 @@ Each round is just:
    budgets, e.g. `figure.html?press=Heat@200,Load@3600,Print@6400` at 2000, 7000, 12000 ms. `?press=` clicks buttons
    by the start of their label; `Label>Choice` picks from a picker; a Predict question that comes up is answered with
    Show me. Add **one out-of-order press** (a later step first) to see it answers sensibly.
-3. **One Walk through run of every step:** `?steps=1&predict=0&press=Next@300,Next@30300,Next@60300,…` (space the
-   Nexts wider than the longest step; Next waits while a step runs). The caption should match each step, and a
-   `Back` press should return to the state before the last step.
+3. **One Walk through run of every step:** `?steps=1&predict=0&press=Next@300,Next@30300,Next@60300,…`. Space the
+   Nexts wider than the longest step, counting any overflow handling it can set off: Next is disabled while a step
+   runs, so a press that lands early does nothing, and the walk silently ends short or runs its steps from the wrong
+   state. Afterwards check that it reads "Step N of N" with the final caption you expect. The caption should match
+   each step, and a `Back` press should return to the state before the last step.
 4. **One `?present=1` shot** of the busiest stage at a short, wide window (`--window-size=1366,650`, a Chromebook):
    labels must still clear each other and the moving parts, nothing should need scrolling, and the button row must
-   be one line at a readable size (if it shrank to 12px, shorten the button labels).
+   be one line at a readable size (if it shrank to 12px, shorten the button labels). Headless Chrome won't make a
+   window narrower than 500px, so to see a phone width, shoot a page holding the figure in an iframe that wide.
 5. **One 3× crop of the part most likely to go wrong** (a row of keys, a glass container, a joint): nearer parts must
    cover farther ones. Rows of identical parts are where order bugs hide: draw them far to near.
 6. **Errors:** run the press URL once with `--dump-dom` and check `<html data-errors="…">` (script errors, unknown
