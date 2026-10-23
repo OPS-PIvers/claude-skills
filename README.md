@@ -7,6 +7,8 @@ Claude skills marketplace with two plugins:
 
 Skills live in `plugins/<plugin>/skills/<name>/SKILL.md`.
 
+The OPS figures are also on the web, outside Claude and SpartBoard: https://ops-pivers.github.io/claude-skills/ (built from `gallery/`).
+
 ## Install
 
 Claude Code (CLI/desktop):
