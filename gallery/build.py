@@ -65,7 +65,7 @@ def card(f):
 INDEX = '''<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>OPS Figures</title>
-<meta name="description" content="Interactive teaching figures of everyday machines, from Orono Public Schools.">
+<meta name="description" content="Interactive teaching figures of everyday machines and how AI works, from Orono Public Schools.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@500;600;700&family=Roboto:wght@400;500&display=swap">
 <style>
@@ -94,7 +94,7 @@ INDEX = '''<!doctype html>
 <body><main>
   <header>
     <h1>OPS Figures</h1>
-    <p>Interactive drawings of everyday machines. Each one opens ready to project: Next (or the → key) runs the real
+    <p>Interactive drawings of everyday machines and of how AI works. Each one opens ready to project: Next (or the → key) runs the real
       steps in order, and the buttons work in any order. Explore freely opens it without the step-by-step bar.</p>
   </header>
   <ul>
