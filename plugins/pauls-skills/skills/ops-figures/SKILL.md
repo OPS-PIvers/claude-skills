@@ -75,8 +75,8 @@ the real process. Sentence case, full sentences, no ALL CAPS, no emoji. Two shor
 
 **Keep it to one or two lines.** Aim for about 90 characters or fewer, which is two lines on a phone; never go past
 about 130 (four lines on a phone). A short caption gets read. A long one gets skimmed while the eye goes back to the
-figure. On a phone the caption box has room for four lines; a longer caption makes the box taller and squeezes the
-figure.
+figure. On a phone the caption box has room for three lines; a longer caption makes the box taller for that step and
+moves the figure up.
 
 **Give every caption time to be read.** A caption the figure replaces on its own (the next phase of an animation)
 must stay up at least `READ_S(caption)` seconds: about 3 words a second plus one, never under 3 s. A 12-word caption
@@ -148,13 +148,15 @@ place to read from the back of a classroom:
 - **Phones** (a window 760px wide or less, or 500px tall or less and wider than tall: a phone, a split screen, a
   SpartBoard widget) get one phone layout, Present or not; the Present switch is hidden there. A one-line tag
   (FIG. 01 · WASHING MACHINE) sits at the top; the figure is framed to the drawing itself and centred in the space
-  left, with the stats as a small overlay on its top-right corner and labels at normal size. The caption wheel sits
+  left, with the stats in a row just above its top-right corner (the figure gives up room for them, so they never
+  cover the drawing) and labels at normal size. The caption wheel sits
   under the figure, right above the buttons, with the newest caption at the bottom (as in the normal layout), so the
   eye passes it on the way to Next. On a touch
   screen the buttons are one row you swipe sideways, and the button Next will press is always scrolled to its centre;
   a sideways swipe on the figure presses Next or Back. A mouse gets the buttons wrapped in rows instead. The bar under
   them reads **← · 3 / 5 · Next →**, a gear at the top right opens the settings as a sheet, and pickers float above
-  their button. A phone on its side puts the figure on the left and the tag at the top right and the caption, buttons and bar at the bottom right.
+  their button. A phone on its side puts the figure on the left; the tag and the stats sit at the top right, and the caption, buttons and bar at the
+  bottom right.
   Nothing to do in the figure: keep button labels short, since the row shows two or three at a time. `?touch=1` tests
   the touch controls with a mouse.
 - **Clicker keys:** → / Page Down / Space press Next (or Show me, while a Predict question is up), and ← / Page Up
@@ -173,7 +175,7 @@ part of it and stays.
 ### The page fits the window (automatic)
 The page always fits the window or the SpartBoard frame without scrolling. The header, buttons, caption box and
 switches stay on screen, and the figure scales to the height that's left (up to 1280px wide). The caption box has a
-fixed height (on a phone, room for four lines), so the figure doesn't jump when the caption changes or a Predict
+fixed height (on a phone, room for three lines), so the figure doesn't jump when the caption changes or a Predict
 question shows. Only a window too short
 to leave the figure 240px scrolls. Nothing to do in the figure, but don't add page elements of your own around
 `mountFigure`: they would push the figure down.
