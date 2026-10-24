@@ -27,6 +27,10 @@ Built for two audiences: students (teacher-led, projected or on Chromebooks) and
 - Colour swatches in the OPS families (every figure starts blue), a hand-drawn wobble slider (starting low) and a
   Speed slider (¼× to 3×) for every animation
 
+Figures of real objects also get **Take apart**: an exploded view that slides the hidden parts out along the path
+something takes through them (light, water, filament, coins, a radio signal), labels each part and draws that path as
+a dashed red line. Whatever flows through keeps running while it's apart.
+
 How-it-works figures also get part labels and **Predict first** questions (off until a teacher turns them on). URL
 switches: `?present=0`, `?steps=0`, `?labels=0`, `?predict=1`, `?speed=2`, `?settings=0`, `?pal=red`, and `?touch=1`
 to test the phone layout's touch controls with a mouse.

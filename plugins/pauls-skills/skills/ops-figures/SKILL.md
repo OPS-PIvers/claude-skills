@@ -1,6 +1,6 @@
 ---
 name: ops-figures
-description: Build an on-brand Orono (OPS) interactive figure of an everyday object or machine (3D printer, washing machine, vending machine, toaster, kettle, projector, pump, lock, bike gear…) as one self-contained HTML page for teaching. Hand-inked isometric 3D drawing in OPS blue, red and gray, with buttons that really work, a plain-language caption for every step, part labels, Predict questions, a step-by-step Walk through, and a Present mode for projecting. Use whenever someone wants a "how does X work" figure, an interactive diagram or model of a machine or process for a class, a PD session or staff training, a clickable object illustration, or an "OPS figure" or "Colorfigure", even if they don't name the skill. Can also be saved to SpartBoard as a mini-app.
+description: Build an on-brand Orono (OPS) interactive figure of an everyday object or machine (3D printer, washing machine, vending machine, toaster, kettle, projector, pump, lock, bike gear…) as one self-contained HTML page for teaching. Hand-inked isometric 3D drawing in OPS blue, red and gray, with buttons that really work, a plain-language caption for every step, part labels, a Take apart (exploded) view of the hidden parts, Predict questions, a step-by-step Walk through, and a Present mode for projecting. Use whenever someone wants a "how does X work" figure, an interactive diagram or model of a machine or process for a class, a PD session or staff training, a clickable object illustration, or an "OPS figure" or "Colorfigure", even if they don't name the skill. Can also be saved to SpartBoard as a mini-app.
 ---
 
 # OPS Figures
@@ -114,6 +114,33 @@ get taller?" One question per key step (3–5 in a figure), none on trivial step
 Don't put the answer in the question; the caption that follows is the answer. A Predict first switch appears
 automatically; it starts off, so a teacher turns it on when they want the questions (`?predict=1` opens with it on). A press that changes nothing (an out-of-order press that only flashes
 why) doesn't use up its question.
+
+### Take apart (every real object)
+A figure of a **real object or machine** (a microscope, a washing machine, a kettle, a lock) always gets a **Take
+apart** view: an exploded view that shows the hidden parts and the order something travels through them. A figure that
+stands for an idea (the context window, the word machine) doesn't: there are no real parts to take apart. Pass
+`apart:{…}` to `mountFigure` (the full shape is in the comment above it in `core.js`; `gallery/figures/microscope.html`
+is the reference) and the engine does the rest: a **Take apart** button at the end of the row (it reads **Put
+together** while apart), the last Walk through step, the slide out and back, labels on every part (even with the Labels
+switch off; the figure's other labels hide), a dashed red line with arrows through the parts in order, and "Put it
+back together first" from any button that would move a part.
+- **Pick the path first.** Name what travels through the machine (`flow`): light, water, filament, coins, a radio
+  signal. The view teaches that path, not a parts list.
+- **3–7 parts on it,** in the order the flow passes through them, plus the case lifting away so they show. Not every
+  screw: the parts a student should name. A part that matters but isn't on the path (the motor that turns a drum)
+  is labelled with `path:false`. Draw hidden parts that aren't in the figure yet (a pump, a coin checker) in the
+  same style; they appear only once it starts coming apart, fading in (the microscope's `inside()`).
+- **Slide each part out along the path** with `exOff(st, to)` / `exAt(st, p, to)` (or your own geometry eased by
+  `exK(st)`), far enough to separate and no farther. `size` must hold the apart pose too, or set `apart.zoom` (.7)
+  to shrink the view as it comes apart. Use `apart.path(st)` when the line must bend between parts.
+- **The flow still runs, parts don't.** List the buttons (and acts) that only start or stop the flow in `allow`:
+  the light still shines through the separated lenses, water still runs through the hoses. Everything else is
+  refused until it's put back together. `ready(st)` can refuse to come apart while a part is mid-move.
+- **Caption** (`caption: st => …`, two lines at most): name the path in order and what is flowing now: "Light goes
+  lamp, iris, condenser, slide, objective, prism, eyepiece." The coming-apart caption already says "This is called an
+  exploded view." Give it a `predict` question about what's inside ("What makes the drum turn?").
+- **Labels:** pick each part's `tag` offset so no two pills overlap in any pose, on a phone too. `on: st => …` turns a
+  part's pill red while the flow is passing through it.
 
 ### Walk through (every figure with 2+ steps)
 On from the start (a switch turns it off; `?steps=0` opens without it): **Back / Step 2 of 5 / Next: Add soap**. Next
@@ -363,12 +390,15 @@ Each round is just:
    be one line at a readable size (if it shrank to 12px, shorten the button labels). Then **one phone shot**:
    Headless Chrome won't make a window narrower than 500px, so shoot a page holding the figure in a 390×844 iframe
    (`figure.html?touch=1`) and check the stats corner and the labels stay clear of each other.
-5. **One 3× crop of the part most likely to go wrong** (a row of keys, a glass container, a joint): nearer parts must
+5. **A real object: the Take apart view.** Shoot it apart (`?press=Take apart@300`, at a budget past its caption),
+   apart with the flow running, and on the phone: every part separate and readable, no labels overlapping, the
+   dashed line running the way the flow goes, nothing off the edge.
+6. **One 3× crop of the part most likely to go wrong** (a row of keys, a glass container, a joint): nearer parts must
    cover farther ones. Rows of identical parts are where order bugs hide: draw them far to near.
-6. **Errors:** run the press URL once with `--dump-dom` and check `<html data-errors="…">` (script errors, unknown
+7. **Errors:** run the press URL once with `--dump-dom` and check `<html data-errors="…">` (script errors, unknown
    labels, unknown walk steps and captions replaced before `READ_S` land there; the full Walk through run above is the
    one to check), grep for `NaN`, and read the caption text.
-7. **A quick look as a stranger would:** anything physically wrong or odd, a caption that doesn't match the picture,
+8. **A quick look as a stranger would:** anything physically wrong or odd, a caption that doesn't match the picture,
    a Predict question that gives away its answer.
 
 Fix what you find, do the second round only if the first found something, then build and hand over. The figure's
