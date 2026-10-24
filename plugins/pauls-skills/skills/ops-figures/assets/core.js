@@ -332,9 +332,10 @@ const CORE_CSS = `
   /* the phone-only pieces stay out of the way everywhere else */
   .figtag,.sheethead,.scrim,.rowpad,.setbtn .gear{display:none}
   /* The phone layout (html.phone: a window 760px wide or less, or a landscape phone; PHONE in the script decides it).
-     Always Present, with no Present switch. Top: a one-line FIG. 01 · TITLE tag, then the caption box (about three
-     lines). Middle: the figure, as big as the room left allows, with the stats as a small overlay in its top-right
-     corner. Bottom: the figure's buttons, then ← · 3 / 5 · Next →. On a touch screen (html.touch) the buttons are one
+     Always Present, with no Present switch. Top: a one-line FIG. 01 · TITLE tag. Middle: the figure, as big as the
+     room left allows, with the stats as a small overlay in its top-right corner. Bottom: the caption box (up to four
+     lines), the figure's buttons, then ← · 3 / 5 · Next →. On a phone the eye goes to the figure and then down to
+     Next, so the caption sits on that path rather than above the figure, where it gets skipped. On a touch screen (html.touch) the buttons are one
      row that scrolls sideways and keeps the next-up button centred, and a swipe on the figure presses Next or Back;
      with a mouse they wrap in rows. The settings are a gear at the top right that opens a bottom sheet (html.sheet).
      A landscape phone (html.land) puts the figure on the left and all of that in a panel on the right. */
@@ -343,7 +344,18 @@ const CORE_CSS = `
   html.phone .figtag{display:block;order:-1;flex:none;width:100%;margin:3px 0 0;padding:0 40px;text-align:center;
     font:700 11px/1.3 var(--head);letter-spacing:.12em;text-transform:uppercase;color:var(--red-light)}
   html.phone .figtag b{color:var(--ink);font-weight:600}
-  html.phone .narr{font-size:17px;height:4.5em;-webkit-mask-image:linear-gradient(#000 calc(100% - .9em),transparent);mask-image:linear-gradient(#000 calc(100% - .9em),transparent)}
+  /* the caption box sits under the figure, right above the buttons, where the eye goes to press Next. The current
+     caption is never cut or faded: the box has room for four lines (it grows for a longer one), and the earlier
+     captions fill what is left above it, tilting back and fading towards the top, and scroll on their own. */
+  html.phone .narr{order:0;font-size:17px;height:auto;min-height:6.4em;overflow:visible;-webkit-mask-image:none;mask-image:none}
+  html.phone .caption{order:0;margin:0 auto 2px}
+  html.phone .caplog{flex:1 1 0;min-height:0;margin:0 0 4px;display:flex;flex-direction:column;overflow-y:auto;scrollbar-width:none;
+    perspective:420px;-webkit-mask-image:linear-gradient(transparent,#000 1.4em);mask-image:linear-gradient(transparent,#000 1.4em)}
+  html.phone .caplog::-webkit-scrollbar{display:none}
+  html.phone .caplog li{margin:0 0 2px;transform-origin:50% 100%;transform:rotateX(calc(var(--d) * 16deg)) scale(calc(1 - var(--d) * .05))}
+  html.phone .caplog li:first-child{margin-top:auto}
+  html.phone .narr.roll .caption{animation-name:capIn}
+  html.phone .narr.roll .caplog{animation-name:logUp}
   html.phone .stats{position:absolute;top:2px;right:0;left:auto;transform:none;flex-direction:column;align-items:flex-end;gap:6px;margin:0;pointer-events:none}
   html.phone .stat .k{font-size:10px} html.phone .stat .v{font-size:20px} html.phone .stat.small .v{font-size:15px}
   html.phone .walk{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"acts acts acts" "back pos next";align-items:center;gap:8px 10px}
@@ -387,7 +399,7 @@ const CORE_CSS = `
     align-items:start;column-gap:18px;row-gap:6px;padding:8px 14px}
   html.phone.land .stage{grid-column:1;grid-row:1 / -1;align-self:stretch;min-height:0}
   html.phone.land .figtag{grid-column:2;grid-row:1;padding:0 40px 0 0;text-align:left;margin:9px 0 0}
-  html.phone.land .narr{grid-column:2;grid-row:2;font-size:15px}
+  html.phone.land .narr{grid-column:2;grid-row:3;align-self:end;font-size:15px}
   html.phone.land .walk{grid-column:2;grid-row:4}
   html.phone.land .controls{top:4px;right:8px}`;
 /* The phone layout's conditions, in one place: the script turns them into classes on <html> (phone, land, touch) and
@@ -508,6 +520,7 @@ function mountFigure(cfg){
       capFresh = false; capSince = performance.now();
     }
     capEl.textContent = c; narrEl.scrollTop = presenting() ? 0 : narrEl.scrollHeight;
+    logEl.scrollTop = logEl.scrollHeight;   // the phone's history scrolls on its own, newest at the bottom
   }
   // a press that changes the state or starts an animation begins a new step: the history clears and its first
   // caption isn't timed (a press that only flashes why it can't run leaves both alone)
