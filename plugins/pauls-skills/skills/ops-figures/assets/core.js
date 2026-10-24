@@ -591,8 +591,9 @@ function mountFigure(cfg){
     ui.animate(dt => { t += dt; st.ex = e0 + (e1 - e0) * Math.min(1, t / 2.2);
       if (t < hold) return true; st.ex = e1; st.exPh = ''; return false; }); }
   // while apart, only Put together and the buttons in apart.allow work; anything else says why
-  const blocked = label => AP && isApart() && label !== TAKE && !(AP.allow || []).some(a => starts(label, a));
-  const APART_WHY = 'Put it back together first';
+  // (and nothing but Take apart works while the parts are still sliding)
+  const blockWhy = label => !AP || label === TAKE ? '' : st.exPh ? 'Wait for it to finish moving'
+    : isApart() && !(AP.allow || []).some(a => starts(label, a)) ? 'Put it back together first' : '';
   function apartLayer(){ if (!AP) return '';
     const k = exK(st), fade = Math.max(0, Math.min(1, (k - .45) / .45)); if (!fade) return '';
     const parts = (typeof AP.parts === 'function' ? AP.parts(st) : AP.parts).map(p => ({ ...p, pos: p.pos || exAt(st, p.at, p.to) }));
@@ -677,14 +678,14 @@ function mountFigure(cfg){
   // (partPress: this press started a part's action, so the swipe watcher on the stage ignores it)
   let partPress = false, wantCentre = false;
   svg.addEventListener('pointerdown', e => { if (e.button) return; const a = e.target.closest('[data-act]'); if (!a || !cfg.acts || !cfg.acts[a.dataset.act]) return;
-    e.preventDefault(); if (blocked(a.dataset.act)){ partPress = true; return ui.flash(APART_WHY); } lastAct = null; partPress = wantCentre = true; hidePredict(); userStep(() => cfg.acts[a.dataset.act](st, a, ui)); ui.render(); });
+    e.preventDefault(); { const why = blockWhy(a.dataset.act); if (why){ partPress = true; return ui.flash(why); } } lastAct = null; partPress = wantCentre = true; hidePredict(); userStep(() => cfg.acts[a.dataset.act](st, a, ui)); ui.render(); });
   const btns = $('btns'), actEls = new Map();   // button config -> its .act element
   if (btns) buttons.forEach(b => {
     const wrap = document.createElement('div'); wrap.className = 'stepwrap';
     const el = document.createElement('button'); el.className = 'act';
     el.innerHTML = `${b.label}${b.choices ? '<span class="car">▾</span>' : ''}`;
     wrap.appendChild(el); btns.appendChild(wrap); actEls.set(b, el);
-    if (!b.choices){ el.onclick = () => { closeChips(); lastAct = el; wantCentre = true; if (blocked(b.label)) return ui.flash(APART_WHY); withPredict(b, () => userStep(() => b.onClick(st, ui))); ui.render(); }; return; }
+    if (!b.choices){ el.onclick = () => { closeChips(); lastAct = el; wantCentre = true; if (blockWhy(b.label)) return ui.flash(blockWhy(b.label)); withPredict(b, () => userStep(() => b.onClick(st, ui))); ui.render(); }; return; }
     const chips = document.createElement('div'); chips.className = 'chips'; wrap.appendChild(chips); el._chips = chips;
     el.onclick = e => { e.stopPropagation(); const open = !wrap.classList.contains('open'); closeChips();
       if (!open) return;
@@ -697,7 +698,7 @@ function mountFigure(cfg){
         ch.onclick = ev => { ev.stopPropagation(); closeChips(); lastAct = el; wantCentre = true;
           if (c.current) return ui.flash(`${c.label} is already set`);
           if (c.disabled) return ui.flash(c.why || `${c.label} isn't possible right now`);
-          if (blocked(b.label)) return ui.flash(APART_WHY);
+          if (blockWhy(b.label)) return ui.flash(blockWhy(b.label));
           withPredict(b, () => userStep(() => c.onClick(st, ui))); ui.render(); }; chips.appendChild(ch); }
       wrap.classList.add('open');
       // on a phone the picker floats over the page above its button (the button row scrolls, and would clip it),
@@ -724,7 +725,7 @@ function mountFigure(cfg){
     const [label, choice] = walkList[i].split('>'), b = buttons.find(b => starts(b.label, label));
     if (!b) return noteErr(`walk: no button "${label}"`);
     lastAct = actEls.get(b) || wnext;
-    if (blocked(b.label)) return ui.flash(APART_WHY);
+    if (blockWhy(b.label)) return ui.flash(blockWhy(b.label));
     withPredict(b, () => userStep(() => {
       if (choice == null) return b.onClick(st, ui);
       const c = b.choices(st).find(c => starts(c.label, choice));

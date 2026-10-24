@@ -16,7 +16,11 @@
                     printer switches its heaters off by itself (nobody presses anything) and the cup hardens
                                                               plastic: nozzle → a cup on the bed, cooling
    4 Remove part    cool plastic shrinks and lets go; you lift the cup onto the table
-                                                              plastic: a pencil cup on the table (room for two) */
+                                                              plastic: a pencil cup on the table (room for two)
+   Take apart (exploded view): the parts the plastic passes through slide apart in order, spool → extruder gears →
+   heater → nozzle → bed, and the motors that move the nozzle and the bed are labelled too. The carriage slides aside
+   along its bar so the plastic's path stands as one clear column. Apart, Heat up and Load filament still work (the
+   plastic still flows); Print and Remove part move the machine, so they wait until it is put back together. */
 
 /* ---------- geometry (x = depth, y = width, z = height; 1 unit ≈ 5 mm, so the parts read) ---------- */
 const W = 62, D = 88, H = 98;          // D reaches past the printer (y 0..64) to the spot on the board where the cup goes
@@ -29,6 +33,12 @@ const DESKS = [[52, 78], [34, 80]];    // where finished cups stand on the board
 const BRD = [-4, -4, W + 4, D, 3, 6];   // the desk board: x0, y0, x1, y1, thickness, corner radius (top at z = 0)
 const SPOOL = [22, 86];                // spool axle (x, z), along y
 const ROOM = 22, NOZ_HOT = 210, BED_HOT = 60;
+// Take apart: how far each part slides out (x, y, z). The plastic's path stays one column (x = NX, y = the head's y):
+// the spool and the extruder rise, the heater and nozzle drop, the bed runs forward on its rails; the carriage slides
+// aside along its bar, out of the column; the X motor slides off the end of the bar. The Z motor stays on the base
+// (forward it would hide behind the cups on the table), labelled where it is.
+const EXV = { spool:[0,0,6], ext:[0,0,5], car:[0,-17,0], heat:[0,0,-4], noz:[0,0,-10], bed:[12,0,0], xmot:[0,-9,0] };
+const ZM = [25.5, 57, 31.5, 63], ZS = [28.5, 60];   // the Z motor's footprint on the base (x0, y0, x1, y1) and its lead screw (x, y)
 
 const PLA = { l:'#d9474a', m:'#c13435', d:'#7a1718' };     // red PLA filament
 const BRASS = { l:'#ecc873', m:'#c9a14a', d:'#8a6a2a' };
@@ -54,10 +64,21 @@ const CAP = {
   lift:'Cool plastic shrinks a little, so the cup lets go of the bed.',
   desk:`A pencil cup, built from ${LAYERS} thin layers of plastic. Press Heat up to print another.`,
   two:`Two pencil cups, each built from ${LAYERS} thin layers of plastic.`,
+  // taken apart: the path the plastic takes, in order, and what is happening now
+  apCold:'The plastic goes spool, extruder gears, heater, nozzle, bed. Heat it up first.',
+  apHeat:'The plastic goes spool, extruder gears, heater, nozzle, bed. The heater is warming up.',
+  apHot:'The plastic goes spool, extruder gears, heater, nozzle, bed. Hot now: load the filament.',
+  apPush:'The gears turn and push the plastic from the spool down to the heater.',
+  apOoze:'The heater melts the plastic, and a bead oozes out of the nozzle.',
+  apReady:'The plastic goes spool, extruder gears, heater, nozzle, bed. Put it together to print.',
+  apCool:'The plastic goes spool, extruder gears, heater, nozzle, bed. Heat it up to melt it.',
+  apPredict:'What grips the solid plastic string and pushes it into the hot nozzle?',
 };
 const capLayer = n => CAP.layer.replace(/^Layer 1/, `Layer ${n}`);   // same words, so it updates in place
-const ends = keys => { let t = 0; return keys.map(k => t += READ_S(CAP[k])); };   // when each phase ends, in seconds
-const HEAT_T = READ_S(CAP.heat), LOAD_E = ends(['push', 'ooze']), COOL_T = READ_S(CAP.cool), LIFT_T = READ_S(CAP.lift), WAIT_T = READ_S(CAP.warm);
+// a phase's caption differs together and apart, so it lasts as long as the longer of the two takes to read
+const readOf = k => Array.isArray(k) ? Math.max(...k.map(x => READ_S(CAP[x]))) : READ_S(CAP[k]);
+const ends = keys => { let t = 0; return keys.map(k => t += readOf(k)); };   // when each phase ends, in seconds
+const HEAT_T = readOf(['heat', 'apHeat']), LOAD_E = ends([['push', 'apPush'], ['ooze', 'apOoze']]), COOL_T = READ_S(CAP.cool), LIFT_T = READ_S(CAP.lift), WAIT_T = READ_S(CAP.warm);
 const T_DOWN = .8, T_UP = .8, T_PRINT = Math.max(8, READ_S(CAP.layer) - T_DOWN - T_UP);   // the layer caption stays up all three
 
 /* ---------- pieces ---------- */
@@ -68,14 +89,49 @@ function smooth3(pts, it=3){
     o.push(pts[pts.length-1]); pts=o; }
   return pts;
 }
-// the feed tube from the spool to the extruder, with the filament inside it up to `fil` (0..1) of the way
-function feedTube(st){
-  const sp = SPOOL, z = st.zt;
-  const q = smooth3([[sp[0]+8.6, PCY, sp[1]], [40, PCY, sp[1]-3], [42, (PCY+st.hy)/2, (sp[1]+z+20)/2 + 4], [NX-1, st.hy, z+24], [NX-1, st.hy, z+18]]);
+// where every part is right now, taken apart by st.ex (0 together, 1 apart): each part's offset, and how far the
+// hidden insides (the extruder's gears, the plastic between the parts) have faded in
+function exg(st){ const o = k => exOff(st, EXV[k]), g = { ia: clamp01(((st.ex || 0) - .15) / .35) };
+  for (const k in EXV) g[k] = o(k);
+  g.ez = st.zt + g.ext[2]; g.hz = st.zt + g.heat[2]; g.nz = st.zt + g.noz[2];   // the extruder, heater and nozzle heights
+  return g; }
+const filTube = st => clamp01(st.fil / .85), filIn = st => clamp01((st.fil - .85) / .15);   // the tube fills first, then the parts below it
+// the feed tube from the spool to the extruder, with the filament inside it up to filTube (0..1) of the way
+function feedTube(st, g){
+  const sp = [SPOOL[0], SPOOL[1] + g.spool[2]], z = g.ez, y = st.hy;
+  const q = smooth3([[sp[0]+8.6, PCY, sp[1]], [40, PCY, sp[1]-3], [42, (PCY+y)/2, (sp[1]+z+20)/2 + 4], [NX, y, z+27], [NX, y, z+21]]);
   const d = pd(q, false), sw = w => `style="stroke-width:${f(w)}"`, cp = 'fill="none" stroke-linecap="round" stroke-linejoin="round"';
   let s = `<path d="${d}" ${cp} stroke="${INK}" ${sw(2.2 + 2.2*INK_K)}/>` + `<path d="${d}" ${cp} stroke="${TUBE.m}" ${sw(2.2)}/>`;
-  if (st.fil > 0) s += `<path d="${d}" ${cp} stroke="${PLA.m}" ${sw(1.1)} pathLength="1" stroke-dasharray="${st.fil.toFixed(3)} 2"/>`;
+  if (st.fil > 0) s += `<path d="${d}" ${cp} stroke="${PLA.m}" ${sw(1.1)} pathLength="1" stroke-dasharray="${filTube(st).toFixed(3)} 2"/>`;
   return s + `<path d="${d}" ${cp} stroke="#ffffff" ${sw(.5)} opacity=".7" transform="translate(-.5 -.5)"/>`;
+}
+// a piece of the plastic string, straight down from z1 to z0 at (x, y), filled to k (0..1) from the top
+function strand(x, y, z1, z0, k){ if (k <= 0 || z1 - z0 < .3) return '';
+  const zb = z1 - (z1 - z0) * k; return rod([x, y, z1], [x, y, zb], .45, PLA, toneI, .5); }
+// a toothed gear face in the plane x, centred (y, z): n teeth, turned by angle a
+function gearFace(x, y, z, r, n, a){ const pts = [];
+  for (let i = 0; i < n * 4; i++){ const t = a + i / (n * 4) * 2 * Math.PI, rr = i % 4 < 2 ? r + .35 : r - .15;
+    pts.push([y + rr * Math.cos(t), z + rr * Math.sin(t)]); }
+  return on(PX(x), pts); }
+// the extruder: the motor at the back and, in front of it under a cover, the drive gear and the idler that pinch the
+// plastic string and push it down. Together only the cover shows; apart the cover fades and the gears come into view.
+function extruder(st, g, y, z){
+  const X0 = NX - 1, X1 = NX + 1.6, z0 = z + 13, z1 = z + 21, gz = z + 17, ia = g.ia, gy = y - 3, iy = y + 2.55;
+  let s = box(NX-7, y-4.5, z0, X0, y+4.5, z1, DARK, toneI, .9);                                    // motor
+  s += line(on(PX(X0 + .05), [[y-3.6, z1-.7], [y+3.6, z1-.7]]), .5);
+  if (ia > 0){ const a = -st.spin * 3, b = st.spin * 4;                                            // gears turn as the plastic moves
+    let gs = strand(NX + .3, y, z1 + .6, z0 - .6, st.fil >= .85 ? 1 : 0);
+    gs += cylX(X0, X1, gy, gz, 2.6, BRASS, toneI, .8)
+       + shape(gearFace(X1 + .05, gy, gz, 2.6, 12, a), BRASS.l, .7)
+       + shape(on(PX(X1 + .1), ellUV(gy, gz, .7, .7, 10)), BRASS.d, .5);                          // drive gear on the motor's shaft
+    gs += cylX(X0, X1, iy, gz, 2.1, METAL, toneI, .8)
+       + shape(on(PX(X1 + .1), ellUV(iy + 1.3*Math.cos(b), gz + 1.3*Math.sin(b), .35, .35, 8)), METAL.d, 0)
+       + shape(on(PX(X1 + .1), ellUV(iy, gz, .6, .6, 10)), METAL.d, .5);                          // idler bearing, pressed against it
+    s += `<g opacity="${ia.toFixed(2)}">${gs}</g>`; }
+  if (ia < 1) s += `<g opacity="${(1 - ia).toFixed(2)}">${box(X0, y-5.5, z0, NX+3, y+5.5, z1, DARK, toneI, .9)}</g>`;   // cover
+  const pts = [], corners = (x0, x1, w) => { for (const x of [x0, x1]) for (const yy of [y-w, y+w]) for (const zz of [z0, z1]) pts.push([x, yy, zz]); };
+  corners(NX-7, X0, 4.5); if (ia < .5) corners(X0, NX+3, 5.5);    // outline: motor and cover, or the motor alone
+  return s + hullInk(pts, 1.6);
 }
 // the pencil cup: an open cylinder with a faint line every second layer
 function cup(cx, cy, z0, h){
@@ -90,38 +146,63 @@ function cup(cx, cy, z0, h){
 }
 function nozzleMat(st){ const k = heatOf(st.nozT, NOZ_HOT) * .8;
   return { l:mix(BRASS.l, HOT, k), m:mix(BRASS.m, HOT, k), d:mix(BRASS.d, '#b8401c', k) }; }
-// print head: hot end + nozzle under a carriage that rides the gantry bar, extruder motor on top
-function head(st, m){
-  const y = st.hy, z = st.zt; let s = '';
-  s += box(NX-3, y-3, z+2, NX+3, y+3, z+5, METAL, toneI, .8);                                  // heater block
-  s += rod([NX, y, z+2], [NX, y, z], 1.5, nozzleMat(st), toneI, .8, .45);                       // nozzle
-  if (st.nozT > 150){ const [X,Y] = P(NX, y, z+1); s += `<circle cx="${f(X)}" cy="${f(Y)}" r="3.4" fill="${HOT}" opacity="${(.35*heatOf(st.nozT, NOZ_HOT)).toFixed(2)}"/>`; }
-  if (st.purge > 0){ const [X,Y] = P(NX, y, z - 1.4*st.purge); s += `<circle cx="${f(X)}" cy="${f(Y)}" r="${f(1.5*st.purge)}" fill="${PLA.l}" stroke="${INK}" stroke-width=".6"/>`; }
-  const car = [[27,y-6,z+5],[NX+5,y+6,z+13]];
-  s += box(27, y-6, z+5, NX+5, y+6, z+13, m, tone, .9);                                          // carriage
-  s += shape(on(PX(NX+5.1), ellUV(y, z+9, 3, 3, 18)), DARK.m, .8)                                // cooling fan
-     + line(on(PX(NX+5.2), [[y-2.1, z+9], [y+2.1, z+9]]), .6) + line(on(PX(NX+5.2), [[y, z+6.9], [y, z+11.1]]), .6);
-  s += box(NX-5, y-4, z+13, NX+1, y+4, z+18, DARK, toneI, .9);                                   // extruder motor
-  const pts = []; for (const x of [car[0][0], car[1][0]]) for (const yy of [y-6, y+6]) for (const zz of [z+5, z+18]) pts.push([x, yy, zz]);
-  return s + hullInk(pts, 1.8);
+// print head: hot end (heater block + nozzle) under a carriage that rides the gantry bar, the extruder on top.
+// Apart, the carriage slides aside along its bar and the plastic's parts stand in one column: extruder, heater, nozzle.
+function head(st, m, g){
+  const y = st.hy, z = st.zt, hz = g.hz, nz = g.nz, cy = y + g.car[1]; let s = '';
+  if (g.ia > 0) s += `<g opacity="${g.ia.toFixed(2)}">${strand(NX, y, g.ez + 13, nz + 2, filIn(st))}</g>`;   // the plastic between the parts
+  const nm = nozzleMat(st);
+  s += box(NX-3, y-3, hz+2, NX+3, y+3, hz+5, METAL, toneI, .8);                                 // heater block
+  s += cylX(NX+3, NX+3.9, y+1.4, hz+3.5, .8, { l:mix(DARK.l, HOT, heatOf(st.nozT, NOZ_HOT)*.7), m:DARK.m, d:DARK.d }, toneI, .6);   // its heater cartridge
+  s += rod([NX, y, nz+2], [NX, y, nz], 1.5, nm, toneI, .8, .45);                                 // nozzle
+  if (st.nozT > 150){ const [X,Y] = P(NX, y, nz + 1); s += `<circle cx="${f(X)}" cy="${f(Y)}" r="3.4" fill="${HOT}" opacity="${(.35*heatOf(st.nozT, NOZ_HOT)).toFixed(2)}"/>`; }
+  if (st.purge > 0){ const [X,Y] = P(NX, y, nz - 1.4*st.purge); s += `<circle cx="${f(X)}" cy="${f(Y)}" r="${f(1.5*st.purge)}" fill="${PLA.l}" stroke="${INK}" stroke-width=".6"/>`; }
+  s += box(27, cy-6, z+5, NX+5, cy+6, z+13, m, tone, .9);                                        // carriage
+  s += shape(on(PX(NX+5.1), ellUV(cy, z+9, 3, 3, 18)), DARK.m, .8)                               // cooling fan
+     + line(on(PX(NX+5.2), [[cy-2.1, z+9], [cy+2.1, z+9]]), .6) + line(on(PX(NX+5.2), [[cy, z+6.9], [cy, z+11.1]]), .6);
+  const pts = []; for (const x of [27, NX+5]) for (const yy of [cy-6, cy+6]) for (const zz of [z+5, z+13]) pts.push([x, yy, zz]);
+  s += hullInk(pts, 1.8);
+  return s + extruder(st, g, y, g.ez);
 }
-function spool(st, m){
-  const [x, z] = SPOOL, r = 8.6 - .9 * st.used; let s = '';
-  s += box(x-1, 22, 74, x+1, 24, z, METAL, toneI, .8);                                            // far holder
+// the motors that move the nozzle and the bed: the X motor at the right end of the gantry bar drives the belt that
+// pulls the carriage side to side; the Z motor on the base turns the lead screw that lifts the gantry
+function xMotor(st, g){
+  const z = st.zt, o = g.xmot; let s = '';
+  s += box(27 + o[0], 3 + o[1], z+5, 33 + o[0], 10 + o[1], z+12, DARK, toneI, 1);
+  s += shape(on(PX(33.1 + o[0]), ellUV(6.5 + o[1], z+8.5, 1.7, 1.7, 14)), DARK.l, .6);
+  return s;
+}
+function belt(st){
+  const z = st.zt, x = 27.25, a = z + 7.6, b = z + 9.4;
+  return `<path d="${pd(on(PX(x), [[6, a], [58.6, a]]), false)} ${pd(on(PX(x), [[6, b], [58.6, b]]), false)}" fill="none" stroke="${DARK.d}" stroke-width="1.1" stroke-linecap="round"/>`
+    + shape(on(PX(x + .05), ellUV(58.6, z + 8.5, 1.1, 1.1, 12)), METAL.m, .6);                   // the idler pulley at the far end
+}
+function zMotor(){
+  const [x0, y0, x1, y1] = ZM;
+  return box(x0, y0, 10, x1, y1, 16.5, DARK, toneI, 1)
+    + cyl(ZS[0], ZS[1], 16.5, 18, 1.1, METAL, toneI, .7);                                 // the coupling on its shaft
+}
+function leadScrew(st){
+  const z = st.zt; let s = rod([ZS[0], ZS[1], 18], [ZS[0], ZS[1], 68], .55, METAL, toneI, .6);
+  return s + box(27, 57, z+6, 30, 63, z+11, METAL, toneI, .8);                                   // the nut block on the gantry
+}
+function spool(st, m, g){
+  const [x, z0] = SPOOL, z = z0 + g.spool[2], r = 8.6 - .9 * st.used; let s = '';
+  s += box(x-1, 22, 74, x+1, 24, z0, METAL, toneI, .8);                                           // far holder
   s += rod([x, 20, z], [x, 44, z], .8, METAL, toneI, .7);                                          // axle
   s += rod([x, 25, z], [x, 26.5, z], 11, DARK, toneI, 1);                                          // far flange
   s += rod([x, 26.5, z], [x, 37.5, z], r, PLA, toneI, 1);                                          // the filament, wound
   s += rod([x, 37.5, z], [x, 39, z], 11, DARK, toneI, 1.2);                                        // near flange
   const a = st.spin;                                                                                // a hole in the flange shows it turning
   s += shape(on(PY(39.1), ellUV(x + 6.5*Math.cos(a), z + 6.5*Math.sin(a), 1.6, 1.6, 12)), DARK.d, .6);
-  s += box(x-1, 40, 74, x+1, 42, z, METAL, toneI, .8);                                             // near holder
+  s += box(x-1, 40, 74, x+1, 42, z0, METAL, toneI, .8);                                            // near holder
   return s;
 }
 
 /* ---------- scene ---------- */
 function scene(st, m){
   let s = '';
-  const bx = st.bx;
+  const g = exg(st), bx = st.bx + g.bed[0];   // g: where each part is, taken apart by st.ex
   // 1 cast shadows: base, both posts, the top bar with the spool (they touch, so they read as one object)
   const base = [], postR = [], postL = [], top = [];
   for (const x of [0, W]) for (const y of [0, PW]) for (const z of [0, 10]) base.push([x, y, z]);
@@ -153,15 +234,18 @@ function scene(st, m){
   const sheet = { l:mix(DARK.l, '#9a3b32', heatOf(st.bedT, BED_HOT)*.45), m:mix(DARK.m, '#7a2a24', heatOf(st.bedT, BED_HOT)*.45), d:DARK.d };
   s += box(NX-14+bx, 16, 10, NX+14+bx, 48, 12, METAL, toneI, .8);
   s += act('bed', box(NX-18+bx, 12, 12, NX+18+bx, 52, Z0, sheet, toneI, 1.2));
-  // 6 the near post, the top bar and the spool on it
+  // 6 the near post, the Z motor on the base in front of it, the top bar and the spool on it
   s += box(20, PW-4, 10, 24, PW, 70, m, tone, 1);
+  s += zMotor();
   s += box(20, 0, 70, 24, PW, 74, m, tone, 1.1);
-  s += act('spool', spool(st, m));
-  // 7 gantry bar (rides up the posts), the part on the bed, then the print head in front of both
-  s += box(24, 0, st.zt+7, 27, PW, st.zt+10, METAL, toneI, .9);
+  s += act('spool', spool(st, m, g));
+  // 7 gantry bar (rides up the posts) with its belt, the X motor at its right end and the lead screw at its left,
+  //   the part on the bed, then the print head in front of all of them
+  s += box(24, 0, st.zt+7, 27, PW, st.zt+10, METAL, toneI, .9) + belt(st);
+  s += xMotor(st, g) + leadScrew(st);
   if (st.part === 'bed') s += cup(NX + bx, PCY, Z0, st.partH);
-  s += head(st, m);
-  s += feedTube(st);
+  s += head(st, m, g);
+  s += feedTube(st, g);
   // 8 cups standing on the table (far one first), then the cup on its way off the bed
   for (let i = st.cups - 1; i >= 0; i--) s += cup(DESKS[i][0], DESKS[i][1], 0, LAYERS);
   if (mv) s += cup(...mv, LAYERS);
@@ -181,7 +265,7 @@ function scene(st, m){
 
 /* ---------- behaviour ---------- */
 const layerOf = st => Math.max(1, Math.min(LAYERS, Math.floor(st.prog * LAYERS) + 1));
-const busy = st => st.phase !== 'idle';
+const busy = st => st.phase !== 'idle' || !!st.exPh;          // exPh: the engine is taking it apart or putting it together
 const COOL_OK = 35;                                            // below this the bed lets the cup go
 // the cup on its way from the bed to the next free spot on the table, lifted in an arc: [x, y, z] of its base
 function movingCup(st){
@@ -251,7 +335,7 @@ ui = mountFigure({
   fig:'04', title:'3D printer', hint:'heat it, load the plastic, print a pencil cup, take it off',
   size:[W, D, H],
   state:{ phase:'idle', nozT:ROOM, bedT:ROOM, fil:0, loaded:false, purge:0, prog:0, partH:0, part:'none', move:0, cups:0,
-          bx:0, hy:PCY, zt:REST_Z, spin:0, used:0 },
+          bx:0, hy:PCY, zt:REST_Z, spin:0, used:0, ex:0 },
   scene,
   caption: st => {
     if (st.phase === 'heat') return CAP.heat;
@@ -274,7 +358,33 @@ ui = mountFigure({
     { label:'Print', onClick:print, predict:'The nozzle only ever moves in a flat circle. How will the cup get taller?' },
     { label:'Remove part', onClick:removePart, predict:'The cup stuck tight to the warm bed while it printed. Why will it come off now?' },
   ],
-  walk:['Heat up', 'Load filament', 'Print', 'Remove part'],
+  walk:['Heat up', 'Load filament', 'Print', 'Remove part'],   // the engine adds Take apart as the last step
+  // Take apart: the plastic's path, part by part, and the motors that move the nozzle and the bed (off the path)
+  apart:{ flow:'plastic',
+    parts: st => { const g = exg(st), y = st.hy, ph = st.phase, z = st.zt, bx = st.bx + g.bed[0];
+      const feeding = ph === 'load' || ph === 'print', hot = ph === 'heat' || feeding;
+      // the gantry's height changes (it rests higher after a print): pills on parts that ride it stay where they sit
+      // at the usual resting height, and only their leaders follow
+      const pin = (p3, dx, dy) => { const [X, Y] = P(...p3), [RX, RY] = P(p3[0], p3[1], p3[2] - z + REST_Z);
+        return [dx + (RX - X) / INK_K, dy + (RY - Y) / INK_K]; };
+      return [ { label:'SPOOL', pos:[SPOOL[0], 39, SPOOL[1] + g.spool[2] + 5], tag:[-64, -14], on:() => feeding },
+        { label:'EXTRUDER', pos:[NX + 1.6, y - 3, g.ez + 17], tag:pin([NX + 1.6, y - 3, g.ez + 17], -117, -54), on:() => feeding },
+        { label:'HEATER', pos:[NX + 3, y - 3, g.hz + 3.5], tag:pin([NX + 3, y - 3, g.hz + 3.5], 80, -10), on:() => hot },
+        { label:'NOZZLE', pos:[NX + .6, y - .6, g.nz + .6], tag:pin([NX + .6, y - .6, g.nz + .6], 140, 4), on:() => ph === 'load' && st.fil >= 1 || ph === 'print' },
+        { label:'BED', pos:[NX + 18 + bx, 16, Z0], tag:[60, 40], on:() => ph === 'heat' || ph === 'print' },
+        { label:'X MOTOR', pos:[33 + g.xmot[0], 4 + g.xmot[1], z + 12], tag:pin([33 + g.xmot[0], 4 + g.xmot[1], z + 12], 60, -40), path:false, on:() => ph === 'print' },
+        { label:'BELT', pos:[27.25, 50, z + 9.4], tag:pin([27.25, 50, z + 9.4], -70, 10), path:false, on:() => ph === 'print' },
+        { label:'Z MOTOR', pos:[ZM[2], 60, 16.5], tag:[-90, -30], path:false, on:() => ph === 'print' } ]; },
+    path: st => { const g = exg(st), y = st.hy;
+      return [[SPOOL[0] + 8.6, PCY, SPOOL[1] + g.spool[2]], [NX + .3, y, g.ez + 17], [NX, y, g.hz + 3.5], [NX, y, g.nz + 1], [NX + st.bx + g.bed[0], PCY, Z0]]; },
+    caption: st => {
+      if (st.phase === 'heat') return CAP.apHeat;
+      if (st.phase === 'load') return st.fil < 1 ? CAP.apPush : CAP.apOoze;
+      if (st.loaded) return st.nozT >= 180 ? CAP.apReady : CAP.apCool;
+      return st.nozT >= 180 ? CAP.apHot : CAP.apCold; },
+    predict:CAP.apPredict,
+    allow:['Heat up', 'Load filament', 'heat', 'spool'],      // only the plastic heats and flows; nothing moves
+    ready: st => busy(st) ? 'Wait for the printer to finish this step' : st.part === 'moving' ? 'Wait for the cup to reach the table' : '' },
   acts:{ heat:(st,el,ui) => heatUp(st,ui), spool:(st,el,ui) => loadFilament(st,ui), bed:(st,el,ui) => removePart(st,ui) },
   params:(st, q) => {
     const prog = q.has('prog') ? clamp01(+q.get('prog')) : null;
@@ -285,6 +395,7 @@ ui = mountFigure({
       const a = prog * LAYERS * 2 * Math.PI; st.bx = -CUP_R * Math.cos(a); st.hy = PCY + CUP_R * Math.sin(a);
       st.zt = Z0 + Math.floor(prog * LAYERS) + 1; st.used = prog;
       if (prog >= 1){ st.bx = 0; st.hy = PCY; st.zt = Z0 + LAYERS + 1 + LIFT; } }
+    if (q.has('ex')) st.ex = +q.get('ex') || 1;             // taken apart: ?ex=1
     if (q.has('cups')){ st.cups = Math.max(0, Math.min(DESKS.length, Math.round(+q.get('cups')))); st.loaded = true; st.fil = 1;
       st.zt = Z0 + LAYERS + 1 + LIFT; st.used = st.cups; }
   },
