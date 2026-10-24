@@ -244,34 +244,148 @@ const boxAt = st => { const t = st.soapAnim == null ? 0 : st.soapAnim, u = ease(
    machine to its inlet valve and its pump. Everything stays left of the body's outline (x − y < −66), so it never
    overlaps the body on screen and can be drawn before it; the body hides the hose ends behind it. ---------- */
 const PIPE_X = 4, SUP_Y = D + 9, DRN_Y = D + 17, TAP_Z = 72, STAND_Z = 60;
-const SUP_HOSE = [[PIPE_X - 3, SUP_Y, TAP_Z], [-1.5, SUP_Y - .5, TAP_Z - 1], [-4, SUP_Y - 3, TAP_Z - 3], [-5, D + 1, TAP_Z - 2], [-5, D - 6, TAP_Z + 3], [-4, 46, 81]];
+// the inlet hose runs behind the machine, below its top edge, to the inlet valve at the back right (hidden by the body)
+const SUP_HOSE = [[PIPE_X - 3, SUP_Y, TAP_Z], [-1.5, SUP_Y - .5, TAP_Z - 1], [-4, SUP_Y - 3, TAP_Z - 3], [-5, D + 1, TAP_Z - 2], [-5, D - 6, TAP_Z + 3], [-4, 44, 78], [-4, 26, 79], [-3.2, 14, 79]];
 const DRN_HOSE = [[-4, 30, 14], [-5, D - 6, 18], [-4, D + 6, 22], [-2, DRN_Y - 3, 44], [0, DRN_Y - 1.5, STAND_Z + 5], [PIPE_X, DRN_Y, STAND_Z + 4.5], [PIPE_X + .4, DRN_Y, STAND_Z + 1.5]];
-const DRN_HOOK = (q => q.slice(q.findIndex((p, i) => i > q.length/2 && p[2] > STAND_Z + .3)))(smooth3(DRN_HOSE));   // the end of DRN_HOSE, above the rim (already smoothed)
+const hookOf = q => q.slice(q.findIndex((p, i) => i > q.length/2 && p[2] > STAND_Z + .3));   // the end of a smoothed drain hose, above the rim
 const TAP_B = matOf('#3e86d9'), PIPE_M = { l:'#d9dedf', m:'#aab2b4', d:'#7d8689' }, DRAIN_M = { l:'#c9cfd0', m:'#9aa3a6', d:'#6a7377' };
 const plumbShadow = () => castShadow([...on(PZ(0), ellUV(PIPE_X, SUP_Y, 1.2, 1.2, 10)), ...on(PZ(TAP_Z + 4), ellUV(PIPE_X, SUP_Y, 1.2, 1.2, 10))])
   + castShadow([...on(PZ(0), ellUV(PIPE_X, DRN_Y, 2.4, 2.4, 12)), ...on(PZ(STAND_Z), ellUV(PIPE_X, DRN_Y, 2.4, 2.4, 12))]);
 function plumbing(st){
-  const p = prog(st), inF = st.run && !st.paused && inflowAt(p, st.tau), outF = st.run && !st.paused && outflowAt(p, st.tau);
+  const p = prog(st), inF = inFlow(st), outF = outFlow(st);
+  const DRN = drainPts(st), SUP = supPts(st), HOOK = hookOf(smooth3(DRN));
   let s = '';
   // 1 the drain hose, from the pump behind the machine up beside the standpipe (it passes behind the pipe)
-  s += tube(DRN_HOSE, 1.3, DRAIN_M, true);
-  if (outF) s += flow(DRN_HOSE, 1.1, '#4f9fdc', st.tau);
+  s += tube(DRN, 1.3, DRAIN_M, true);
+  if (outF) s += flow(DRN, 1.1, '#4f9fdc', st.tau);
   // 2 the drain standpipe: an open pipe; its mouth is dark
   const sA = on(PZ(0), ellUV(PIPE_X, DRN_Y, 2.4, 2.4, 20)), sB = on(PZ(STAND_Z), ellUV(PIPE_X, DRN_Y, 2.4, 2.4, 20));
   s += loft(sA, sB, n => toneI(n, PIPE_M)) + hullInk([...sA, ...sB], 1.2);
   s += fill(pd(sB), PIPE_M.l) + fill(pd(on(PZ(STAND_Z), ellUV(PIPE_X, DRN_Y, 1.7, 1.7, 20))), '#2b3134') + ink(pd(sB), .9);
   // 3 the hose's hook over the rim, on top of the pipe
-  s += tube(DRN_HOOK, 1.3, DRAIN_M, true, 0);
-  if (outF) s += flow(DRN_HOOK, 1.1, '#4f9fdc', st.tau, 0);
+  s += tube(HOOK, 1.3, DRAIN_M, true, 0);
+  if (outF) s += flow(HOOK, 1.1, '#4f9fdc', st.tau, 0);
   // 4 the supply pipe with its tap: valve body, blue handle (cold), and a short spout the inlet hose screws onto
   s += cyl(PIPE_X, SUP_Y, 0, TAP_Z - 1.6, 1.1, PIPE_M, toneI, 1, 16);
   s += cyl(PIPE_X, SUP_Y, TAP_Z - 2, TAP_Z + 2.4, 1.9, PIPE_M, toneI, 1.1, 16);
   s += rod([PIPE_X, SUP_Y, TAP_Z], [PIPE_X - 3, SUP_Y, TAP_Z], .9, PIPE_M, toneI, .9);
   s += rod([PIPE_X, SUP_Y, TAP_Z + 2.4], [PIPE_X, SUP_Y + 4.5, TAP_Z + 3.4], .7, TAP_B, toneI, .9);
   // 5 the inlet hose, from the tap round behind the machine to its inlet valve
-  s += tube(SUP_HOSE, 1.1, { l:'#ffffff', m:'#e8ecec', d:'#b9c0c1' });
-  if (inF) s += flow(SUP_HOSE, .9, '#4f9fdc', st.tau);
+  s += tube(SUP, 1.1, INLET_M);
+  if (inF) s += flow(SUP, .9, '#4f9fdc', st.tau);
   return s;
+}
+
+/* ---------- Take apart: the parts inside the case, drawn only once it starts to come apart. Water path:
+   tap → inlet hose → INLET VALVE (back, top right) → hose → SOAP DRAWER (its box sits behind the drawer front)
+   → bellows → DRUM (the outer tub, with the turning drum inside) → sump hose → PUMP (under the tub, front left)
+   → DRAIN HOSE → standpipe. The MOTOR under the tub turns the drum through the BELT and the big pulley on the
+   tub's back. Taken apart, the case slides off to the right (and a little forward, clear of the parts); the valve and the drawer lift up, the pump slides out
+   to the left, and the motor and belt slide out of the back; the tub stays where it is. ---------- */
+const EXP = { case:[15, -82, 0], valve:[0, 0, 22], disp:[12, 0, 20], pump:[0, 30, 0], drive:[-30, 0, 0] };
+const apK = st => exOff(st, [1, 0, 0])[0];                                          // 0 together … 1 apart (eased)
+const insA = st => Math.max(0, Math.min(1, (apK(st) - .25) / .45));                 // the inside parts fade in as the case clears
+const fadeIn = (st, svg) => { const a = insA(st); return a <= 0 ? '' : a >= 1 ? svg : `<g opacity="${a.toFixed(2)}">${svg}</g>`; };
+const add3 = (p, d) => [p[0]+d[0], p[1]+d[1], p[2]+d[2]];
+const lerp3 = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
+// draw fn() moved by the 3D offset d (a whole part at once: everything goes through P, which adds OX/OY)
+const shiftBy = (d, fn) => { const [dx, dy] = Dv(...d); OX += dx; OY += dy; try { return fn(); } finally { OX -= dx; OY -= dy; } };
+const inFlow = st => st.run && !st.paused && inflowAt(prog(st), st.tau);
+const outFlow = st => st.run && !st.paused && outflowAt(prog(st), st.tau);
+const turning = st => st.run && !st.paused && st.door === 0;
+const drumA = st => st.run ? angleAt(prog(st), st.tau) : st.restA;
+
+const TUB_X0 = 16, TUB_R = 24.5, TUB_M = { l:'#f1f3f2', m:'#ccd2d3', d:'#949da0' };
+const tubTop = y => CZ + Math.sqrt(Math.max(0, TUB_R*TUB_R - (y - CY)**2)), tubBot = y => 2*CZ - tubTop(y);
+const TUB_IN = [46, 47, tubTop(47)], TUB_OUT = [50, 41, tubBot(41)];
+const VALVE_M = { l:'#f4f5f3', m:'#d3d8d9', d:'#9aa3a6' }, COIL_M = matOf('#3a3e40'), MOTOR_M = matOf('#7d8689');
+const DSP = { x0:32, y0:42, y1:60.5, z0:71, z1:84 };
+const PUMP = { y:50, z:6 }, MOTOR = { x0:12, x1:30, y:40, z:7.5, r:5.2 }, PUL = { x:10.5, r:12, rm:2.2 };
+
+// where the hoses run: they follow the parts they join, so they stretch as it comes apart
+function supPts(st){ const o = exOff(st, EXP.valve), n = SUP_HOSE.length;
+  return SUP_HOSE.map((p, i) => i === n - 1 ? add3(p, o) : i === n - 2 ? add3(p, o.map(v => v*.55)) : p); }
+const DRN_APART = [[49, 87.5, 6], [18, 87, 2.6], [2, 86.5, 6]];             // pump outlet, along the floor, round the standpipe
+function drainPts(st){ const k = apK(st); if (!k) return DRN_HOSE;
+  return [add3([49, 57.5, 6], exOff(st, EXP.pump)), lerp3(DRN_HOSE[1], DRN_APART[1], k), lerp3(DRN_HOSE[2], DRN_APART[2], k), ...DRN_HOSE.slice(3)]; }
+function v2dPts(st){ const v = exOff(st, EXP.valve), d = exOff(st, EXP.disp), m = lerp3(v, d, .5);
+  return [add3([8.6, 14, 79], v), add3([14, 15, 79.5], v), add3([22, 30, 80], m), add3([26, 45, 80], d), add3([29, 46, 80], d)]; }
+function bellowsPts(st){ const d = exOff(st, EXP.disp);
+  return [add3([46, 50, 69], d), add3([46, 49.5, 66], d.map(v => v*.6)), [46, 47.5, TUB_IN[2] + 4], [46, 47, TUB_IN[2] + 1.6]]; }
+function sumpPts(st){ const o = exOff(st, EXP.pump);
+  return [add3(TUB_OUT, [0, 0, -1.2]), [50, 41, TUB_OUT[2] - 4], add3([51, 46, 15], o.map(v => v*.5)), add3([51.5, 50, 15.5], o), add3([51.5, 50, 12.6], o)]; }
+
+// the outer tub, with the turning drum (and the clothes and water) seen through its mouth
+function tubPart(st){
+  const back = ringX(TUB_X0, TUB_R), front = ringX(W, TUB_R);
+  let s = loft(back, front, n => toneI(n, TUB_M));
+  for (const x of [26, 40]) s += `<path d="${pd(ringX(x, TUB_R + .05).filter(([, y, z]) => (y - CY) + (z - CZ) > 0), false)}" fill="none" stroke="${TUB_M.d}" stroke-width=".9"/>`;
+  s += `<path d="${pd(front)}${pd(ringX(W, RO))}" fill="${toneI([1,0,0], TUB_M)}" fill-rule="evenodd"/>`;
+  for (let i = 0; i < 8; i++){ const a = i/8*2*Math.PI + .2; s += fill(pd(on(PX(W + .05), ellUV(CY + 21.8*Math.cos(a), CZ + 21.8*Math.sin(a), .8, .8, 10))), TUB_M.d); }
+  s += clipTo(ringX(W, RO), drum(st));
+  s += ink(pd(ringX(W, RO)), 1.5) + ink(pd(front), 1.2) + hullInk([...back, ...front], 2.4);
+  s += rod([TUB_IN[0], TUB_IN[1], TUB_IN[2] - 1], [TUB_IN[0], TUB_IN[1], TUB_IN[2] + 1.8], 1.5, TUB_M, toneI, .9);   // inlet from the drawer
+  return s;
+}
+// inlet valve: a white body with a black coil; water comes in at the back and leaves at the front
+function valvePart(st){ return shiftBy(exOff(st, EXP.valve), () =>
+  rod([0, 14, 79], [-3.2, 14, 79], 1.3, TAP_B, toneI, .9) + box(0, 10.5, 76.5, 6, 17.5, 81.5, VALVE_M, toneI, 1.1)
+  + cyl(3, 14, 81.5, 85.8, 2.5, COIL_M, toneI, 1) + rod([6, 14, 79], [8.8, 14, 79], .85, VALVE_M, toneI, .8)); }
+// the soap drawer's box: water from the valve washes through it and down the bellows into the tub
+function dispPart(st){ const { x0, y0, y1, z0, z1 } = DSP;
+  return shiftBy(exOff(st, EXP.disp), () =>
+    rod([x0, 46, 80], [x0 - 3.2, 46, 80], .85, VALVE_M, toneI, .8) + box(x0, y0, z0, W - .3, y1, z1, VALVE_M, toneI, 1.1)
+    + shape(on(PX(W - .25), rectUV(y0 + .6, z0 + .6, y1 - .6, z1 - .6)), '#1f1d1a', .8)
+    + ink(pd([[x0 + 4, y1 + .05, z0 + 3], [W - 4, y1 + .05, z0 + 3]], false), .7)); }
+function pumpPart(st){ const { y, z } = PUMP;
+  return shiftBy(exOff(st, EXP.pump), () =>
+    cylX(40, 46, y, z, 3.4, MOTOR_M, toneI, 1, 18) + rod([49, y + 4, z], [49, y + 7.5, z], 1.05, PUMP_M2, toneI, .8)
+    + cylX(46, 54, y, z, 4.6, PUMP_M2, toneI, 1.2, 22) + cylX(54, 57.6, y, z, 3.3, VALVE_M, toneI, 1, 18)
+    + ink(pd(on(PX(57.65), [[y - 2, z], [y + 2, z]]), false), 1)); }
+const PUMP_M2 = matOf('#5a6266');
+// the drive: the big pulley on the tub's back, the belt, and the motor under the tub
+function drivePart(st){
+  const A = drumA(st), run = turning(st), r = PUL.r, rm = PUL.rm, my = MOTOR.y, mz = MOTOR.z;
+  return shiftBy(exOff(st, EXP.drive), () => {
+    let s = cylX(PUL.x - 1.6, PUL.x + 1.6, CY, CZ, r, METAL, toneI, 1.3, 36) + rod([PUL.x + 1.6, CY, CZ], [PUL.x + 4.5, CY, CZ], 1.4, METAL, toneI, .9);
+    for (let i = 0; i < 3; i++){ const a = A + i*2*Math.PI/3;
+      s += shape(on(PX(PUL.x + 1.65), ellUV(CY + 6.6*Math.cos(a), CZ + 6.6*Math.sin(a), 2.7, 2.7, 14)), '#3a4144', .8); }
+    // the belt: the outline round both pulleys, in the pulleys' groove
+    const loop = hull([...ellUV(CY, CZ, r + .2, r + .2, 40), ...ellUV(my, mz, rm + .4, rm + .4, 16)]), bp = on(PX(PUL.x), loop), d = pd(bp);
+    s += `<path d="${d}" fill="none" stroke="${INK}" style="stroke-width:${f(1.9 + 2.2*INK_K)}" stroke-linejoin="round"/>`
+       + `<path d="${d}" fill="none" stroke="#3b3734" style="stroke-width:1.9" stroke-linejoin="round"/>`
+       + `<path d="${d}" fill="none" stroke="#8a847d" style="stroke-width:.5" pathLength="1" stroke-dasharray=".012 .03" stroke-dashoffset="${f(run ? -A*.02 % 1 : 0)}"/>`;
+    s += cylX(PUL.x - 2, MOTOR.x0, my, mz, rm, METAL, toneI, .9, 14);
+    s += ink(pd(on(PX(PUL.x - 2.05), [[my, mz], [my + rm*.9*Math.cos(A*5), mz + rm*.9*Math.sin(A*5)]]), false), .8);
+    s += cylX(MOTOR.x0, MOTOR.x1, my, mz, MOTOR.r, MOTOR_M, toneI, 1.3, 24);
+    for (const x of [16, 19, 22, 25]) s += `<path d="${pd(ringX2(x, my, mz, MOTOR.r + .05), false)}" fill="none" stroke="${MOTOR_M.d}" stroke-width=".8"/>`;
+    return s + shape(on(PX(MOTOR.x1 + .05), ellUV(my, mz, 2.4, 2.4, 14)), MOTOR_M.d, .7);
+  });
+}
+// the visible half of a ring round the x axis at (y, z)
+const ringX2 = (x, y, z, r) => ellUV(y, z, r, r, 24).filter(([u, v]) => (u - y) + (v - z) > -.5*r).map(([u, v]) => [x, u, v]);
+function insideShadows(st){
+  const pO = exOff(st, EXP.pump), dO = exOff(st, EXP.drive);
+  return `<g opacity=".7">` + castShadow([...ringX(TUB_X0, TUB_R, 16), ...ringX(W, TUB_R, 16)])
+    + castShadow([...ringX2(40, 50 + pO[1], 6, 4.6), ...ringX2(57, 50 + pO[1], 6, 4.6)].map(p => [p[0], p[1], p[2] - 1.4]))
+    + shiftBy(dO, () => castShadow([...on(PX(12), ellUV(MOTOR.y, MOTOR.z, MOTOR.r, MOTOR.r, 12)), ...on(PX(30), ellUV(MOTOR.y, MOTOR.z, MOTOR.r, MOTOR.r, 12))])) + `</g>`;
+}
+// everything inside, in painter's order; 'behind' = what goes before the case, 'front' = after it
+const insideBehind = st => fadeIn(st, drivePart(st));
+function insideFront(st, jx, jy){
+  const inF = inFlow(st), outF = outFlow(st), BEL = bellowsPts(st), SUMP = sumpPts(st);
+  let s = '';
+  OX += jx; OY += jy;                                     // the tub shakes when it spins
+  try { s += tubPart(st); } finally { OX -= jx; OY -= jy; }
+  s += tube(SUMP, 1.1, RUBBER, true) + (outF ? flow(SUMP, .9, '#4f9fdc', st.tau) : '');
+  s += pumpPart(st);
+  s += tube(BEL, 1.7, RUBBER, true, 2) + (inF ? flow(BEL, 1.2, '#86c4ee', st.tau, 2) : '');
+  s += dispPart(st);
+  return fadeIn(st, s);
+}
+function insideTop(st){
+  const V2D = v2dPts(st);
+  return fadeIn(st, tube(V2D, .9, INLET_M) + (inFlow(st) ? flow(V2D, .7, '#4f9fdc', st.tau) : '') + valvePart(st));
 }
 
 /* ---------- state helpers ---------- */
@@ -545,19 +659,39 @@ function labels(st){
 
 /* ---------- scene ---------- */
 function scene(st, m){
-  const p = prog(st);
-  const FRONT = facing([1,0,0]), BACK = facing([-1,0,0]), LEFT = facing([0,1,0]), RIGHT = facing([0,-1,0]);
-  let s = castShadow([...on(PX(0), OUT), ...on(PX(W), OUT)]) + plumbShadow();
-  if (st.door > .02){ const th = ease(st.door) * DOOR_MAX; s += castShadow(dRing(0, RB, th, 24).concat(dRing(BT, RB, th, 24))); }
+  const p = prog(st), k = apK(st), cO = exOff(st, EXP.case);
+  // cast shadows: the case's moves with it (it slides along the floor)
+  let s = shiftBy(cO, () => castShadow([...on(PX(0), OUT), ...on(PX(W), OUT)])
+    + (st.door > .02 ? (th => castShadow(dRing(0, RB, th, 24).concat(dRing(BT, RB, th, 24))))(ease(st.door) * DOOR_MAX) : '')) + plumbShadow();
   s += basketShadow();
-  // the tap, the standpipe and their hoses stand beside the machine, left of its outline: drawn before it
-  s += plumbing(st);
+  if (k) s += fadeIn(st, insideShadows(st));
 
-  // spin shake: offset everything but the shadow
+  // spin shake: offset everything but the shadow (taken apart, only the tub shakes)
   const om = st.run ? omegaAt(p, st.tau) : 0, shake = Math.max(0, (Math.abs(om) - 8) / 12);
   const jx = shake * (.55*Math.sin(st.tau*97) + .3*Math.sin(st.tau*151)), jy = shake * (.45*Math.sin(st.tau*123 + 1));
-  OX += jx; OY += jy;
-  try {
+  if (!k){
+    // the tap, the standpipe and their hoses stand beside the machine, left of its outline: drawn before it
+    s += plumbing(st);
+    OX += jx; OY += jy;
+    try { s += cabinet(st, m, false); } finally { OX -= jx; OY -= jy; }
+    return s + labels(st);
+  }
+  // taken apart: what ends up left of the case (motor and belt, plumbing, valve) goes before it, so while the
+  // case still covers them it hides them; the tub, pump and soap drawer go after it (the case ends up behind them)
+  s += insideBehind(st) + plumbing(st) + insideTop(st);
+  const cs = 1 - k;
+  OX += jx*cs; OY += jy*cs;
+  try { s += shiftBy(cO, () => cabinet(st, m, true)); } finally { OX -= jx*cs; OY -= jy*cs; }
+  s += insideFront(st, jx, jy);
+  s += shiftBy(exOff(st, EXP.disp), () => drawer(st));       // the drawer front stays solid: it is on the outside
+  s += byDepth([{ at: basketAt(), svg: basket(st) }, ...flying(st)]);
+  return s + labels(st);
+}
+// the case: body, front panel, door, controls, and what stands on it. apart = it is sliding off the parts inside
+function cabinet(st, m, apart){
+  const FRONT = facing([1,0,0]), BACK = facing([-1,0,0]), LEFT = facing([0,1,0]), RIGHT = facing([0,-1,0]);
+  let s = '';
+  {
     // feet
     s += byDepth([[5,D-5],[5,5],[W-5,D-5],[W-5,5]].map(([x,y]) => ({ at:[x,y,0], svg: cyl(x, y, 0, PL + .5, 2.6, RUBBER, toneI, 1, 16) })));
 
@@ -565,8 +699,9 @@ function scene(st, m){
     let body = '';
     const X = PX(W);
     if (FRONT){
-      // drum through the opening
-      const inner = drum(st);
+      // drum through the opening (coming apart, the tub slides out of view: the inside of the case is dark)
+      const a = apart ? insA(st) : 0;
+      const inner = !apart ? drum(st) : fill(pd(ringX(W, RO)), '#22272a') + (a < 1 ? `<g opacity="${(1 - a).toFixed(2)}">${drum(st)}</g>` : '');
       body += clipTo(ringX(W, RO), st.door > .02 ? act('door', fill(pd(ringX(W, RO)), 'transparent') + inner) : inner);
       // drawer cavity
       const dr = rectUV(DRW[0], DRW[1], DRW[2], DRW[3]);
@@ -610,17 +745,18 @@ function scene(st, m){
     const th = ease(st.door) * DOOR_MAX, s0 = ease(st.drawer) * DRAWER_MAX;
     const parts = [
       { at: dP(BT/2, uc, CZ, th), svg: door(st) },
-      { at: basketAt(), svg: basket(st) },
-      { at: [W + s0 + .7, (DRW[0]+DRW[2])/2, (DRW[1]+DRW[3])/2], svg: drawer(st) },   // pulled out, it sits in front of the door's top rim
       { at: boxAt(st), svg: soapBox(st) },
-      ...flying(st) ];
+      ...(apart ? [] : [
+        { at: basketAt(), svg: basket(st) },
+        { at: [W + s0 + .7, (DRW[0]+DRW[2])/2, (DRW[1]+DRW[3])/2], svg: drawer(st) },   // pulled out, it sits in front of the door's top rim
+        ...flying(st) ]) ];
     const frontStuff = FRONT ? mounted + byDepth(parts) : byDepth(parts) + mounted;
 
     // whatever is on a face turned away goes BEFORE the body (it hides it; bits sticking out past the edge still show)
     if (FRONT) s += backBits() + body + frontStuff;
     else       s += frontStuff + body + backBits();
-  } finally { OX -= jx; OY -= jy; }
-  return s + labels(st);
+  }
+  return s;
 }
 
 /* ---------- behaviour: every move runs on ui.animate's dt, so Speed scales it and Next can finish it ---------- */
@@ -716,8 +852,36 @@ function toggleDrawer(st){
 }
 
 const cap = w => w[0] + w.slice(1).toLowerCase();
+/* ---------- Take apart: captions (each one short enough to be read within its phase of the wash), labels, path ---------- */
+const AP_CAP = {
+  idle:"Water's path: valve, soap drawer, drum, pump, drain hose. A motor and belt turn the drum.",
+  fill:'Water flows in: valve, soap drawer, drum. Later it goes out: pump, drain hose.',
+  wash:'No water flows now. The motor and belt turn the drum.',
+  drain:'Water flows out: drum, pump, drain hose, into the pipe.',
+  rinse:'Clean water flows in: valve, soap drawer, drum. The drum turns to rinse.',
+  spin:'The drum spins fast. Water flows out: drum, pump, drain hose.',
+  paused:"Paused. Water's path: valve, soap drawer, drum, pump, drain hose.",
+};
+function apGeo(st){
+  const vO = exOff(st, EXP.valve), dO = exOff(st, EXP.disp), pO = exOff(st, EXP.pump), mO = exOff(st, EXP.drive), DRN = drainPts(st);
+  return { vO, dO, pO, mO, DRN,
+    valve: add3([3, 14, 79], vO), disp: add3([W - 14, 51, 77.5], dO), pump: add3([50, PUMP.y, PUMP.z], pO) };
+}
+const apParts = st => { const g = apGeo(st), run = turning(st), inF = inFlow(st), outF = outFlow(st);
+  return [
+    { label:'INLET VALVE', pos: add3([0, 17.5, 81.5], g.vO), tag:[-80, -24], on: () => inF },
+    { label:'SOAP DRAWER', pos: add3([W - 4, DSP.y0 + 1, DSP.z1], g.dO), tag:[54, -48], on: () => inF },
+    { label:'DRUM', pos: [W, CY - 17, CZ - 13], tag:[60, 46], on: () => run },
+    { label:'PUMP', pos: add3([57.6, PUMP.y + 2.2, PUMP.z + 1.6], g.pO), tag:[58, 40], on: () => outF },
+    { label:'DRAIN HOSE', pos: g.DRN[1], tag:[-40, 44], on: () => outF },
+    { label:'MOTOR', pos: add3([24, MOTOR.y + 2, MOTOR.z - MOTOR.r + 1], g.mO), tag:[16, 44], on: () => run, path:false },
+    { label:'BELT', pos: add3([PUL.x, 43.6, 22], g.mO), tag:[-64, -14], on: () => run, path:false },
+  ]; };
+const apPath = st => { const g = apGeo(st), V2D = v2dPts(st);
+  return [g.valve, V2D[2], g.disp, add3(TUB_IN, [0, 0, 2]), [W, CY, CZ], TUB_OUT, g.pump, g.DRN[1], g.DRN[2], g.DRN[3], [PIPE_X, DRN_Y, STAND_Z + 1]]; };
+
 ui = mountFigure({
-  fig:'01', title:'Washing machine', hint:'load the laundry, add soap, pick a program, start, then unload',
+  fig:'01', title:'Washing machine', hint:'load the laundry, add soap, pick a program, start, unload, then take it apart',
   size:[W, D + 19, H],                                  // D + 19: the tap and the standpipe beside the machine
   state:{ prog:0, run:false, paused:false, loop:false, tau:0, done:false, washed:false, door:0, doorT:0, drawer:0, drawerT:0, restA:0,
           soapLvl:0, soapAnim:null, laundry:'basket', xfer:null, task:null, taskT:0 },   // starts empty: the laundry waits in the basket
@@ -750,6 +914,15 @@ ui = mountFigure({
       predict:'The door stayed locked the whole time the machine ran. Why does it lock?' },
   ],
   buttonsLabel:'Machine',
+  // taken apart, the case slides off and the parts spread out along the water's path; the wash still runs
+  apart:{ flow:'water', zoom:.8, parts: apParts, path: apPath,
+    caption: st => !st.run ? AP_CAP.idle : st.paused ? AP_CAP.paused : AP_CAP[phaseAt(prog(st), st.tau)],
+    out:"The case slides off. The parts spread out along the water's path: an exploded view.",
+    in:'The parts slide back in, and the case slides back over them.',
+    predict:'What do you think makes the drum turn?',
+    allow:['Start', 'start'],
+    // a part moving, or the drum turning, has to stop first (the captions of a running wash are timed to its phases)
+    ready: st => busy(st) ? 'Wait for the machine to finish this step' : st.run && !st.paused ? 'Pause the wash first: the drum is turning' : '' },
   acts:{ dial:(st,el,ui) => cycleProg(st,ui), start:(st,el,ui) => start(st,ui), door:(st,el,ui) => toggleDoor(st,ui),
          drawer:(st,el,ui) => st.run ? ui.flash('The drawer stays shut while the machine runs') : busy(st) ? ui.flash('Wait for the machine to finish this step') : toggleDrawer(st) },
   params:(st,q) => {
@@ -762,6 +935,7 @@ ui = mountFigure({
     if (q.get('done') === '1'){ st.done = st.washed = true; st.run = false; }
     if (q.has('soap')){ const v = +q.get('soap'); if (v > 0 && v < 1){ st.soapAnim = v; st.soapLvl = Math.max(0, Math.min(1, (v-.35)/.45)); st.drawer = st.drawerT = 1; } else st.soapLvl = v ? 1 : 0; }
     if (q.get('laundry') === 'basket'){ st.laundry = 'basket'; st.door = st.doorT = 1; st.washed = q.get('washed') === '1'; }
+    if (q.has('ex')) st.ex = +q.get('ex') || 1;
     if (q.has('unload')){ st.door = st.doorT = 1; st.washed = true; st.xfer = { dir:'out', T: +q.get('unload') * xferEnd() }; }
   },
 });
