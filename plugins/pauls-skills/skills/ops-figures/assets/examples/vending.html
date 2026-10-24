@@ -15,7 +15,10 @@
                        it drops behind the glass into the pickup tray       drink: shelf → tray, credit $2.00 → $0.50
    3 Take your drink   pull the pickup door down, lift the can out; the door falls shut   drink: tray → you
    4 Return change     the credit not spent drops down a chute into the coin cup   money: coin box → cup, credit $0
-   (5 Take coins       the change comes out of the cup                      money: cup → you) */
+   (5 Take coins       the change comes out of the cup                      money: cup → you)
+   Take apart (last): the door slides off to the right, and the parts behind it come out, in the order the coin and
+   then the signal travel: coin slot (on the door) → coin checker → control board → spiral motor → spiral → pickup
+   tray, with the coin cup under the checker. The buttons that move money and drinks still work apart. */
 
 /* ---------- geometry (x = depth, y = width, z = height) ---------- */
 const W = 90, D = 130, H = 232, R = 8, T = 6;
@@ -105,9 +108,10 @@ function lying(kind,col,yc,dx=0,dz=0){
 
 /* ---------- state ---------- */
 // flying: coins on their way into the slot (0..1 each); drop: a product being vended; take: the drink being lifted
-// out; chg: change dropping into the cup; msg/msgN: a short note on the machine's own screen
+// out; chg: change dropping into the cup; msg/msgN: a short note on the machine's own screen; foc: the last spiral
+// chosen [row, column], whose motor the exploded view shows
 const st = { credit:0, returned:0, sel:'', msg:'', msgN:0, drop:null, tray:null, take:null, got:'', chg:null, flying:[],
-             press:null, flap:0, flapTarget:0, stock: ROWS.map(() => COL_Y.map(() => 3)) };
+             press:null, flap:0, flapTarget:0, foc:[0,0], stock: ROWS.map(() => COL_Y.map(() => 3)) };
 
 /* ---------- coins in the return cup ---------- */
 const COIN = { l:'#f0d27a', m:'#d2ad4a', d:'#9a7a2a' };
@@ -180,8 +184,14 @@ function screenLines(){
   return st.credit > 0 ? ['CREDIT', money(st.credit)] : ['INSERT', 'COIN'];
 }
 
+let BASE_OX = null;
 function scene(){
   const m = PALS[st.pal];
+  // taken apart, the cabinet moves left as the door moves off to the right, so both stay in the frame (the engine's
+  // labels and path line are drawn after this with the same OX, so they line up)
+  if (BASE_OX === null) BASE_OX = OX;
+  OX = BASE_OX + SCENE_SHIFT * exK(st);
+  if (st.ex > 0) return apartScene(m);
   // which faces of the cabinet are toward the viewer in the current turn
   const FF = facing([1,0,0]), BF = facing([-1,0,0]), LF = facing([0,1,0]), RF = facing([0,-1,0]);
   let s = '';
@@ -222,16 +232,14 @@ function scene(){
   return s;
 }
 
-function frontAssembly(m){
-  let s = '';
-  const LW = facing([0,1,0]);          // which side wall of an opening we look at: y0-wall (view 0) or y1-wall (view 3)
-  const win = rectUV(WIN[0],WIN[1],WIN[2],WIN[3]), tray = rectUV(TRAY[0],TRAY[1],TRAY[2],TRAY[3]);
-  s += `<clipPath id="cWin"><path d="${pd(on(PX(W),win))}"/></clipPath><clipPath id="cTray"><path d="${pd(on(PX(W),tray))}"/></clipPath>`;
-
-  // interior behind the glass: lit cabinet, shelves bottom-up, products back-to-front
+// the cabinet's inside: lit walls, shelves bottom-up, products back-to-front. open = the door is off (taken apart):
+// the walls run right to the front, and the pickup bin at the bottom shows
+function interior(m, open){
+  const LW = facing([0,1,0]);
   let it = fill(pd(on(PX(T),IN)), '#e8eef0');
-  it += loft(on(PX(T),IN), on(PX(W-3),IN), n => n[2]>.7 ? '#d3dbde' : '#dfe7e9', true);
+  it += loft(on(PX(T),IN), on(PX(open ? W : W-3),IN), n => n[2]>.7 ? '#d3dbde' : '#dfe7e9', true);
   it += fill(pd(on(PY(LW ? T+.2 : D-T-.2),rectUV(T+10,60,W-10,206))), '#ffffff', 'opacity=".8"');   // light strip on the visible side wall
+  if (open) it += pickupBin(m);
   // the product being vended: on the shelf while its spiral turns (it is the front one of its column, one slot ahead),
   // then falling in the gap between the shelf fronts and the glass
   const dr = st.drop, turned = dr ? ease(Math.min(1, dr.h/DROP.turn)) * ITEM_STEP : 0;
@@ -258,7 +266,17 @@ function frontAssembly(m){
     const row = ROWS[dr.r], x = SHELF_X + (FALL_X - SHELF_X)*Math.min(1, fallK*4);
     it += ITEM[row.kind](x, COL_Y[dr.c] + (trayY(dr.c) - COL_Y[dr.c])*fallK, row.s - (row.s - 14)*fallK*fallK, row.cols[dr.c]);
   }
-  s += `<g clip-path="url(#cWin)">${it}</g>`;
+  return it;
+}
+
+function frontAssembly(m){
+  let s = '';
+  const LW = facing([0,1,0]);          // which side wall of an opening we look at: y0-wall (view 0) or y1-wall (view 3)
+  const win = rectUV(WIN[0],WIN[1],WIN[2],WIN[3]), tray = rectUV(TRAY[0],TRAY[1],TRAY[2],TRAY[3]);
+  s += `<clipPath id="cWin"><path d="${pd(on(PX(W),win))}"/></clipPath><clipPath id="cTray"><path d="${pd(on(PX(W),tray))}"/></clipPath>`;
+
+  // interior behind the glass
+  s += `<g clip-path="url(#cWin)">${interior(m, false)}</g>`;
 
   // glass: tint, streaks, window reveal
   const GX = PX(W-2.9), wy = LW ? WIN[0] : WIN[2];
@@ -289,17 +307,33 @@ function frontAssembly(m){
   s += `<g clip-path="url(#cCup)" data-act="cup">${fill(pd(on(PX(W),cup)),'transparent')}${cp}</g>`;
 
   // front face with its openings
-  const X = PX(W);
-  s += `<path d="${pd(on(X,OUT))}${pd(on(X,win))}${pd(on(X,tray))}${pd(on(X,cup))}" fill="${tone([1,0,0],m)}" fill-rule="evenodd"/>`;
-  s += ink(pd(on(X,win)),1.8) + ink(pd(on(X,tray)),1.6) + ink(pd(on(X,cup)),1.4);
-  s += shape(on(PX(W+.3),rrUV(10,62,32,82,3)), 'none', 1);   // metal bezel line
-  s += ink(pd([[W,36,8],[W,36,200]],false),1) + ink(pd([[W,36,200],[W,124,200]],false),1);
+  s += frontFace(m);
   s += pickupDoor();
-  if (lifted){                                    // the drink comes up out of the tray, over the open door, to you
-    const k = Math.min(1, (tk.h - TAKE.open)/TAKE.lift);
-    if (k < 1) s += `<g opacity="${(1 - k*k).toFixed(2)}">${lying(tk.kind, tk.col, tk.yc, 22*ease(k), 16*ease(k))}</g>`;
-  }
+  s += liftedDrink();
+  s += controls(m);
+  return s;
+}
 
+// the drink coming up out of the tray, over the open door, to you
+function liftedDrink(){
+  const tk = st.take;
+  if (!tk || tk.h <= TAKE.open) return '';
+  const k = Math.min(1, (tk.h - TAKE.open)/TAKE.lift);
+  return k < 1 ? `<g opacity="${(1 - k*k).toFixed(2)}">${lying(tk.kind, tk.col, tk.yc, 22*ease(k), 16*ease(k))}</g>` : '';
+}
+
+// the door's front face: one path with the window, tray and cup openings, and its trim lines
+function frontFace(m){
+  const X = PX(W), win = rectUV(...WIN), tray = rectUV(...TRAY), cup = rectUV(...CUP);
+  return `<path d="${pd(on(X,OUT))}${pd(on(X,win))}${pd(on(X,tray))}${pd(on(X,cup))}" fill="${tone([1,0,0],m)}" fill-rule="evenodd"/>`
+    + ink(pd(on(X,win)),1.8) + ink(pd(on(X,tray)),1.6) + ink(pd(on(X,cup)),1.4)
+    + shape(on(PX(W+.3),rrUV(10,62,32,82,3)), 'none', 1)   // metal bezel line
+    + ink(pd([[W,36,8],[W,36,200]],false),1) + ink(pd([[W,36,200],[W,124,200]],false),1);
+}
+
+// everything mounted on the front of the door: header sign, screen, keypad, coin slot, return button
+function controls(m){
+  let s = '';
   // header sign
   const F = PX(W+.3);
   s += shape(on(F,rrUV(8,204,122,224,4)), '#fff4d6', 1.4);
@@ -320,6 +354,143 @@ function frontAssembly(m){
   }
   s += `<g data-act="coin">${shape(on(F,rrUV(11,100,31,112,2.5)), METAL.m, 1.2)}${shape(on(PX(W+.5),rrUV(20,102,22.4,110,1)), '#26231f', .6)}${tx(W+.5, 26.5, 104, 'c', 4, INK)}</g>`;
   s += `<g data-act="ret">${shape(on(F,ellUV(21,92,3.6,3.6)), METAL.l, 1.1)}${tx(W+.5, 21, 90.6, 'RET', 2.4, INK)}</g>`;
+  return s;
+}
+
+/* ---------- take apart (exploded view) ----------
+   The door slides off to the right. The coin parts that sit behind it (coin checker, coin cup, control board) slide
+   straight out of the front, and the motor at the back of the chosen spiral comes forward over its shelf. Those inside
+   parts are drawn only once it starts coming apart, fading in. The coin's path: slot -> checker -> board; the board's
+   signal: board -> motor -> spiral; the drink: spiral -> pickup tray. */
+const DOOR_TO = [130, -130, 0];             // the door: out and off to the right (straight right on screen)
+const MECH_TO = [52, -14, 0];               // checker, cup and board: out of the front, clear of the cabinet
+const SCENE_SHIFT = -115;                   // screen units the whole picture moves left as it comes apart
+const CHK = [74, 9, 84, 90, 33, 124];       // coin checker at home (x0,y0,z0,x1,y1,z1): right behind the coin slot
+const POCKET = [76, 10, 58, 90, 32, 77];    // the coin cup's pocket, behind its opening in the door
+const CHUTE = [80, 20, 77, 87, 27, 84];     // the change chute from the checker down into the cup
+const BRD = [85, 3, 142, 87, 39, 198];      // control board: a thin plate behind the keypad
+const OPEN = rrUV(T, 16, D-T, H-T, R-T);    // the cabinet's open front with the door off (a low lip keeps drinks in)
+const PCB = { l:'#3f9a63', m:'#2f7d4f', d:'#1f5636' };
+const COPPER = '#c98a3a';
+// draw fn's parts moved by d (3D): the projection origin moves instead of every point
+const shiftBy = (d, fn) => { const [a, b] = Dv(...d); OX += a; OY += b; try { return fn(); } finally { OX -= a; OY -= b; } };
+const apartA = () => Math.max(0, Math.min(1, ((st.ex || 0) - .1) / .35));   // how far the inside parts have faded in
+const focusRC = () => st.drop ? [st.drop.r, st.drop.c] : st.foc;          // the spiral the motor belongs to
+const turning = () => !!st.drop && st.drop.h < DROP.turn;
+const spiralPt = ([r, c]) => [ITEM_X + ITEM_STEP/2, COL_Y[c], ROWS[r].s + 2*COIL_R + .3];
+// the motor: from the back of its spiral, forward and up, out in front of the machine (for the top row, into the
+// empty band above the cans)
+const motorPos = () => { const [r, c] = focusRC(), z = ROWS[r].s + COIL_R + .3; return exAt(st, [T+2, COL_Y[c], z], [W+12-(T+2), 0, 60]); };
+// the motor travels through the shelf on its way out: show it only once it is out in front
+const motorA = () => Math.max(0, Math.min(1, (exK(st) - .6) / .25));
+// a coin inside the checker: 0 = just in at the top, 1 = through (only while apart: c.n > 1)
+const coinIn = c => c.n > 1 && c.t > 1 ? Math.min(1, (c.t - 1)/(c.n - 1)) : -1;
+
+function apartScene(m){
+  const dd = exOff(st, DOOR_TO), md = exOff(st, MECH_TO), a = apartA();
+  const inside = svg => a > 0 ? `<g opacity="${a.toFixed(2)}">${svg}</g>` : '';
+  let s = castShadow([...on(PX(0),OUT), ...on(PX(W),OUT)]);
+  s += shiftBy(dd, () => castShadow([...on(PX(W-3),OUT), ...on(PX(W),OUT)]));
+  s += openFront(m);
+  s += loft(on(PX(0),OUT), on(PX(W),OUT), n=>tone(n,m)) + leftSide(m);
+  s += ink(pd(on(PX(W),OUT)),2.2) + hullInk([...on(PX(0),OUT), ...on(PX(W),OUT)], 2.8);
+  // the inside parts, back to front, then the door (the nearest thing)
+  const ma = motorA();
+  if (ma > 0) s += `<g opacity="${ma.toFixed(2)}">${motorSVG(motorPos())}</g>`;
+  s += inside(shiftBy(md, () => pocketSVG() + box(...CHUTE, METAL, toneI, .8) + checkerSVG() + boardSVG()));
+  s += shiftBy(dd, () => doorPanel(m));
+  return s;
+}
+
+// the cabinet with its door off: the inside, the pickup bin, the drink in it, and the front rim
+function openFront(m){
+  let it = interior(m, true);
+  const tk = st.take;
+  if (st.tray) it += act('tray', lying(st.tray.kind, st.tray.col, st.tray.yc));
+  else if (tk && tk.h <= TAKE.open) it += lying(tk.kind, tk.col, tk.yc);
+  return clipTo(on(PX(W),OPEN), it)
+    + `<path d="${pd(on(PX(W),OUT))}${pd(on(PX(W),OPEN))}" fill="${tone([1,0,0],m)}" fill-rule="evenodd"/>` + ink(pd(on(PX(W),OPEN)),1.6)
+    + liftedDrink();
+}
+// the pickup bin at the bottom of the cabinet, under the shelves: a floor and a back wall the drinks fall in front of
+function pickupBin(m){
+  const bx = 72;
+  return face(pd([[bx,T,14],[W,T,14],[W,D-T,14],[bx,D-T,14]]), mix(m.d,'#ffffff',.12))
+    + face(pd([[bx,T,14],[bx,D-T,14],[bx,D-T,43],[bx,T,43]]), m.d) + line([[bx,T,43],[bx,D-T,43]], .9);
+}
+
+// the door on its own: a slab with its openings, the glass, the pickup flap and everything on its front
+function doorPanel(m){
+  let s = extrude(OUT, W-3, W, m);
+  for (const [y0,z0,y1,z1] of [WIN, TRAY, CUP])     // the inside edges of its three openings
+    s += face(pd([[W-3,y0,z0],[W,y0,z0],[W,y0,z1],[W-3,y0,z1]]), mix(tone([0,1,0],m),'#000000',.15))
+       + face(pd([[W-3,y0,z0],[W,y0,z0],[W,y1,z0],[W-3,y1,z0]]), tone([0,0,1],m));
+  const GX = PX(W-2.9);
+  s += `<g pointer-events="none">${fill(pd(on(GX,rectUV(...WIN))),'#cfe9f0','opacity=".2"')}`
+     + fill(pd(on(GX,[[52,62],[66,62],[102,196],[88,196]])),'#ffffff','opacity=".38"')
+     + fill(pd(on(GX,[[72,62],[77,62],[113,196],[108,196]])),'#ffffff','opacity=".38"') + `</g>`;
+  s += frontFace(m) + pickupDoor() + controls(m);
+  for (const c of st.flying) s += flyingCoin(c.t);
+  return s + ink(pd(on(PX(W),OUT)),2.2) + hullInk([...on(PX(W-3),OUT), ...on(PX(W),OUT)], 2.6);
+}
+
+// coin checker: a dark box with a window on the front. The coin rolls down a rail through a copper coil, which tests
+// its size and metal
+function checkerSVG(){
+  const [x0,y0,z0,x1,y1,z1] = CHK, X = x1 + .15;
+  let s = box(x0,y0,z0,x1,y1,z1, DARK, toneI, 1.2);
+  s += shape(on(PZ(z1+.1), rectUV(x0+3, SLOT[0]-1.2, x1-3, SLOT[0]+1.2)), '#141619', .6);   // the coin's way in, on top
+  s += shape(on(PX(X), rectUV(y0+2, z0+3, y1-2, z1-3)), '#d9eef4', .9);                        // window
+  const A = [27, 117], B = [15, 92], dz = [B[0]-A[0], B[1]-A[1]], L = Math.hypot(...dz);
+  const nrm = [dz[1]/L, -dz[0]/L];                           // the rail's normal that points up (the coin rolls on top)
+  s += `<path d="${pd([[X+.1, ...A], [X+.1, ...B]], false)}" stroke="${INK}" stroke-width="2.6" stroke-linecap="round"/>`
+     + `<path d="${pd([[X+.1, ...A], [X+.1, ...B]], false)}" stroke="${METAL.m}" stroke-width="1.2" stroke-linecap="round"/>`;   // the rail
+  const mid = [(A[0]+B[0])/2 + 3.1*nrm[0], (A[1]+B[1])/2 + 3.1*nrm[1]];
+  const ringP = on(PX(X+.3), ellUV(mid[0], mid[1], 5, 5, 20));
+  for (const c of st.flying){ const u = coinIn(c); if (u < 0) continue;
+    const y = A[0] + dz[0]*u + 3.1*nrm[0], z = A[1] + dz[1]*u + 3.1*nrm[1], op = u > .85 ? (1 - u)/.15 : 1;
+    s += `<g opacity="${op.toFixed(2)}">${shape(on(PX(X+.2), ellUV(y, z, 3, 3, 16)), COIN.l, .8)}</g>`; }
+  s += `<path d="${pd(ringP)}" fill="none" stroke="${INK}" stroke-width="3.4"/><path d="${pd(ringP)}" fill="none" stroke="${COPPER}" stroke-width="2"/>`;   // the coil
+  return s;
+}
+// the coin cup's pocket: open at the front, with the change lying in it
+function pocketSVG(){
+  const [x0,y0,z0,x1,y1,z1] = POCKET;
+  let s = shape(on(PX(x0), rectUV(y0,z0,y1,z1)), mix(METAL.d,'#000000',.45), 0);
+  s += face(pd([[x0,y0,z0],[x1,y0,z0],[x1,y0,z1],[x0,y0,z1]]), mix(METAL.d,'#000000',.3));
+  s += face(pd(on(PZ(z0), rectUV(x0,y0,x1,y1))), METAL.m);
+  const nC = Math.round(st.returned / .5);
+  s += st.chg ? coins(nC, st.chg.from, 14*(1 - Math.min(1, st.chg.t)**2)) : coins(nC);
+  s += shape([[x0,y1,z0],[x1,y1,z0],[x1,y1,z1],[x0,y1,z1]], toneI([0,1,0],METAL), 1);
+  s += shape(on(PZ(z1), rectUV(x0,y0,x1,y1)), toneI([0,0,1],METAL), 1);
+  return act('cup', s + ink(pd(on(PX(x1), rectUV(y0,z0,y1,z1))), 1.2));
+}
+// control board: a green circuit board with chips, copper tracks and a light that comes on while it is working
+function boardSVG(){
+  const [x0,y0,z0,x1,y1,z1] = BRD, X = x1 + .1, lit = boardOn();
+  let s = box(x0,y0,z0,x1,y1,z1, PCB, toneI, 1.2);
+  let tr = '';                                                                       // copper tracks (y, z)
+  for (const t of [[[33,152],[33,174]], [[22,152],[22,164]], [[8,152],[8,180],[12,184],[18,184]], [[20,180],[20,191],[29,191]]])
+    tr += pd(t.map(([y, z]) => [X, y, z]), false);
+  s += `<path d="${tr}" fill="none" stroke="#d8b25a" stroke-width=".8" stroke-linecap="round"/>`;
+  s += box(x1, 12, 164, x1+1.8, 28, 180, DARK, toneI, .9);                         // the main chip
+  s += box(x1, 29, 185, x1+1.3, 35, 193, DARK, toneI, .7);                        // a small chip
+  s += box(x1, 7, 147, x1+2, 35, 152, METAL, toneI, .8);                          // the connector for the wires
+  const [lx, ly] = P(X+.2, 8, 192);
+  if (lit) s += `<circle cx="${f(lx)}" cy="${f(ly)}" r="${f(3.4)}" fill="#43c25c" opacity=".35"/>`;
+  s += `<circle cx="${f(lx)}" cy="${f(ly)}" r="${f(1.5)}" fill="${lit ? '#43c25c' : '#24432f'}" stroke="${INK}" stroke-width=".6"/>`;
+  return s;
+}
+const boardOn = () => turning() || st.flying.some(c => coinIn(c) > .6);
+// the spiral's motor, lying along its spiral: a shaft toward the spiral, a gearbox, then the motor can. A mark on its
+// end turns while it runs
+function motorSVG(p){
+  const [x, y, z] = p, dr = st.drop;
+  const turn = dr && dr.h < DROP.turn ? ease(dr.h/DROP.turn) : 0, a = turn * 6 * Math.PI;
+  let s = rod([x-7,y,z], [x,y,z], 1.1, METAL, toneI, .8);
+  s += box(x, y-6, z-6, x+6, y+6, z+6, DARK, toneI, 1.1);
+  s += rod([x+6,y,z], [x+18,y,z], 5, METAL, toneI, 1.3);
+  s += line([[x+18.1,y,z], [x+18.1, y+3.6*Math.cos(a), z+3.6*Math.sin(a)]], 1.2);
   return s;
 }
 
@@ -413,7 +584,17 @@ const CAP = {
   left:    (code, c) => `You have your ${code}. Press Return change to get your ${c} back.`,
   change:  c => `Your ${c} change drops down a chute into the coin cup.`,
   done:    code => `You have your ${code}. The machine is ready for the next customer.`,
+  // taken apart
+  apOut:   'The door comes off and the parts slide apart along the coin\'s path. This is called an exploded view.',
+  apIdle:  'Coin slot, checker, board, motor, spiral, tray: how a coin becomes a drink. Insert a coin.',
+  apCoin:  c => `The checker tests each coin and tells the control board your credit: ${c}.`,
+  apVend:  'The board sends power to the motor. The motor turns the spiral and the drink drops.',
+  apIn:    'The parts slide back in and the door closes over them.',
 };
+// taken apart: what is moving now, or (when nothing is) the path itself
+const apartCaption = st => st.drop ? CAP.apVend
+    : st.take || st.tray || st.chg || (st.got && st.credit > 0 && !st.flying.length) ? captionText(st)
+    : st.credit > 0 || st.flying.length ? CAP.apCoin(money(st.credit)) : CAP.apIdle;
 const DROP = { turn:1.0, fall:.55 };          // seconds: the spiral's turn, then the fall into the tray
 const TAKE = { open:.55, lift:.7, shut:.55 }; // seconds: door down, drink out, door falls shut at the end of the phase
 const captionText = st => st.take ? CAP.take(st.take.code)
@@ -432,15 +613,19 @@ const flash = (text, sec=1.4) => { st.msg = text; const n = ++st.msgN; ui.after(
 let pressTimer = 0;
 const press = k => { st.press = k; clearTimeout(pressTimer); pressTimer = setTimeout(() => { st.press = null; render(); }, 160); };
 
+// while the parts are sliding apart or back together, its own caption is up: the flow waits for it
+const MOVING = 'Wait: the parts are still moving';
 function vend(r, c){
   const row = ROWS[r], code = row.code + (c+1);
+  if (st.exPh) return ui.flash(MOVING);
   if (st.drop) return ui.flash('Wait for this drink to drop');
   if (st.tray) return flash('TAKE|ITEM');
   if (!st.stock[r][c]) return flash('SOLD|OUT');
   if (st.credit < row.price - 1e-9) return flash('INSERT|' + money(row.price - st.credit));
   st.credit -= row.price; st.stock[r][c]--; st.sel = ''; st.got = '';
-  st.drop = { r, c, code, h:0 };
-  const hold = READ_S(CAP.vend(code));                   // the drink lands early; the phase lasts until its caption is read
+  st.drop = { r, c, code, h:0 }; st.foc = [r, c];
+  // the drink lands early; the phase lasts until its caption (together or apart) is read
+  const hold = Math.max(READ_S(CAP.vend(code)), READ_S(CAP.apVend));
   ui.animate(dt => {
     st.drop.h += dt;
     if (!st.tray && st.drop.h >= DROP.turn + DROP.fall) st.tray = { kind:row.kind, col:row.cols[c], code, yc:trayY(c) };
@@ -454,24 +639,30 @@ function key(k){
   if (!st.sel){ flash('PICK|A-D'); return; }
   const r = 'ABCD'.indexOf(st.sel); st.sel = ''; vend(r, +k-1); render();
 }
-// a coin from your hand: it slides into the slot, and the machine counts it once it is inside
+// a coin from your hand: it slides into the slot, and the machine counts it once it is inside. Taken apart, you also
+// see it roll down through the checker (t 1..n) before it counts
 const coin = () => {
+  if (st.exPh) return ui.flash(MOVING);
   if (st.credit + st.flying.length*.5 >= 5) return flash('MAX|$5.00');
-  st.got = ''; const c = { t:0 }; st.flying.push(c);
+  st.got = ''; const c = { t:0, n: st.ex > .5 ? 2.6 : 1 }; st.flying.push(c);
   ui.animate(dt => {
     c.t += dt/.7;
-    if (c.t < 1) return true;
+    if (c.t < c.n) return true;
     st.flying.splice(st.flying.indexOf(c), 1); st.credit += .5; return false;
   });
 };
 const refund = () => {
+  if (st.exPh) return ui.flash(MOVING);
   st.sel = '';
   if (st.credit <= 0) return ui.flash('There is no credit to return');
   st.chg = { from: Math.round(st.returned/.5), t:0 };
   st.returned += st.credit; st.credit = 0; flash('COINS|BELOW');
-  ui.animate(dt => { st.chg.t += dt/.45; if (st.chg.t < 1) return true; st.chg = null; return false; });
+  // taken apart, the caption goes back to the path once the coins land, so the drop holds until its caption is read
+  const hold = st.ex > .5 ? READ_S(CAP.change(money(st.returned))) / .45 : 1;
+  ui.animate(dt => { st.chg.t += dt/.45; if (st.chg.t < hold) return true; st.chg = null; return false; });
 };
 const takeCoins = () => {
+  if (st.exPh) return ui.flash(MOVING);
   if (st.returned <= 0) return ui.flash('The coin cup is empty');
   if (st.chg) return ui.flash('Wait for the coins to land');
   const amt = st.returned; st.returned = 0; flash('THANK|YOU'); ui.flash(`Collected ${money(amt)}`);
@@ -490,16 +681,20 @@ function swing(target){
 const toggleFlap = () => st.take ? ui.flash('Wait: the door shuts on its own') : swing(st.flapTarget ? 0 : 1);
 // Take your drink: one thing a person does. Pull the door down, lift the drink out; the door falls shut by itself.
 function takeDrink(){
+  if (st.exPh) return ui.flash(MOVING);
   if (st.take) return ui.flash('You are already taking it');
   if (!st.tray) return ui.flash(st.drop ? 'Wait for the drink to drop' : 'Nothing in the tray yet');
   const { kind, col, code, yc } = st.tray;
-  st.take = { kind, col, code, yc, h:0 }; st.tray = null; st.flapTarget = 1;
+  // taken apart, the door (and its flap) is off to the side: the drink comes straight out of the bin
+  const apart = st.ex > .5;
+  st.take = { kind, col, code, yc, h:0 }; st.tray = null; if (!apart) st.flapTarget = 1;
   const f0 = st.flap, end = READ_S(CAP.take(code));
   ui.animate(dt => {
     const h = st.take.h += dt;
-    st.flap = h < end - TAKE.shut ? Math.max(f0, Math.min(1, h/TAKE.open)) : Math.max(0, (end - h)/TAKE.shut);
+    if (!apart) st.flap = h < end - TAKE.shut ? Math.max(f0, Math.min(1, h/TAKE.open)) : Math.max(0, (end - h)/TAKE.shut);
     if (h < end) return true;
-    st.flap = st.flapTarget = 0; st.got = code; st.take = null; flash('ENJOY|' + code); return false;
+    if (!apart) st.flap = st.flapTarget = 0;
+    st.got = code; st.take = null; flash('ENJOY|' + code); return false;
   });
 }
 
@@ -527,6 +722,24 @@ ui = mountFigure({
       predict:'Your coins are inside the machine now. How will the money you did not spend get back to you?' },
     { label:'Take coins', onClick: takeCoins },
   ],
+  // Take apart: the coin's path through the machine, and the board's signal to release the drink. Apart, the money and
+  // the drink still flow (coins, choosing, taking, change); the parts themselves (the flap) stay put
+  apart:{ flow:'coin',
+    parts: st => { const dd = exOff(st, DOOR_TO), md = exOff(st, MECH_TO), add = (p, d) => p.map((v, i) => v + d[i]);
+      const fc = focusRC(), mp = motorPos(), coinAt = (a, b) => st.flying.some(c => c.t >= a && c.t < b);
+      return [
+        { label:'COIN SLOT',     pos: add([W+.5, SLOT[0], SLOT[1]+4], dd), tag:[-75, -42], on: () => coinAt(0, 1) },
+        { label:'COIN CHECKER',  pos: add([CHK[3], CHK[1]+3, CHK[5]-2], md), tag:[80, 34], on: () => st.flying.some(c => coinIn(c) >= 0) },
+        { label:'CONTROL BOARD', pos: add([BRD[3]+.2, BRD[1]+8, BRD[5]-6], md), tag:[30, -85], on: boardOn },
+        { label:'MOTOR',         pos: [mp[0]+12, mp[1], mp[2]+5], tag:[30, -50], on: turning },
+        { label:'SPIRAL',        pos: spiralPt(fc), tag:[-110, -70], on: turning },
+        { label:'PICKUP TRAY',   pos: [W-6, trayY(fc[1]), 15], tag:[-120, 46], on: () => !!(st.tray || st.take || (st.drop && st.drop.h >= DROP.turn)) },
+        { label:'COIN CUP',      pos: add([POCKET[3], POCKET[1]+3, POCKET[2]+4], md), tag:[86, 44], on: () => !!st.chg, path:false },
+      ]; },
+    caption: apartCaption, out: CAP.apOut, in: CAP.apIn,
+    predict: 'How does the machine know you paid enough?',
+    allow: ['Insert 50c', 'Choose a drink', 'Take your drink', 'Return change', 'Take coins', 'key', 'item', 'coin', 'ret', 'tray', 'cup'],
+    ready: st => st.drop || st.take || st.flying.length || st.chg || st.flap !== st.flapTarget ? 'Wait for this step to finish' : '' },
   acts:{
     key:  (st,a) => key(a.dataset.k),
     item: (st,a) => vend(+a.dataset.r, +a.dataset.c),
@@ -536,6 +749,7 @@ ui = mountFigure({
     if (q.has('credit')) st.credit = +q.get('credit');
     if (q.get('flap') === '1') st.flap = st.flapTarget = 1;
     if (q.has('returned')) st.returned = +q.get('returned');
+    if (q.has('ex')) st.ex = +q.get('ex') || 1;
     const tq = /^([A-D])([1-4])$/.exec(q.get('tray') || '');
     if (tq){ const r = 'ABCD'.indexOf(tq[1]), c = +tq[2]-1, row = ROWS[r]; st.tray = { kind:row.kind, col:row.cols[c], code:tq[0], yc:trayY(c) }; }
   },
