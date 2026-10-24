@@ -18,7 +18,10 @@
    4 Play music  on the phone: phone → radio waves → antenna → chip   song: phone → air → chip → both speakers →
                  → wire in the headband → both speakers → your ears         air between the ear cups
    5 Turn off    you hold the button again: the chip sleeps and the   the phone is remembered for next time
-                 link drops, but the pairing stays */
+                 link drops, but the pairing stays
+   Take apart    the left ear cup comes apart along its axis, in the order the parts sit (cushion, speaker, shell,
+                 battery, chip, antenna, cover): the song's path is antenna → chip → speaker → cushion → ear.
+                 Apart, the song and the radio still run (power, pair, play, off); charging waits for the cup. */
 
 /* ---------- geometry (x = depth, y = width, z = height; 1 unit ≈ 4 mm) ---------- */
 const HP_W = 86, HP_D = 76, HP_H = 64;
@@ -29,7 +32,6 @@ const PH = [46, 23, 80, 40];                   // the phone lying on the desk: x
 const STRIP = [52, 64, 80, 71, 3.5];           // the power strip: x0, y0, x1, y1, height
 const USB = [56, 67.5, 3.5];                   // its USB port, on top
 const A_PH = [47.2, 31.5, 1.9];                // the phone's antenna (top edge)
-const A_HP = [XC + 2.4, 56.3, ZC + 6.8];       // the antenna on the circuit board in the left cup
 
 /* ---------- the captions, and how long each phase lasts: long enough to read its caption (READ_S) ---------- */
 const CAP = {
@@ -45,6 +47,13 @@ const CAP = {
   wire:'A thin wire inside the headband carries the signal to the other ear cup.',
   sound:"Each speaker's magnet pushes a thin cone back and forth. The cone shakes the air, and that is sound.",
   off:'You hold the button again. The chip goes to sleep and stops listening for the phone.',
+  // taken apart (the engine's own "out" caption says it is called an exploded view)
+  xDead:'Radio in, sound out: antenna, chip, speaker, ear cushion. But the battery is empty.',
+  xOff:'Radio in, sound out: antenna, chip, speaker, ear cushion. Turn them on to follow it.',
+  xOn:'Radio in, sound out: antenna, chip, speaker, ear cushion. Pair the phone to start it.',
+  xLink:'Radio in, sound out: antenna, chip, speaker, ear cushion. Play music to follow it.',
+  xDone:'The antenna caught the song, the chip made it a signal, and the speaker played it.',
+  xIn:'The parts slide back into the ear cup, and the cover closes it.',
 };
 const ends = keys => { let t = 0; return keys.map(k => t += READ_S(CAP[k])); };   // when each phase ends, in seconds
 const CHARGE_E = ends(['plugIn', 'fill', 'full']), PAIR_E = ends(['ask', 'answer', 'code']), PLAY_E = ends(['send', 'chip', 'wire', 'sound']);
@@ -79,6 +88,8 @@ const busy = st => st.phase !== 'idle';
 const chipOn = st => st.phase === 'play' && st.pt >= PLAY_E[0];
 const wireOn = st => st.phase === 'play' && st.pt >= PLAY_E[1];
 const soundOn = st => st.phase === 'play' && st.pt >= PLAY_E[2] && st.pt < PLAY_T - .2;
+const batteryOn = st => st.phase === 'charge' || st.phase === 'power' || st.phase === 'play';
+const chipWorking = st => st.phase === 'power' || st.phase === 'pair' || chipOn(st);
 function ledColour(st){
   if (st.phase === 'charge') return st.batt >= 100 ? '#43c25c' : st.plug >= 1 ? '#e2483d' : null;
   if (st.phase === 'pair') return Math.floor(st.tk * 4) % 2 ? '#4aa3ff' : null;
@@ -88,10 +99,10 @@ function ledColour(st){
 
 /* ---------- pieces ---------- */
 // sound: rings leaving a speaker into the space between the cups (dir = +1 from the right cup, -1 from the left)
-function soundRings(st, y0, dir){
+function soundRings(st, y0, dir, span = 13.5){
   let s = '';
   for (let k = 0; k < 3; k++){
-    const d = (st.tk * 7 + k * 4.5) % 13.5, r = 4.5 + d * .35, o = (1 - d / 13.5) * .85;
+    const d = (st.tk * 7 + k * span / 3) % span, r = 4.5 + d * .35 * 13.5 / span, o = (1 - d / span) * .85;
     s += `<path d="${pd(on(PY(y0 + dir*d), ellUV(XC, ZC, r*.78, r, 24)))}" fill="none" stroke="${RED}" stroke-width="1.3" opacity="${o.toFixed(2)}"/>`;
   }
   return s;
@@ -110,27 +121,66 @@ function rightCup(st, m){
   s += clipTo(hole, drv) + fill(pd(hole), '#9aa3c0', 'opacity=".18"') + ink(pd(hole), 1.1);
   return s + hullInk([...cupRing(0), ...cupRing(9), ...cupRing(14, 1.3)], 2.4);
 }
-// the left ear cup (near): a clear cover on the outside shows the battery and the circuit board
-function leftCup(st, m){
-  let s = loft(cupRing(44, 1.3), cupRing(49, .6), n => toneI(n, DARK));
-  s += loft(cupRing(49), cupRing(58), n => tone(n, m));
-  const outer = cupRing(58), win = on(PY(58), ellUV(XC, ZC, 7.8, 10.6, 28));
-  // seen through the cover: inside wall, back plate, circuit board, chip, antenna, battery (far to near)
-  let inside = fill(pd(win), DARK.l) + fill(pd(on(PY(55), ellUV(XC, ZC, 8, 10.8, 28))), DARK.m);
-  inside += box(XC - 1.5, 55, ZC - 4, XC + 6, 56.2, ZC + 9, PCB, toneI, .7);
-  const ant = [[5,4.6],[5,7.6],[3.6,7.6],[3.6,5.6],[2.2,5.6],[2.2,7.6],[.8,7.6],[.8,5.6],[-.6,5.6],[-.6,7.6]].map(([u,v]) => [XC + u, 56.25, ZC + v]);
-  const antOn = st.phase === 'pair' || (st.phase === 'play' && st.pt < PLAY_E[1]);
-  inside += `<path d="${pd(ant, false)}" ${CAPS} stroke="${antOn ? '#ffd27a' : GOLD}" stroke-width="${antOn ? 1.1 : .8}"/>`;
-  inside += box(XC + .5, 56.2, ZC - 1.5, XC + 4.5, 56.9, ZC + 2.5, DARK, toneI, .6);
-  if (chipOn(st) || st.phase === 'pair'){ const [X,Y] = P(XC + 2.5, 56.9, ZC + .5);
-    inside += `<circle cx="${f(X)}" cy="${f(Y)}" r="3.2" fill="#ff8a7a" opacity="${(.3 + .2*Math.sin(st.tk*9)).toFixed(2)}"/>`; }
-  inside += box(XC - 8, 55, ZC - 9, XC - .5, 57.2, ZC + 1.5, METAL, toneI, .8);
-  inside += txY(XC - 4.2, 57.25, ZC - 5.5, 'Li-ion', 2.1, INK, 600);
-  s += clipTo(win, inside);
-  s += fill(pd(win), '#cfe9f0', 'opacity=".2" pointer-events="none"')
-     + `<path d="${pd(on(PY(58.05), [[XC-5.5, ZC+4], [XC-1.5, ZC+8.5]]), false)}" stroke="#ffffff" stroke-width="1.1" opacity=".38" fill="none" pointer-events="none"/>`
-     + `<path d="${pd(on(PY(58.05), [[XC-6, ZC], [XC-4.6, ZC+1.6]]), false)}" stroke="#ffffff" stroke-width="1.1" opacity=".38" fill="none" pointer-events="none"/>`;
-  s += `<path d="${pd(outer)}${pd(win)}" fill="${tone([0,1,0], m)}" fill-rule="evenodd"/>` + ink(pd(outer), 1.3) + ink(pd(win), 1.1);
+/* the left ear cup (near). Its parts, along its axis (y) from the ear outward, as built:
+     ear cushion 44–49 · speaker (cone 47.6–50, coil and magnet to 52.2) · shell 49–56.5 (on the yoke, with the port,
+     light and button) · battery 52.5–54.3 · chip board 54.5–55.9 · antenna board 55.4–55.9 · outer cover 56.5–58
+   Take apart: the shell stays on the headband; the cushion and the speaker slide out on the ear side (−y), the rest
+   out through the open side (+y), each by EXO[part] (eased by the engine's st.ex). */
+const EXO = { cushion:-22, speaker:-13, battery:10, chip:20, antenna:29, cover:39 };
+const exDy = (st, k) => exOff(st, [0, EXO[k], 0])[1];
+const SH_Y = 56.5, MOUTH = y => on(PY(y), ellUV(XC, ZC, RX - 1.2, RZ - 1.2, 28));
+const shiftY = (pts, dy) => pts.map(p => [p[0], p[1] + dy, p[2]]);
+// the parts hidden in the cup fade in as it opens (like the microscope's inside())
+const insideK = st => clamp01(((st.ex || 0) - .08) / .3);
+const antOn = st => st.phase === 'pair' || (st.phase === 'play' && st.pt < PLAY_E[1]);
+const COPPER = matOf('#c8793a'), PAPER = { l:'#f4f1ea', m:'#ddd8cc', d:'#b3ad9f' };
+const antPos = st => [XC + .5, 55.95 + exDy(st, 'antenna'), ZC + 5];
+const chipPos = st => [XC, 55.9 + exDy(st, 'chip'), ZC];
+const spkPos = st => [XC, 52.2 + exDy(st, 'speaker'), ZC];
+const cushPos = st => [XC, 49 + exDy(st, 'cushion'), ZC];
+
+function cushionL(st){ const dy = exDy(st, 'cushion'), A = cupRing(44 + dy, 1.3), B = cupRing(49 + dy, .6);
+  let s = loft(A, B, n => toneI(n, DARK));
+  if (dy < -1){ const hole = on(PY(49 + dy), ellUV(XC, ZC, 5.4, 8, 28));     // its inner face, once it is off the shell
+    s += `<path d="${pd(B)}${pd(hole)}" fill="${DARK.m}" fill-rule="evenodd"/>` + ink(pd(B), 1) + ink(pd(hole), 1); }
+  return s + hullInk([...A, ...B], 2.2); }
+// the speaker (driver), seen from the back: the paper cone, the copper coil at its tip, the magnet inside the coil
+function speakerL(st){ const dy = exDy(st, 'speaker'), v = soundOn(st) ? .5 * Math.sin(st.tk * 38) : 0, y0 = 47.6 + dy;
+  const ring = (y, r, n = 28) => on(PY(y), ellUV(XC, ZC, r, r, n));
+  let s = shape(ring(y0 - .2, 7.9), DARK.m, .9) + fill(pd(ring(y0 - .15, 7.1)), DARK.d);      // the frame and the rubber edge
+  s += loft(ring(y0 + v*.3, 7), ring(y0 + 2.4 + v, 2.9), n => toneI(n, PAPER));
+  s += rod([XC, y0 + 1.8 + v, ZC], [XC, y0 + 3.6 + v, ZC], 3.1, COPPER, toneI, .8);        // the coil of thin wire
+  for (let i = 1; i < 4; i++){ const yy = y0 + 2 + v + i * .45;                           // its windings
+    s += `<path d="${pd(on(PY(yy), arcUV(XC, ZC, 3.1, -30, 160, 10)), false)}" fill="none" stroke="#8a4a1c" stroke-width=".5"/>`; }
+  s += rod([XC, y0 + 2.6, ZC], [XC, y0 + 4.6, ZC], 2, DARK, toneI, .9) + shape(ring(y0 + 4.62, 1.5, 16), METAL.m, .6);  // magnet
+  return s; }
+function batteryL(st){ const y = 52.5 + exDy(st, 'battery');
+  return box(XC - 6, y, ZC - 8, XC + 6, y + 1.8, ZC + 4, METAL, toneI, .9) + txY(XC, y + 1.85, ZC - 3.2, 'Li-ion', 2.4, INK, 600); }
+function chipL(st){ const y = 54.5 + exDy(st, 'chip'), A = on(PY(y), ellUV(XC, ZC, 7.4, 10, 28)), B = on(PY(y + .7), ellUV(XC, ZC, 7.4, 10, 28));
+  let s = loft(A, B, n => toneI(n, PCB)) + shape(B, PCB.m, .9);
+  for (const [a, b] of [[[-2, 1.2], [-5.6, 1.2]], [[-2, -1.2], [-5, -4.5]], [[2, 1.4], [4.6, 5.5]], [[2, -1], [5.4, -1]], [[0, -2], [0, -7]]])
+    s += `<path d="${pd(on(PY(y + .72), [[XC + a[0], ZC + a[1]], [XC + b[0], ZC + b[1]]]), false)}" ${CAPS} stroke="${GOLD}" stroke-width=".6"/>`;
+  s += box(XC - 4.5, y + .7, ZC + 3.4, XC - 2.5, y + 1.1, ZC + 4.6, DARK, toneI, .5);
+  s += box(XC - 2.2, y + .7, ZC - 2.2, XC + 2.2, y + 1.4, ZC + 2.2, DARK, toneI, .7);
+  if (chipOn(st) || st.phase === 'pair' || st.phase === 'power'){ const [X,Y] = P(XC, y + 1.4, ZC);
+    s += `<circle cx="${f(X)}" cy="${f(Y)}" r="3.4" fill="#ff8a7a" opacity="${(.3 + .2*Math.sin(st.tk*9)).toFixed(2)}"/>`; }
+  return s; }
+function antennaL(st){ const y = 55.4 + exDy(st, 'antenna'), on_ = antOn(st);
+  let s = box(XC - 3, y, ZC + 2, XC + 4, y + .5, ZC + 8, PCB, toneI, .8);
+  const zig = [[3,3],[3,7],[1.8,7],[1.8,3.6],[.6,3.6],[.6,7],[-.6,7],[-.6,3.6],[-1.8,3.6],[-1.8,7]].map(([u,v]) => [XC + u, y + .55, ZC + v]);
+  return s + `<path d="${pd(zig, false)}" ${CAPS} stroke="${on_ ? '#ffd27a' : GOLD}" stroke-width="${on_ ? 1.2 : .85}"/>`; }
+function coverL(st, m){ const y = SH_Y + exDy(st, 'cover'), A = cupRing(y), B = cupRing(y + 1.5);
+  return loft(A, B, n => tone(n, m)) + shape(B, tone([0,1,0], m), 1.3)
+    + ink(pd(on(PY(y + 1.52), ellUV(XC, ZC, RX - 2.6, RZ - 2.6, 28))), .7) + hullInk([...A, ...B], 2.2); }
+// the shell stays on the yoke; with the cover off you see into it: the wall, and the back plate with the speaker's hole
+function shellL(st, m){
+  let s = loft(cupRing(49), cupRing(SH_Y), n => tone(n, m));
+  const open = exDy(st, 'cover') > .05, outer = cupRing(SH_Y), mouth = MOUTH(SH_Y);
+  if (open){
+    s += `<path d="${pd(outer)}${pd(mouth)}" fill="${tone([0,1,0], m)}" fill-rule="evenodd"/>` + ink(pd(mouth), 1);
+    s += clipTo(mouth, fill(pd(mouth), DARK.m) + fill(pd(on(PY(50), ellUV(XC, ZC, RX - 1.4, RZ - 1.4, 28))), DARK.l)
+      + shape(on(PY(50.05), ellUV(XC, ZC, 4.2, 4.2, 20)), DARK.d, .7));
+  }
   // on the front edge: the USB-C port, the light, the power button
   const xp = rimX(-5), xl = rimX(0), xb = rimX(5);
   s += shape(on(PX(xp + .1), rrUV(51.8, ZC - 5.8, 55.2, ZC - 4.2, .7)), '#1a1d24', .6);
@@ -138,7 +188,25 @@ function leftCup(st, m){
   s += shape(on(PX(xl + .1), ellUV(53.5, ZC, .9, .9, 12)), led || '#555a68', .6);
   if (led){ const [X,Y] = P(xl + .5, 53.5, ZC); s += `<circle cx="${f(X)}" cy="${f(Y)}" r="3" fill="${led}" opacity=".35"/>`; }
   s += act('power', cylX(xb, xb + 1.5 - st.press, 53.5, ZC + 5, 1.7, DARK, toneI, .9));
-  return s + hullInk([...cupRing(44, 1.3), ...cupRing(49), ...cupRing(58)], 2.4);
+  return s + ink(pd(outer), 1.1) + hullInk([...cupRing(49), ...outer], 2.4);
+}
+// the whole left cup, far to near along its axis. A part still inside the shell shows only through its open side.
+function leftCup(st, m){
+  const ia = insideK(st), inside = svg => ia > 0 ? `<g opacity="${ia.toFixed(2)}">${svg}</g>` : '';
+  const thru = (yBack, svg) => yBack < SH_Y ? clipTo(MOUTH(SH_Y), svg) : svg;
+  let s = cushionL(st);
+  // apart, the sound leaves the speaker's cone toward the cushion (and on to your ear)
+  if (soundOn(st) && ia >= .5){ const ym = 47.6 + exDy(st, 'speaker'), yc = 49 + exDy(st, 'cushion');
+    s += soundRings(st, ym - .3, -1, Math.max(3, ym - yc)); }
+  s += inside(speakerL(st)) + shellL(st, m);
+  if (ia > 0) s += inside(thru(52.5 + exDy(st, 'battery'), batteryL(st)) + thru(54.5 + exDy(st, 'chip'), chipL(st))
+    + thru(55.4 + exDy(st, 'antenna'), antennaL(st)));
+  s += coverL(st, m);
+  // together: the seam where the cover fits on (only the half of it that faces us)
+  if (exDy(st, 'cover') < .05){ const seam = []; for (let i = 0; i <= 16; i++){ const t = (-50 + 178 * i / 16) * Math.PI / 180;
+      seam.push([XC + RX * Math.cos(t), SH_Y, ZC + RZ * Math.sin(t)]); }
+    s += line(seam, .8); }
+  return s;
 }
 function headband(st, m){
   let s = rod([XC, 4.5, ZC + RZ - 1], [XC, 4.5, BAND_Z + .5], 1.3, METAL, toneI, 1)
@@ -201,7 +269,7 @@ function cable(st){
 }
 // radio: rings of waves spreading out from one antenna toward the other, and the song travelling as little bursts
 function radio(st){
-  const pa = P(...A_PH), pb = P(...A_HP);
+  const pa = P(...A_PH), pb = P(...antPos(st));         // to the antenna in the left cup, wherever it is
   const arcs = (from, to, o) => { const a = Math.atan2(to[1] - from[1], to[0] - from[0]); let s = '';
     for (let k = 0; k < 3; k++){ const r = 5 + ((st.tk * 18 + k * 10) % 30), op = (1 - (r - 5) / 30) * o;
       const p0 = [from[0] + r*Math.cos(a - .55), from[1] + r*Math.sin(a - .55)], p1 = [from[0] + r*Math.cos(a + .55), from[1] + r*Math.sin(a + .55)];
@@ -224,7 +292,14 @@ function scene(st, m){
   // 0 the desk board (its top is the z = 0 plane), then the cast shadows on it
   OY += BRD[4]; s += board(...BRD); OY -= BRD[4];
   const onBoard = on(PZ(0), rrUV(BRD[0], BRD[1], BRD[2], BRD[3], BRD[5]));
-  const bp = bandPts(); let sh = castShadow([...cupRing(0), ...cupRing(14, 1.3)]) + castShadow([...cupRing(44, 1.3), ...cupRing(58)]);
+  const bp = bandPts(); let sh = castShadow([...cupRing(0), ...cupRing(14, 1.3)]) + castShadow([...cupRing(49), ...cupRing(SH_Y)]);
+  // the left cup's parts, wherever they are (together, these add up to the cup's own shadow)
+  const sc = exDy(st, 'cushion'), sv = exDy(st, 'cover');
+  sh += castShadow(shiftY([...cupRing(44, 1.3), ...cupRing(49, .6)], sc)) + castShadow(shiftY([...cupRing(SH_Y), ...cupRing(58)], sv));
+  if (insideK(st) > .5){ const ds = exDy(st, 'speaker'), db = exDy(st, 'battery');
+    sh += castShadow(shiftY([...on(PY(47.4), ellUV(XC, ZC, 7.9, 7.9, 16)), ...on(PY(52.2), ellUV(XC, ZC, 2, 2, 8))], ds))
+        + castShadow([[XC - 6, 52.5 + db, ZC - 8], [XC + 6, 54.3 + db, ZC - 8], [XC - 6, 52.5 + db, ZC + 4], [XC + 6, 54.3 + db, ZC + 4]])
+        + castShadow(on(PY(55 + exDy(st, 'chip')), ellUV(XC, ZC, 7.4, 10, 16))); }
   for (let i = 0; i < bp.length - 1; i++) sh += castShadow([bp[i], bp[i+1]].flatMap(p => [[p[0] - 2.3, p[1], p[2]], [p[0] + 2.3, p[1], p[2]]]));
   for (const y of [4.5, 53.5]) sh += castShadow([[XC - 1.3, y, ZC + RZ], [XC + 1.3, y, ZC + RZ], [XC - 1.3, y, BAND_Z], [XC + 1.3, y, BAND_Z]]);
   sh += castShadow([[PH[0], PH[1], 0], [PH[2], PH[1], 0], [PH[2], PH[3], 0], [PH[0], PH[3], 0], [PH[0], PH[1], 1.8], [PH[2], PH[1], 1.8], [PH[2], PH[3], 1.8], [PH[0], PH[3], 1.8]]);
@@ -235,18 +310,19 @@ function scene(st, m){
   if (soundOn(st)) s += soundRings(st, 14.5, 1);
   // 2 the yokes and the headband (a wire inside it carries the sound to the right cup)
   s += headband(st, m);
-  // 3 the sound leaving the left speaker (its cushion faces away from us), then the left cup in front of it
-  if (soundOn(st)) s += soundRings(st, 43.5, -1);
+  // 3 the sound leaving the left ear cushion (it faces away from us), then the left cup's parts in front of it
+  if (soundOn(st) && insideK(st) < .5) s += soundRings(st, 43.5 + exDy(st, 'cushion'), -1);
   s += leftCup(st, m);
   // 4 what is on the desk in front: the phone, the strip's cord (it leaves the strip's back end), the power strip,
   //   then the charging cable that runs from the port on its top
   s += phone(st) + stripCord() + powerStrip() + cable(st);
   // 5 radio waves over everything, then the labels
   s += radio(st);
-  const ph = st.phase;
-  s += tag([XC - 4.5, 57.2, ZC - 3], -74, 20, 'BATTERY', ph === 'charge' || ph === 'power' || ph === 'play');
-  s += tag([XC + 1, 56.3, ZC + 7.6], -62, -44, 'ANTENNA', ph === 'pair' || (ph === 'play' && st.pt < PLAY_E[1]));
-  s += tag([XC + 3.5, 56.9, ZC + 2.5], -78, -8, 'CHIP', ph === 'power' || ph === 'pair' || chipOn(st));
+  // the parts inside the left cup are labelled on its cover, over where each one sits (Take apart shows them)
+  const yv = 58 + exDy(st, 'cover');               // (they ride on the cover for the moment it starts to come off)
+  s += tag([XC - 3, yv, ZC - 4], -74, 20, 'BATTERY', batteryOn(st));
+  s += tag([XC + .5, yv, ZC + 6], -62, -44, 'ANTENNA', antOn(st));
+  s += tag([XC + 1, yv, ZC], -78, -8, 'CHIP', chipWorking(st));
   s += tag([XC, 12.8, ZC + 1.5], 92, -42, 'SPEAKER', soundOn(st));
   return s;
 }
@@ -300,7 +376,7 @@ function turnOff(st, ui){
 }
 
 ui = mountFigure({
-  fig:'05', title:'Bluetooth headphones', hint:'charge them, turn them on, pair the phone, play a song',
+  fig:'05', title:'Bluetooth headphones', hint:'charge them, turn them on, pair the phone, play a song, take them apart',
   size:[HP_W, HP_D, HP_H],
   state:{ phase:'idle', cs:'', batt:0, plug:0, on:false, paired:false, link:false, played:false, press:0, pairS:0, pt:0, tk:0 },
   scene,
@@ -325,7 +401,31 @@ ui = mountFigure({
     { label:'Play music', onClick:play, predict:'The song arrives as radio signals. What has to happen inside the headphones before you can hear it?' },
     { label:'Turn off', onClick:turnOff, predict:'When you turn them back on tomorrow, will you have to pair them again? Why or why not?' },
   ],
-  walk:['Charge', 'Power on', 'Pair', 'Play music', 'Turn off'],
+  walk:['Charge', 'Power on', 'Pair', 'Play music', 'Turn off'],     // the engine adds Take apart as the last step
+  // Take apart: the left ear cup slides apart along its axis. The dashed line is the song's path through it.
+  apart:{ flow:'signal',
+    parts: st => [
+      { label:'ANTENNA', pos:antPos(st), tag:[-74, -26], on:antOn },
+      { label:'CHIP', pos:[XC + 1, 55.9 + exDy(st, 'chip') + 1.4, ZC + 2.2], tag:[-44, -86], on:chipWorking },
+      { label:'BATTERY', pos:[XC + 2, 54.3 + exDy(st, 'battery'), ZC + 4], tag:[-40, -110], on:batteryOn },
+      { label:'SPEAKER', pos:spkPos(st), tag:[-12, -176], on:soundOn },
+      { label:'CUSHION', pos:[XC + 7, 49 + exDy(st, 'cushion'), ZC + 8], tag:[90, -112] },
+      { label:'COVER', pos:[XC - 4, 58 + exDy(st, 'cover'), ZC - 4], tag:[-40, 46] } ],
+    path: st => [antPos(st), chipPos(st), spkPos(st), cushPos(st)],
+    caption: st => {
+      const ph = st.phase;
+      if (ph === 'power') return CAP.power;
+      if (ph === 'pair') return CAP[['ask', 'answer', 'code'][stageOf(PAIR_E, st.pairS)]];
+      if (ph === 'play') return CAP[['send', 'chip', 'wire', 'sound'][stageOf(PLAY_E, st.pt)]];
+      if (ph === 'off') return CAP.off;
+      if (st.batt < 1) return CAP.xDead;
+      if (!st.on) return CAP.xOff;
+      if (!st.link) return CAP.xOn;
+      return st.played ? CAP.xDone : CAP.xLink; },
+    in:CAP.xIn,
+    predict:'What inside the ear cup turns the radio signal into sound?',
+    allow:['Power on', 'Pair', 'Play music', 'Turn off', 'power', 'phone'],
+    ready: st => busy(st) ? 'Wait for this step to finish' : '' },
   // press the parts themselves: the button on the ear cup, or the phone (pair it, then play)
   acts:{ power:(st,el,ui) => st.on ? turnOff(st,ui) : powerOn(st,ui), phone:(st,el,ui) => st.link ? play(st,ui) : pair(st,ui) },
   params:(st, q) => {
@@ -333,6 +433,7 @@ ui = mountFigure({
     if (q.has('on') || q.has('paired') || q.has('play')) st.on = true;
     if (q.has('paired') || q.has('play')) st.link = st.paired = true;
     if (q.has('play')){ st.phase = 'play'; st.pt = Math.min(PLAY_T - .3, +q.get('play')); st.tk = st.pt; }
+    if (q.has('ex')) st.ex = +q.get('ex') || 1;
   },
 });
 </script>
