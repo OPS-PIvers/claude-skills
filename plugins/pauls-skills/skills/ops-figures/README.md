@@ -18,7 +18,7 @@ Built for two audiences: students (teacher-led, projected or on Chromebooks) and
   with the newest caption on top. The title stands in a column left of the figure and the stats in one on its right. The buttons sit in one row under the
   figure, with Back and Next at its ends, and a clicker's Page Up / Page Down work them.
 - **A phone layout** for phones and narrow windows (and a phone turned sideways, figure left, controls right): a small
-  FIG tag over the caption, the figure as big as the space allows with its stats in the corner, the buttons in one row
+  FIG tag at the top, the figure as big as the space allows with its stats beside it (never on the drawing), the caption under it right above the buttons, the buttons in one row
   you swipe sideways with the next one always centred, ← 3 / 5 Next →, a swipe on the figure for Next or Back, and the
   settings in a sheet behind a gear
 - **Settings** fold away into one small button (Present does this itself), leaving more room for the figure

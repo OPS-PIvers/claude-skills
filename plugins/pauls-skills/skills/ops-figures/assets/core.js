@@ -332,9 +332,10 @@ const CORE_CSS = `
   /* the phone-only pieces stay out of the way everywhere else */
   .figtag,.sheethead,.scrim,.rowpad,.setbtn .gear{display:none}
   /* The phone layout (html.phone: a window 760px wide or less, or a landscape phone; PHONE in the script decides it).
-     Always Present, with no Present switch. Top: a one-line FIG. 01 · TITLE tag, then the caption box (about three
-     lines). Middle: the figure, as big as the room left allows, with the stats as a small overlay in its top-right
-     corner. Bottom: the figure's buttons, then ← · 3 / 5 · Next →. On a touch screen (html.touch) the buttons are one
+     Always Present, with no Present switch. Top: a one-line FIG. 01 · TITLE tag. Middle: the figure, as big as the
+     room left allows, with the stats in a row just above its top-right corner (never on the drawing). Bottom: the
+     caption box (three lines, more if the caption needs them), the figure's buttons, then ← · 3 / 5 · Next →. On a phone the eye goes to the figure and then down to
+     Next, so the caption sits on that path rather than above the figure, where it gets skipped. On a touch screen (html.touch) the buttons are one
      row that scrolls sideways and keeps the next-up button centred, and a swipe on the figure presses Next or Back;
      with a mouse they wrap in rows. The settings are a gear at the top right that opens a bottom sheet (html.sheet).
      A landscape phone (html.land) puts the figure on the left and all of that in a panel on the right. */
@@ -343,8 +344,19 @@ const CORE_CSS = `
   html.phone .figtag{display:block;order:-1;flex:none;width:100%;margin:3px 0 0;padding:0 40px;text-align:center;
     font:700 11px/1.3 var(--head);letter-spacing:.12em;text-transform:uppercase;color:var(--red-light)}
   html.phone .figtag b{color:var(--ink);font-weight:600}
-  html.phone .narr{font-size:17px;height:4.5em;-webkit-mask-image:linear-gradient(#000 calc(100% - .9em),transparent);mask-image:linear-gradient(#000 calc(100% - .9em),transparent)}
-  html.phone .stats{position:absolute;top:2px;right:0;left:auto;transform:none;flex-direction:column;align-items:flex-end;gap:6px;margin:0;pointer-events:none}
+  /* the caption box sits under the figure, right above the buttons, where the eye goes to press Next. The current
+     caption is never cut or faded: the box has room for three lines (it grows for a longer one), and the earlier
+     captions fill what is left above it, tilting back and fading towards the top, and scroll on their own. */
+  html.phone .narr{order:0;font-size:17px;height:auto;min-height:5.1em;overflow:visible;-webkit-mask-image:none;mask-image:none}
+  html.phone .caption{order:0;margin:0 auto 2px}
+  html.phone .caplog{flex:1 1 0;min-height:0;margin:0 0 4px;display:flex;flex-direction:column;overflow-y:auto;scrollbar-width:none;
+    perspective:420px;-webkit-mask-image:linear-gradient(transparent,#000 1.4em);mask-image:linear-gradient(transparent,#000 1.4em)}
+  html.phone .caplog::-webkit-scrollbar{display:none}
+  html.phone .caplog li{margin:0 0 2px;transform-origin:50% 100%;transform:rotateX(calc(var(--d) * 16deg)) scale(calc(1 - var(--d) * .05))}
+  html.phone .caplog li:first-child{margin-top:auto}
+  html.phone .narr.roll .caption{animation-name:capIn}
+  html.phone .narr.roll .caplog{animation-name:logUp}
+  html.phone .stats{position:absolute;top:2px;right:0;left:auto;transform:none;flex-direction:row;align-items:flex-start;gap:16px;margin:0;pointer-events:none}
   html.phone .stat .k{font-size:10px} html.phone .stat .v{font-size:20px} html.phone .stat.small .v{font-size:15px}
   html.phone .walk{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"acts acts acts" "back pos next";align-items:center;gap:8px 10px}
   html.phone .actions{margin:0;gap:8px;min-width:0}
@@ -387,7 +399,8 @@ const CORE_CSS = `
     align-items:start;column-gap:18px;row-gap:6px;padding:8px 14px}
   html.phone.land .stage{grid-column:1;grid-row:1 / -1;align-self:stretch;min-height:0}
   html.phone.land .figtag{grid-column:2;grid-row:1;padding:0 40px 0 0;text-align:left;margin:9px 0 0}
-  html.phone.land .narr{grid-column:2;grid-row:2;font-size:15px}
+  html.phone.land .stats{position:static;grid-column:2;grid-row:2;justify-content:flex-start;text-align:left;gap:20px;margin:4px 0 0}
+  html.phone.land .narr{grid-column:2;grid-row:3;align-self:end;font-size:15px}
   html.phone.land .walk{grid-column:2;grid-row:4}
   html.phone.land .controls{top:4px;right:8px}`;
 /* The phone layout's conditions, in one place: the script turns them into classes on <html> (phone, land, touch) and
@@ -508,6 +521,7 @@ function mountFigure(cfg){
       capFresh = false; capSince = performance.now();
     }
     capEl.textContent = c; narrEl.scrollTop = presenting() ? 0 : narrEl.scrollHeight;
+    logEl.scrollTop = logEl.scrollHeight;   // the phone's history scrolls on its own, newest at the bottom
   }
   // a press that changes the state or starts an animation begins a new step: the history clears and its first
   // caption isn't timed (a press that only flashes why it can't run leaves both alone)
@@ -526,7 +540,7 @@ function mountFigure(cfg){
   ui.drawStats = () => { if (!statsEl) return;
     const list = cfg.stats(st).filter(Boolean), html = list.map(x => `<div class="stat${x.small ? ' small' : ''}"><div class="k">${x.label}</div><div class="v" data-k="${x.label}">${x.value}</div></div>`).join('');
     if (statsEl._html !== html){ statsEl._html = html; statsEl.innerHTML = html;
-      statsEl.querySelectorAll('.v').forEach(v => { if (prevStats[v.dataset.k] != null && prevStats[v.dataset.k] !== v.textContent) v.classList.add('bump'); prevStats[v.dataset.k] = v.textContent; }); fitSides(); } };
+      statsEl.querySelectorAll('.v').forEach(v => { if (prevStats[v.dataset.k] != null && prevStats[v.dataset.k] !== v.textContent) v.classList.add('bump'); prevStats[v.dataset.k] = v.textContent; }); fitSides(); if (document.documentElement.classList.contains('phone')) placeStats(); } };
   // Present stands the title in a column left of the figure and the stats in one on its right, leaving the top to the
   // caption. The stage keeps the wider column's room clear on both sides, so the figure stays centred and never runs
   // under either; the room only grows, so a changing value can't make it jump. The phone layout has no room beside the
@@ -737,13 +751,24 @@ function mountFigure(cfg){
       const x0 = Math.max(-vbW*.25, b.x - p), y0 = Math.max(-vbH*.25, b.y - p), x1 = Math.min(vbW*1.25, b.x + b.width + p), y1 = Math.min(vbH*1.25, b.y + b.height + p);
       if (x1 - x0 > vbW*.2 && y1 - y0 > vbH*.2) vb = [x0, y0, x1 - x0, y1 - y0]; } catch (e) {}
     const s = vb.map(f).join(' '); if (svg.getAttribute('viewBox') !== s) svg.setAttribute('viewBox', s);
-    placeStats(); }
-  // …and the stats stay on the drawn figure's top-right corner, not at the top of that room
+    statRoom = null; placeStats(); }
+  // …and on a phone the stats never sit on the drawing. A landscape phone moves them into the side panel, under the
+  // tag. A portrait phone sets them in a row and the figure gives up a band for them, along the top (the stats then
+  // sit just above the drawing's top-right corner) or down the right side, whichever leaves the figure bigger. The
+  // band only grows while the layout holds (a number getting wider doesn't make the figure jump back and forth).
+  let statRoom = null;
   function placeStats(){ if (!statsEl) return;
-    const par = svg.getAttribute('preserveAspectRatio'), vb = svg.viewBox.baseVal, r = svg.getBoundingClientRect();
-    const h = vb && vb.width ? Math.min(r.height, r.width * vb.height / vb.width) : r.height;
-    statsEl.style.top = par && r.height - h > 8 ? (r.bottom - h - svg.parentElement.getBoundingClientRect().top + 2) + 'px' : ''; }
-  if (window.ResizeObserver) new ResizeObserver(placeStats).observe(svg);
+    const stage = svg.parentElement, ss = svg.style, land = isPhone && document.documentElement.classList.contains('land');
+    if (land !== (statsEl.parentElement !== stage)){ if (land) $('figtag').after(statsEl); else stage.insertBefore(statsEl, toast); }
+    if (!isPhone || land){ ss.marginTop = ss.width = statsEl.style.top = ''; statRoom = null; return; }
+    const vb = svg.viewBox.baseVal, a = vb && vb.width ? vb.height / vb.width : .75;
+    const W = stage.clientWidth, H = stage.clientHeight, gap = 6;
+    statRoom = { w: Math.max(statRoom ? statRoom.w : 0, statsEl.offsetWidth + gap), h: Math.max(statRoom ? statRoom.h : 0, statsEl.offsetHeight + gap) };
+    const top = Math.min(W, (H - statRoom.h) / a), side = Math.min(W - statRoom.w, H / a);   // the drawing's width either way
+    if (top >= side){ const y = Math.max(0, (H - statRoom.h - top * a) / 2);
+      ss.marginTop = statRoom.h + 'px'; ss.width = ''; statsEl.style.top = y + 'px'; }
+    else { ss.marginTop = ''; ss.width = `calc(100% - ${statRoom.w}px)`; statsEl.style.top = Math.max(0, (H - side * a) / 2) + 'px'; } }
+  if (window.ResizeObserver) new ResizeObserver(() => placeStats()).observe(svg.parentElement);
   // everything that depends on the window: the phone layout (turned on or off as the window crosses PHONE.on, which
   // forces Present on), the label size, the frame, the title and stats columns, and the button row
   function relayout(){ const root = document.documentElement, on = mq.on.matches;
