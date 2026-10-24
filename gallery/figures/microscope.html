@@ -36,9 +36,8 @@ rotate:'The turret turns the next objective lens into place above the slide.',
 see0:'Onion skin cells, 40 times bigger: the 10x eyepiece times the 4x objective. Try a stronger objective.',
 see1:'100 times bigger: 10 x 10. You see fewer cells, but each one shows more detail.',
 see2:'400 times bigger: one cell nearly fills the view, and its nucleus is easy to see.',
-apart:'The parts slide apart along the path the light takes.',
-apartOn:'Light passes through four lenses and a prism on its way from the lamp to your eye. Press Explode view again to put it back.',
-apartOff:'Taken apart, every lens and the prism sit on one line: the path the light takes. Press Explode view again to put it back.',
+apartOn:'Light goes lamp, iris, condenser, slide, objective, prism, eyepiece: four lenses and a prism on its way to your eye.',
+apartOff:'Taken apart, every lens and the prism sit on one line: the path the light takes. Turn on the light to follow it.',
 join:'The parts slide back together and line up again.',
 };
 const FOCUS_E = (() => { const a = READ_S(CAP.focus1); return [a, a + READ_S(CAP.focus2)]; })();
@@ -244,15 +243,7 @@ const fs = 8.6 * INK_K * TAG_K;
 s += `<text x="${f(cx)}" y="${f(cy + R + 3.5 + fs*1.5)}" font-size="${f(fs)}" text-anchor="middle" font-family="${FONT_HEAD}" font-weight="600" fill="${INK}">In the eyepiece${onStage ? ': ' + OBJS[ri].mag*10 + 'x' : ''}</text>`;
 return `<g pointer-events="none">${s}</g>`;
 }
-function scene(st, m){
-const g = geo(st), zm = lerp(1, ZOOM_EX / ((MS_W + MS_D) / 2 + EX_H), g.k);
-if (zm > .999) return sceneAt(st, m, g) + eyeView(st, g);
-const ink0 = INK_K; INK_K = ink0 / zm; let s;
-try { s = sceneAt(st, m, g); } finally { INK_K = ink0; }
-s = s.replace(/stroke-width="([\d.]+)"/g, (_, w) => `stroke-width="${(w / zm).toFixed(2)}"`).replace(/stroke-width:([\d.]+)/g, (_, w) => `stroke-width:${(w / zm).toFixed(2)}`);
-const [px, py] = P(MS_W / 2, MS_D / 2, 0), dy = g.k * .06 * document.getElementById('fig').viewBox.baseVal.height;
-return `<g transform="translate(${f(px)} ${f(py + dy)}) scale(${zm.toFixed(4)}) translate(${f(-px)} ${f(-py)})">${s}</g>`;
-}
+function scene(st, m){ const g = geo(st); return sceneAt(st, m, g) + eyeView(st, g); }
 function sceneAt(st, m, g){
 let s = '';
 OY += BRD[4]; s += board(...BRD); OY -= BRD[4];
@@ -286,16 +277,6 @@ s += tag(ad(act_.top, mu(act_.d, 8)), -132, -6, 'OBJECTIVE', look || ph === 'rot
 s += tag([58, 12, g.st - 1], 60, 70, 'STAGE', ph === 'place' || focusing);
 s += tag(kc, -78, 32, 'FOCUS KNOB', focusing);
 s += tag([XO - 3, YO + 3, 10.4], -70, 58, 'LAMP', lit);
-} else {
-s += tag(ad(g.eye, mu(ED, 27)), 40, -30, 'EYEPIECE', lit);
-s += tag([g.prism[0] - 3.4, YO + 3.2, g.prism[2]], -70, -8, 'PRISM', lit);
-s += tag(ad(act_.top, mu(act_.d, 7)), 110, -10, 'OBJECTIVE', lit);
-s += tag([58, 20, g.st - 1], 64, -6, 'STAGE', false);
-s += tag([XO + 5.5, YO - 1, g.cond + 4], 108, 4, 'CONDENSER', lit);
-s += tag([XO + 5, YO - 3, g.iris + 1], 92, 26, 'IRIS', lit);
-s += tag(g.bulb, 98, 34, 'LAMP', lit);
-s += tag([KN[0] + g.ax, 26 + g.kdy, KN[1] + 3], -50, -40, 'GEARS', false);
-s += tag(kc, -50, 30, 'FOCUS KNOB', false);
 }
 return s;
 }
@@ -309,7 +290,6 @@ if (t >= READ_S(CAP.light)){ st.lk = 1; st.phase = 'idle'; return false; } retur
 }
 function placeSlide(st, ui){
 if (busy(st)) return ui.flash('Wait for this step to finish');
-if (apart(st)) return ui.flash('Put the microscope back together first');
 if (st.slide) return ui.flash('The slide is already on the stage');
 st.phase = 'place'; st.sp = 0; let t = 0;
 ui.animate(dt => { t += dt; st.tk += dt; st.sp = Math.min(1, t / 2.6);
@@ -317,7 +297,6 @@ if (t >= READ_S(CAP.place)){ st.slide = 1; st.sp = 0; st.phase = 'idle'; return 
 }
 function focus(st, ui){
 if (busy(st)) return ui.flash('Wait for this step to finish');
-if (apart(st)) return ui.flash('Put the microscope back together first');
 if (!st.slide) return ui.flash('Put a slide on the stage first: there is nothing to focus on yet');
 if (!st.light) return ui.flash('Turn on the light first: in the dark there is nothing to focus on');
 if (st.sz > -.3) return ui.flash('It is already sharp');
@@ -332,15 +311,8 @@ st.phase = 'rotate'; const r0 = st.rot; let t = 0;
 ui.animate(dt => { t += dt; st.tk += dt; st.rot = lerp(r0, j, ease(clamp01(t / 1.6)));
 if (t >= READ_S(CAP.rotate)){ st.rot = st.obj = j; st.phase = 'idle'; return false; } return true; });
 }
-function explode(st, ui){
-if (busy(st)) return ui.flash('Wait for this step to finish');
-const out = !apart(st), e0 = st.ex; st.phase = out ? 'apart' : 'join'; let t = 0;
-const hold = READ_S(out ? CAP.apart : CAP.join);
-ui.animate(dt => { t += dt; st.tk += dt; st.ex = lerp(e0, out ? 1 : 0, clamp01(t / 2.2));
-if (t >= hold){ st.ex = out ? 1 : 0; st.phase = 'idle'; return false; } return true; });
-}
 ui = mountFigure({
-fig:'06', title:'Microscope', hint:'turn on the light, place a slide, focus, change lenses, explode it',
+fig:'06', title:'Microscope', hint:'turn on the light, place a slide, focus, change lenses, take it apart',
 size:[MS_W, MS_D, MS_H],
 state:{ phase:'idle', light:false, lk:0, slide:0, sp:0, sz:-8, ft:0, obj:0, rot:0, ex:0, knob:0, tk:0 },
 scene,
@@ -350,9 +322,6 @@ if (ph === 'light') return CAP.light;
 if (ph === 'place') return CAP.place;
 if (ph === 'focus') return st.ft < FOCUS_E[0] ? CAP.focus1 : CAP.focus2;
 if (ph === 'rotate') return CAP.rotate;
-if (ph === 'apart') return CAP.apart;
-if (ph === 'join') return CAP.join;
-if (apart(st)) return st.light ? CAP.apartOn : CAP.apartOff;
 if (!st.slide) return st.light ? CAP.noSlide : CAP.start;
 if (!st.light) return CAP.dark;
 if (st.sz < -.3) return CAP.blurry;
@@ -367,9 +336,22 @@ buttons:[
 { label:'Objective', predict:'A stronger objective makes things look bigger. Will you see more cells, or fewer?',
 choices: st => OBJS.map((o, i) => ({ label:`${o.mag}x`, current: st.obj === i, disabled: apart(st),
 why:'Put the microscope back together first', onClick:(st, ui) => rotateTo(st, ui, i) })) },
-{ label:'Explode view', onClick:explode, predict:'Before it comes apart: how many lenses do you think the light goes through on its way to your eye?' },
 ],
-walk:['Light', 'Place slide', 'Focus', 'Objective>10x', 'Explode view'],
+walk:['Light', 'Place slide', 'Focus', 'Objective>10x'],
+// taken apart, the parts slide up along the light's path; the dashed line is the beam's own path through them
+apart:{ flow:'light', zoom:ZOOM_EX / ((MS_W + MS_D) / 2 + EX_H),
+parts: st => { const g = geo(st), lit = st.light;
+return [ { label:'LAMP', pos:g.bulb, tag:[98, 34], on:() => lit },
+{ label:'IRIS', pos:[XO + 5, YO - 3, g.iris + 1], tag:[92, 26], on:() => lit },
+{ label:'CONDENSER', pos:[XO + 5.5, YO - 1, g.cond + 4], tag:[108, 4], on:() => lit },
+{ label:'STAGE', pos:[58, 20, g.st - 1], tag:[64, -6] },
+{ label:'OBJECTIVE', pos:ad(g.act.top, mu(g.act.d, 7)), tag:[110, -10], on:() => lit },
+{ label:'PRISM', pos:[g.prism[0] - 3.4, YO + 3.2, g.prism[2]], tag:[-70, -8], on:() => lit },
+{ label:'EYEPIECE', pos:ad(g.eye, mu(ED, 27)), tag:[40, -30], on:() => lit } ]; },
+path: st => beamPts(geo(st)),
+caption: st => st.light ? CAP.apartOn : CAP.apartOff, in:CAP.join,
+predict:'Before it comes apart: how many lenses do you think the light goes through on its way to your eye?',
+allow:['Light', 'lamp'], ready: st => busy(st) ? 'Wait for this step to finish' : '' },
 acts:{ lamp:lightBtn, knob:focus, slide:placeSlide },
 params:(st, q) => {
 if (q.has('light')){ st.light = true; st.lk = 1; }

@@ -188,6 +188,11 @@ function tag(p3, dx, dy, text, on=false){
     + `<rect x="${f(cx-w/2)}" y="${f(cy-h/2)}" width="${f(w)}" height="${f(h)}" rx="${f(h/2)}" fill="${on ? ACCENT : '#ffffff'}" stroke="${INK}" stroke-width="1.2"/>`
     + `<text x="${f(cx)}" y="${f(cy+fs*.36)}" font-size="${f(fs)}" text-anchor="middle" font-family="${FONT_HEAD}" font-weight="700" letter-spacing=".05em" fill="${on ? '#ffffff' : INK}">${text}</text></g>`;
 }
+// Take apart (exploded view): how far a part has slid out. exOff(st, d) = the offset [dx,dy,dz] times how far apart the
+// figure is right now (0 together, 1 apart, eased); add it to every point of that part. exAt(st, p, d) = point p moved.
+const exK = st => ease(Math.max(0, Math.min(1, st.ex || 0)));
+const exOff = (st, d) => { const k = exK(st); return [d[0]*k, d[1]*k, d[2]*k]; };
+const exAt = (st, p, d) => { const o = exOff(st, d); return [p[0]+o[0], p[1]+o[1], p[2]+o[2]]; };
 const clipTo = (pts3, inner) => { const id = 'k' + (++_clipN); return `<clipPath id="${id}"><path d="${pd(pts3)}"/></clipPath><g clip-path="url(#${id})">${inner}</g>`; };
 // The least time (seconds) a caption stays up before the figure replaces it on its own: about 3 words a second while
 // watching the picture, plus a second to notice it changed, never under 3 s. Pace every animated phase to this.
@@ -224,7 +229,7 @@ const CORE_CSS = `
   #fig [data-act]{cursor:pointer}
   .actions{position:absolute;top:4px;left:0;display:flex;flex-direction:column;align-items:flex-start;gap:8px;z-index:2;max-width:230px}
   .actions .cap,.ctl label{color:var(--muted);font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;margin:0}
-  html.nolabels #fig .tag{display:none}
+  html.nolabels #fig .tag:not(.xtag),html.apart #fig .tag:not(.xtag){display:none}
   .ctl[hidden],.predict[hidden],.walk[hidden]{display:none}
   /* narration: the step's earlier captions, then the current one, in a box of fixed height so the figure never jumps.
      It reads like a wheel: the current caption sits on a white band at the front, and each earlier one is tilted
@@ -437,8 +442,28 @@ const filterFor = k => `<filter id="hand" x="-3%" y="-3%" width="106%" height="1
      stats: st => [{label, value, small?}],   // optional: big numbers top-right (credit, litres, height)
      buttonsLabel: 'Machine',      // optional: the small heading over the buttons (default 'Try it')
      acts: { name(st, el, ui){} },  // presses on act(name, …) groups; el has dataset
-     params(st, q){}               // optional: read URLSearchParams for screenshot states
+     params(st, q){},              // optional: read URLSearchParams for screenshot states
+     apart: {                      // Take apart (exploded view): required for a real object, left out for a metaphor
+       flow: 'light',              //   what travels through the parts ("the path the light takes")
+       parts: [{ label:'LAMP', at:[x,y,z], to:[dx,dy,dz], tag:[dx,dy], on?: st => bool, path?: false }, …],
+              //   3–7 parts, in the order the flow passes through them. at = a point on the part as built (the
+              //   path line runs through it and the label points at it), to = how far it slides out (draw the part
+              //   with exOff(st, to) / exAt(st, p, to)), tag = the label's offset as in tag(). path:false keeps a
+              //   part (a motor, a case) off the path line; it is still labelled. parts may also be st => [...],
+              //   and a part may give pos (where it is now) instead of at and to, if the figure already moves it.
+       path?: st => [[x,y,z], …],  //   optional: the path line's points, apart, if it should bend between parts
+       caption: st => 'sentence',  //   the caption while apart: name the path in order, and what is flowing now
+       out?: 'sentence', in?: 'sentence',   // optional: the captions while it comes apart / goes back together
+       predict?: 'question',       //   optional: asked before the first Take apart while Predict is on
+       allow?: ['Power on', …],    //   buttons (and acts) that still work apart: the ones that only start the flow
+       ready?: st => '' | 'why not now',     // optional: refuse to come apart now (a part is moving)
+       zoom?: .7                   //   optional: zoom the whole view out this far when apart, if the parts need room
+     }
    })  -> ui = { st, render, animate(stepFn), after(sec, fn), flash(text,ms), running }
+   With apart, the engine adds a "Take apart" button at the end of the row (it reads "Put together" while apart) and
+   as the last Walk through step, slides st.ex from 0 to 1, labels every part while apart (even with labels off; the
+   figure's other labels hide), draws the dashed path line through the parts, and answers any other button with "Put
+   it back together first". Keep st.ex and st.exPh for the engine.
    animate(step): calls step(dt seconds) every frame and re-renders until step returns false.
    after(sec, fn): runs fn once, sec seconds from now. Use it instead of setTimeout for anything that changes state,
    so Walk through knows the step is still running and Back can cancel it. */
@@ -448,9 +473,12 @@ function mountFigure(cfg){
   if (!document.querySelector('link[data-ops-fonts]')){
     const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = FONTS_URL; l.dataset.opsFonts = ''; document.head.appendChild(l); }
   const style = document.createElement('style'); style.textContent = CORE_CSS; document.head.appendChild(style);
-  const buttons = cfg.buttons || [];
+  const buttons = (cfg.buttons || []).slice(), AP = cfg.apart, TAKE = 'Take apart', PUT = 'Put together';
+  const apartBtn = AP ? { label: TAKE, predict: AP.predict, onClick: (st, ui) => toggleApart(st, ui) } : null;
+  if (AP) buttons.push(apartBtn);
   const hasPredict = buttons.some(b => b.predict);
-  const walkList = cfg.walk || buttons.filter(b => !b.choices).map(b => b.label);
+  const walkList = cfg.walk ? cfg.walk.slice() : buttons.filter(b => !b.choices).map(b => b.label);
+  if (AP && !walkList.some(s => s.trim().toLowerCase().startsWith('take apart'))) walkList.push(TAKE);
   const tog = (id, label, hide) => `<div class="ctl" id="${id}ctl"${hide ? ' hidden' : ''}><label>${label}</label><div class="row"><button id="${id}" aria-pressed="false">Off</button></div></div>`;
   document.body.innerHTML = `
     <header><h1><span class="no">Fig. ${cfg.fig}</span>${cfg.title}</h1><span class="hint">${cfg.hint || ''}</span></header>
@@ -532,9 +560,52 @@ function mountFigure(cfg){
     try { fn(); } finally { inPress = false; }
     if (ui.running > r0 || JSON.stringify(st) !== before) newStep(); };
   const ui = { st, running: 0 };
-  ui.render = () => { _clipN = 0; art.innerHTML = inkScale(cfg.scene(st, PALS[st.pal]));
-    const c = cfg.caption ? cfg.caption(st) || '' : ''; if (capEl.textContent !== c) setCaption(c);
+  ui.render = () => { _clipN = 0; art.innerHTML = drawn();
+    document.documentElement.classList.toggle('apart', !!AP && exK(st) > .3);
+    const c = captionOf(st); if (capEl.textContent !== c) setCaption(c);
     if (ui.drawStats) ui.drawStats(); drawWalk(); };
+
+  // Take apart (cfg.apart): the engine's half of the exploded view. The figure draws its parts moved by exOff(st, to);
+  // the engine runs the move, the captions, the labels on the parts and the dashed path line through them.
+  if (AP){ if (st.ex == null) st.ex = 0; st.exPh = ''; }
+  const isApart = () => (st.ex || 0) > .5;
+  // the scene plus the take-apart layer. apart.zoom (e.g. .7) shrinks the whole view toward the middle of the ground
+  // as it comes apart, so a tall stack of parts still fits; line widths and labels keep their size on screen.
+  function drawn(){ const zm = AP && AP.zoom ? 1 + (AP.zoom - 1) * exK(st) : 1;
+    if (zm > .999) return inkScale(cfg.scene(st, PALS[st.pal]) + apartLayer());
+    const k0 = INK_K; let s; INK_K = k0 / zm;
+    try { s = cfg.scene(st, PALS[st.pal]) + apartLayer(); } finally { INK_K = k0; }
+    s = s.replace(/stroke-width="([\d.]+)"/g, (_, w) => `stroke-width="${(w / zm).toFixed(2)}"`).replace(/stroke-width:([\d.]+)/g, (_, w) => `stroke-width:${(w / zm).toFixed(2)}`);
+    const [px, py] = P(cfg.size[0] / 2, cfg.size[1] / 2, 0);
+    return inkScale(`<g transform="translate(${f(px)} ${f(py)}) scale(${zm.toFixed(4)}) translate(${f(-px)} ${f(-py)})">${s}</g>`); }
+  const AP_OUT = AP ? AP.out || `The parts slide apart along the path the ${AP.flow} takes. This is called an exploded view.` : '';
+  const AP_IN = AP ? AP.in || 'The parts slide back together.' : '';
+  function captionOf(st){
+    if (AP){ if (st.exPh === 'out') return AP_OUT; if (st.exPh === 'in') return AP_IN; if (isApart()) return AP.caption(st) || ''; }
+    return cfg.caption ? cfg.caption(st) || '' : ''; }
+  function toggleApart(st, ui){
+    if (st.exPh) return ui.flash('Wait for it to finish moving');
+    const why = AP.ready && AP.ready(st); if (why) return ui.flash(why);
+    const out = !isApart(), e0 = st.ex || 0, e1 = out ? 1 : 0, hold = READ_S(out ? AP_OUT : AP_IN); let t = 0;
+    st.exPh = out ? 'out' : 'in';
+    ui.animate(dt => { t += dt; st.ex = e0 + (e1 - e0) * Math.min(1, t / 2.2);
+      if (t < hold) return true; st.ex = e1; st.exPh = ''; return false; }); }
+  // while apart, only Put together and the buttons in apart.allow work; anything else says why
+  const blocked = label => AP && isApart() && label !== TAKE && !(AP.allow || []).some(a => starts(label, a));
+  const APART_WHY = 'Put it back together first';
+  function apartLayer(){ if (!AP) return '';
+    const k = exK(st), fade = Math.max(0, Math.min(1, (k - .45) / .45)); if (!fade) return '';
+    const parts = (typeof AP.parts === 'function' ? AP.parts(st) : AP.parts).map(p => ({ ...p, pos: p.pos || exAt(st, p.at, p.to) }));
+    const pts = (AP.path ? AP.path(st) : parts.filter(p => p.path !== false).map(p => p.pos)).map(p => P(...p));
+    let line = '';
+    if (pts.length > 1){ const a = 5 * INK_K;
+      line = `<path d="M${pts.map(q => f(q[0]) + ' ' + f(q[1])).join('L')}" fill="none" stroke="${ACCENT}" stroke-width="1.7" stroke-dasharray="${f(6*INK_K)} ${f(4*INK_K)}" stroke-linecap="round" stroke-linejoin="round"/>`;
+      // a small arrowhead halfway along each leg, pointing the way the flow goes
+      for (let i = 1; i < pts.length; i++){ const [x0,y0] = pts[i-1], [x1,y1] = pts[i], L = Math.hypot(x1-x0, y1-y0); if (L < a*3) continue;
+        const ux = (x1-x0)/L, uy = (y1-y0)/L, mx = (x0+x1)/2 + ux*a/2, my = (y0+y1)/2 + uy*a/2;
+        line += `<path d="M${f(mx - ux*a - uy*a*.6)} ${f(my - uy*a + ux*a*.6)}L${f(mx)} ${f(my)}L${f(mx - ux*a + uy*a*.6)} ${f(my - uy*a - ux*a*.6)}" fill="none" stroke="${ACCENT}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>`; } }
+    const tags = parts.map(p => tag(p.pos, p.tag[0], p.tag[1], p.label, p.on ? !!p.on(st) : false).replace('class="tag', 'class="tag xtag')).join('');
+    return `<g class="apartpath" opacity="${fade.toFixed(2)}">${line}${tags}</g>`; }
   // big numbers in the top-right corner (credit, change, score…); a value that changes gets a little bump
   const statsEl = $('stats'), prevStats = {};
   ui.drawStats = () => { if (!statsEl) return;
@@ -606,14 +677,14 @@ function mountFigure(cfg){
   // (partPress: this press started a part's action, so the swipe watcher on the stage ignores it)
   let partPress = false, wantCentre = false;
   svg.addEventListener('pointerdown', e => { if (e.button) return; const a = e.target.closest('[data-act]'); if (!a || !cfg.acts || !cfg.acts[a.dataset.act]) return;
-    e.preventDefault(); lastAct = null; partPress = wantCentre = true; hidePredict(); userStep(() => cfg.acts[a.dataset.act](st, a, ui)); ui.render(); });
+    e.preventDefault(); if (blocked(a.dataset.act)){ partPress = true; return ui.flash(APART_WHY); } lastAct = null; partPress = wantCentre = true; hidePredict(); userStep(() => cfg.acts[a.dataset.act](st, a, ui)); ui.render(); });
   const btns = $('btns'), actEls = new Map();   // button config -> its .act element
   if (btns) buttons.forEach(b => {
     const wrap = document.createElement('div'); wrap.className = 'stepwrap';
     const el = document.createElement('button'); el.className = 'act';
     el.innerHTML = `${b.label}${b.choices ? '<span class="car">▾</span>' : ''}`;
     wrap.appendChild(el); btns.appendChild(wrap); actEls.set(b, el);
-    if (!b.choices){ el.onclick = () => { closeChips(); lastAct = el; wantCentre = true; withPredict(b, () => userStep(() => b.onClick(st, ui))); ui.render(); }; return; }
+    if (!b.choices){ el.onclick = () => { closeChips(); lastAct = el; wantCentre = true; if (blocked(b.label)) return ui.flash(APART_WHY); withPredict(b, () => userStep(() => b.onClick(st, ui))); ui.render(); }; return; }
     const chips = document.createElement('div'); chips.className = 'chips'; wrap.appendChild(chips); el._chips = chips;
     el.onclick = e => { e.stopPropagation(); const open = !wrap.classList.contains('open'); closeChips();
       if (!open) return;
@@ -626,6 +697,7 @@ function mountFigure(cfg){
         ch.onclick = ev => { ev.stopPropagation(); closeChips(); lastAct = el; wantCentre = true;
           if (c.current) return ui.flash(`${c.label} is already set`);
           if (c.disabled) return ui.flash(c.why || `${c.label} isn't possible right now`);
+          if (blocked(b.label)) return ui.flash(APART_WHY);
           withPredict(b, () => userStep(() => c.onClick(st, ui))); ui.render(); }; chips.appendChild(ch); }
       wrap.classList.add('open');
       // on a phone the picker floats over the page above its button (the button row scrolls, and would clip it),
@@ -652,6 +724,7 @@ function mountFigure(cfg){
     const [label, choice] = walkList[i].split('>'), b = buttons.find(b => starts(b.label, label));
     if (!b) return noteErr(`walk: no button "${label}"`);
     lastAct = actEls.get(b) || wnext;
+    if (blocked(b.label)) return ui.flash(APART_WHY);
     withPredict(b, () => userStep(() => {
       if (choice == null) return b.onClick(st, ui);
       const c = b.choices(st).find(c => starts(c.label, choice));
@@ -664,6 +737,8 @@ function mountFigure(cfg){
     walkbar.hidden = !walkOn && !presenting(); wback.hidden = wnext.hidden = wpos.hidden = !walkOn;
     const nb = walkOn && wi < walkList.length ? buttons.find(b => starts(b.label, walkList[wi].split('>')[0])) : null;
     actEls.forEach((el, b) => el.classList.toggle('nextup', b === nb));
+    if (AP){ const el = actEls.get(apartBtn), lbl = st.exPh === 'out' || (isApart() && st.exPh !== 'in') ? PUT : TAKE;
+      if (el && el.textContent !== lbl) el.textContent = lbl; }
     // the phone's button row scrolls the next-up button to its centre whenever the step changes or a button is pressed
     const at = walkOn ? wi : -1;
     if (at !== centredAt || wantCentre){ wantCentre = false; const first = centredAt === null; centredAt = at; if (nb) centreNext(first); }
@@ -746,8 +821,15 @@ function mountFigure(cfg){
   // itself (its outline, labels and shadow as drawn now, at most a quarter of the usual frame past any side of it), so
   // the figure fills the width or height that's left instead of keeping the usual frame's margins. A portrait phone is
   // taller than the figure: it is centred between the caption and the buttons, the room left over split above and below.
+  // (a figure that comes apart is framed to the drawing both together and apart, so the parts stay on screen)
+  function frameBox(){ const b = art.getBBox(); if (!AP) return b;
+    const ex = st.ex, ph = st.exPh; st.ex = 1; st.exPh = '';
+    try { art.innerHTML = drawn(); const a = art.getBBox();
+      const x0 = Math.min(a.x, b.x), y0 = Math.min(a.y, b.y);
+      return { x: x0, y: y0, width: Math.max(a.x + a.width, b.x + b.width) - x0, height: Math.max(a.y + a.height, b.y + b.height) - y0 }; }
+    finally { st.ex = ex; st.exPh = ph; ui.render(); } }
   function setView(){ let vb = [presenting() ? vbW*.06 : 0, 0, vbW, vbH];
-    if (isPhone) try { const b = art.getBBox(), p = Math.max(b.width, b.height) * .025;
+    if (isPhone) try { const b = frameBox(), p = Math.max(b.width, b.height) * .025;
       const x0 = Math.max(-vbW*.25, b.x - p), y0 = Math.max(-vbH*.25, b.y - p), x1 = Math.min(vbW*1.25, b.x + b.width + p), y1 = Math.min(vbH*1.25, b.y + b.height + p);
       if (x1 - x0 > vbW*.2 && y1 - y0 > vbH*.2) vb = [x0, y0, x1 - x0, y1 - y0]; } catch (e) {}
     const s = vb.map(f).join(' '); if (svg.getAttribute('viewBox') !== s) svg.setAttribute('viewBox', s);
