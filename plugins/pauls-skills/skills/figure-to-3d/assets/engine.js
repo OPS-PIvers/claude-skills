@@ -33,6 +33,8 @@
                flows?: [flowIds], apart?: 0|1, cut?: null | 0..1, move?: { partId: [dx,dy,dz] },
                run?: bool, speed?: n, reset?: true,    // motion: start or stop it, set the speed, zero the count
                params?: { id: value },         // sliders: where this step slides them to (beats take params too)
+               adds?: [partIds], tray?: true, manual?: '3',   // assembly: parts this step puts in, show the parts
+                                               //   list, the manual's own step number (default: the step's)
                beats?: [{ caption, highlight?, flows?, move?, params? }] }],
               //   move: where parts sit in this step, as offsets from where they're built (a piston pressed
               //   down, a lever thrown). Parts a step doesn't move go back home.
@@ -44,6 +46,10 @@
      params?: [{ id, name, min, max, step?, value, unit?, time? }],
               //   sliders (math): shapes, positions and spins that are functions of them rebuild as they move.
               //   time = seconds a step takes to slide it (default 1.2)
+     assembly?: { tray?: { partId: [dx,dy,dz] }, from?: { partId: [dx,dy,dz] } },
+              //   an instruction manual: in Walk through only the parts added so far are there; a step's `adds`
+              //   fly in from `from` (default: from above) or slide over from the tray. tray: where each part lies
+              //   in the parts list (offsets from where it's built). Before Walk through the piece is finished.
      stats?: st => [{ label, value }],          // live readouts, top right. st: { turns, speed, running, step, p }
      caption: 'sentence',                      // the caption before Walk through starts
    })
@@ -112,6 +118,8 @@ button,input{font:inherit;color:inherit}
 .f3d-sw{display:inline-flex;align-items:center;gap:4px;font-size:calc(13px*var(--scale));color:var(--muted);cursor:pointer}
 .f3d-cut{display:inline-flex;align-items:center;gap:6px;font-size:calc(13px*var(--scale))}
 .f3d-cut[hidden]{display:none}
+.f3d-badge{position:absolute;left:0;top:0;min-width:1.6em;padding:2px 10px;border:2.5px solid var(--ink);background:var(--paper);font-size:calc(34px*var(--scale));font-weight:800;line-height:1.15;text-align:center;font-variant-numeric:tabular-nums}
+.f3d-badge[hidden]{display:none}
 .f3d-params{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center}
 .f3d-params label{display:inline-flex;align-items:center;gap:6px;font-size:calc(14px*var(--scale))}
 .f3d-params input{width:150px;accent-color:var(--accent)}
@@ -267,7 +275,7 @@ export async function mountModel(cfg) {
   }
   // the model's centre and size, then each part's centre and label anchor
   const box = new THREE.Box3().setFromObject(model), mid = box.getCenter(new THREE.Vector3());
-  const radius = box.getSize(new THREE.Vector3()).length() / 2;
+  const size = box.getSize(new THREE.Vector3()), radius = size.length() / 2;
   for (const P of parts.values()) measure(P);
   // a part's centre, size and label anchor candidates (again whenever a slider rebuilds it)
   function measure(P) {
@@ -304,11 +312,20 @@ export async function mountModel(cfg) {
     apartRadius = Math.max(radius, far * .9);
   }
 
+  // how far out the parts list goes (for framing)
+  let trayRadius = radius;
+  if (cfg.assembly?.tray) {
+    const b3 = new THREE.Box3();
+    for (const [id, P] of parts) b3.union(P.obj.geometry.boundingBox.clone().translate(P.home).translate(new THREE.Vector3(...(cfg.assembly.tray[id] || [0, 0, 0]))));
+    trayRadius = Math.max(radius, ...[...Array(8)].map((_, i) => new THREE.Vector3(i & 1 ? b3.max.x : b3.min.x, i & 2 ? b3.max.y : b3.min.y, i & 4 ? b3.max.z : b3.min.z).distanceTo(mid)) .map(d => d * .85));
+  }
+
   // ---- state ----
   const S = { step: -1, pending: null, beat: 0, highlight: null, flows: new Set(), ex: 0, exTo: 0, cut: null,
     labels: param.get('labels') !== '0', predict: param.get('predict') === '1', asked: new Set(),
     layers: Object.fromEntries((cfg.layers || []).map(l => [l.id, l.on !== false])), picked: null,
-    turns: 0, speed: cfg.motion?.speed?.value ?? .5, running: !!cfg.motion?.running, p: { ...P0 } };
+    turns: 0, speed: cfg.motion?.speed?.value ?? .5, running: !!cfg.motion?.running, p: { ...P0 },
+    hidden: new Set(), tray: false };
   let dirty = true; const anims = new Set();
   const invalidate = () => { dirty = true; };
   controls.addEventListener('change', invalidate);
@@ -317,8 +334,11 @@ export async function mountModel(cfg) {
   const views = cfg.views || { Front: { az: 0, el: 8 }, Back: { az: 180, el: 8 }, Left: { az: -90, el: 8 }, Top: { az: 0, el: 80 } };
   // the distance that fits the model (or, as it comes apart, the apart pose) in the view
   const baseDist = (ex = S.ex) => {
-    const vf = THREE.MathUtils.degToRad(camera.fov) / 2, half = Math.min(vf, Math.atan(Math.tan(vf) * camera.aspect));
-    return (radius + (apartRadius - radius) * ease(ex)) * .76 / Math.sin(half);
+    const vf = THREE.MathUtils.degToRad(camera.fov) / 2, hf = Math.atan(Math.tan(vf) * camera.aspect);
+    const grow = (S.tray ? trayRadius : radius + (apartRadius - radius) * ease(ex)) / radius;
+    // fit the height and the widest side as well as the bounding sphere, so a tall bookcase or a long trumpet fits
+    const rV = Math.max(radius * .76, size.y / 2 * 1.22), rH = Math.max(radius * .76, Math.max(size.x, size.z) / 2 * 1.08);
+    return grow * Math.max(rV / Math.sin(vf), rH / Math.sin(hf));
   };
   const D2R = THREE.MathUtils.degToRad;
   const sph = () => { const o = camera.position.clone().sub(mid), d = o.length();
@@ -346,11 +366,11 @@ export async function mountModel(cfg) {
   };
   // a part sits at home + its step offset (move) + its take-apart offset
   const mv = new Map([...parts.keys()].map(id => [id, new THREE.Vector3()]));
-  function setMove(move = {}) {
+  function setMove(move = {}, sec = .45) {
     const from = new Map([...mv].map(([id, v]) => [id, v.clone()]));
     const to = new Map([...mv.keys()].map(id => [id, new THREE.Vector3(...(move[id] || [0, 0, 0]))]));
     if ([...mv].every(([id, v]) => v.distanceTo(to.get(id)) < 1e-6)) return;
-    tween(.45, k => { for (const [id, v] of mv) v.lerpVectors(from.get(id), to.get(id), k); applyApart(); });
+    tween(sec, k => { for (const [id, v] of mv) v.lerpVectors(from.get(id), to.get(id), k); applyApart(); });
   }
   // motion: where the drive puts each moving part at S.turns
   let drv = {};
@@ -487,6 +507,8 @@ export async function mountModel(cfg) {
       if (apartOn) { if (cfg.apart.order.includes(id)) ids.push(id); continue; }
       if (!S.labels) continue;
       if (S.highlight && !S.highlight.includes(id) && S.picked !== id) continue;   // a step labels only what it's about
+      const adds = cfg.assembly && S.step >= 0 && !S.tray && steps[S.step].adds;
+      if (adds && !adds.includes(id) && S.picked !== id) continue;                // a manual step labels its new parts
       ids.push(id);
     }
     return ids;
@@ -512,7 +534,9 @@ export async function mountModel(cfg) {
       return;
     }
     // leader lines: labels in a column on each side, spread so they never overlap, lines to the anchors
-    const cx = w / 2, gap = 22 * (root.classList.contains('present-on') ? 1.35 : 1), pad = 8;
+    // rows at least one label apart (boxed and Present labels are taller)
+    const tallest = Math.max(0, ...items.map(it => it.L.el.offsetHeight));
+    const cx = w / 2, gap = Math.max(22 * (root.classList.contains('present-on') ? 1.35 : 1), tallest + 4), pad = 8;
     // the model's outline on screen: the projected corners of every visible part's box
     let sx0 = Infinity, sx1 = -Infinity; const cv = new THREE.Vector3();
     for (const P of parts.values()) {
@@ -527,11 +551,13 @@ export async function mountModel(cfg) {
     const cols = { l: items.filter(i => i.x < cx), r: items.filter(i => i.x >= cx) };
     for (const side of ['l', 'r']) {
       const col = cols[side].sort((p, q) => p.y - q.y);
-      // spread: push down, then pull back up from the bottom
-      let y = -Infinity; for (const it of col) { it.ly = Math.max(it.y, y + gap); y = it.ly; }
+      const top = (side === 'r' && cfg.stats ? statsEl.offsetHeight                      // clear of the readouts
+        : side === 'l' && !badge.hidden ? badge.offsetHeight : 0) + gap / 2;             // and of the step number
+      // spread: push down from the top margin, pull back up from the bottom, then push down once more so no two
+      // rows ever overlap (a crowded column may then run a little low rather than stack)
+      let y = top - gap; for (const it of col) { it.ly = Math.max(it.y, y + gap); y = it.ly; }
       let bottom = h - gap / 2; for (let i = col.length - 1; i >= 0; i--) { col[i].ly = Math.min(col[i].ly, bottom); bottom = col[i].ly - gap; }
-      const top = side === 'r' && cfg.stats ? statsEl.offsetHeight + gap / 2 : gap / 2;   // clear of the readouts
-      for (const it of col) it.ly = Math.max(top, it.ly);
+      y = top - gap; for (const it of col) { it.ly = Math.max(it.ly, y + gap); y = it.ly; }
       for (const it of col) {
         const { L } = it; const hl = S.highlight?.includes(it.id) || S.picked === it.id;
         L.el.className = 'f3d-lab ' + side + (hl ? ' on' : '') + (L.occluded && !hl ? ' dim' : '');
@@ -553,7 +579,7 @@ export async function mountModel(cfg) {
   function applyLook() {
     for (const [id, P] of parts) {
       const g = P.cfg.group;
-      P.obj.visible = !g || S.layers[g] !== false;
+      P.obj.visible = (!g || S.layers[g] !== false) && !S.hidden.has(id);
       const hl = S.highlight, picked = S.picked;
       const faded = (hl && !hl.includes(id)) || (picked && picked !== id && !(hl && hl.includes(id)));
       const base = P.cfg.opacity ?? 1, op = faded ? Math.min(.22, base) : base;
@@ -590,7 +616,7 @@ export async function mountModel(cfg) {
     if (s.layers) Object.assign(S.layers, s.layers);
     S.highlight = s.highlight || null;
     S.flows = new Set(s.flows || []);
-    setMove(s.move);
+    if (cfg.assembly) setMove(assemble(i), 1.1); else setMove(s.move);
     if (s.reset) { S.turns = 0; applyDrive(); }
     if (s.params) slideParams(s.params);
     if (s.speed != null) setSpeed(s.speed);
@@ -602,6 +628,21 @@ export async function mountModel(cfg) {
     newStepCaption(s.caption);
     if (s.beats) playBeat(0);
     syncBar();
+  }
+  // assembly: parts added by step i or earlier are in place; the rest lie in the tray (a tray step) or are hidden.
+  // A part added now flies in from `from`, or slides over from the tray if it was lying there.
+  function assemble(i) {
+    const s = steps[i], placed = new Set(steps.slice(0, i + 1).flatMap(t => t.adds || []));
+    const move = { ...s.move }, wasHidden = new Set(S.hidden);
+    S.tray = !!s.tray; S.hidden = new Set();
+    for (const id of parts.keys()) {
+      if (placed.has(id)) continue;
+      if (S.tray) move[id] = cfg.assembly.tray?.[id] || [0, 0, 0]; else S.hidden.add(id);
+    }
+    for (const id of s.adds || []) if (wasHidden.has(id) || !parts.get(id).obj.visible)
+      mv.get(id).set(...(cfg.assembly.from?.[id] || [0, radius * .9, 0]));
+    badge.hidden = false; badge.textContent = s.manual ?? String(i + 1);
+    return move;
   }
   function playBeat(b) {
     const s = steps[S.step]; S.beat = b;
@@ -759,6 +800,7 @@ export async function mountModel(cfg) {
 
   // ---- stats: live readouts, top right of the stage ----
   const statsEl = $('dl', 'f3d-stats'); if (cfg.stats) stage.append(statsEl);
+  const badge = $('div', 'f3d-badge'); badge.hidden = true; if (cfg.assembly) stage.append(badge);
   let statsText = '';
   function showStats() {
     if (!cfg.stats) return;
