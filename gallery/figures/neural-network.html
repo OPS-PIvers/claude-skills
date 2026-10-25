@@ -8,318 +8,271 @@
 <body>
 <script src="core.js"></script>
 <script>
-/* A tiny neural network that sorts fruit, built as a tabletop machine.
-   The real process (what a neural network does), and where every number is after each step:
-   1. Fruit:   a fruit moves from the crate to the stand under the camera.
-   2. Think:   the camera turns it into 3 numbers (round, yellow, long): the INPUT columns fill.
-               Each number travels along a wire to every HIDDEN neuron. A wire's thickness is its weight: what reaches
-               the neuron is the number times the weight. Each neuron adds up what arrives (its column fills); past the
-               threshold it lights and sends its own signal on. The 2 OUTPUT neurons add up the same way, and the
-               fuller one is the guess, shown on the screen.
-   3. Correct it: the screen shows the right answer. The error goes backward through the wires and every weight is
-               nudged (gradient descent): wires toward the right answer thicken, wires toward the wrong one thin.
-   4. Practice: the same nudge, 200 times, on apples and bananas in turn. The weights settle so both are sorted right.
-   Weights start the same every time (a fixed "random" start), so the first banana is guessed wrong. All the numbers
-   below are computed, not scripted: press things in any order and the network behaves as a real one would. */
-const NN_IN = { banana:[.1, 1, 1], apple:[1, .1, .15] };        // round, yellow, long
-const NN_W0 = { h:[[.5, .2, .4], [.3, .3, .2], [.2, .4, .3]], o:[[.6, .3, .4], [.2, .3, .3]] };
-const OUTS = ['apple', 'banana'], NAME = { apple:'APPLE', banana:'BANANA' };
-const LR_O = .6, LR_H = .12, LR_PO = .15, LR_PH = .03, N_PRAC = 200, PRAC_S = 9;
+/* One neuron that learns to tell an X from an O, built as a machine on a desk. It is a real perceptron.
+   The real process, and where everything is after each step:
+   1. Draw:      9 squares on the screen light up (an X, an O, or squares the student clicks).
+   2. Guess:     each lit square uses the knob in the same spot on the knob panel. Those knob numbers fly to the
+                 adder and are added up. Above 0 means X, below 0 means O, exactly 0 means not sure.
+   3. Correct it: the student tells it the right answer. Every lit square's knob turns one click toward that answer
+                 (unlit knobs don't move). The adder shows the new total for the same drawing.
+   4. Practice:  the same rule on 30 drawings, some of them messy. A knob only turns when the guess is wrong or not
+                 sure enough (total under 2 away from 0).
+   After practice the knobs make a picture: the centre points to X (only X's use it), the edges point to O, and the
+   corners stay near 0 (X's and O's both use them, so they don't help). Knobs (weights) go from -3 to +3. */
+const XS_ = [0, 2, 4, 6, 8], OS_ = [0, 1, 2, 3, 5, 6, 7, 8];
+const pixOf = a => { const p = Array(9).fill(0); a.forEach(i => { p[i] = 1; }); return p; };
+const SHAPES = { X:{ pix:pixOf(XS_), truth:'X', name:'X' }, O:{ pix:pixOf(OS_), truth:'O', name:'O' },
+  messy:{ pix:pixOf([0, 2, 4, 8]), truth:'X', name:'messy X' } };
+const W0 = [1, 0, 0, -1, 0, 1, -1, 0, 0];
+// the practice set: X's and O's, each with one square missing, plus the clean ones, in a mixed order
+const PRAC = (() => { const ex = [];
+  for (const c of [0, 2, 6, 8]) ex.push(['X', pixOf(XS_.filter(i => i !== c))]);
+  for (const e of [1, 3, 5, 7]) ex.push(['O', pixOf(OS_.filter(i => i !== e))]);
+  ex.push(['X', pixOf(XS_)], ['O', pixOf(OS_)]);
+  return Array.from({ length:30 }, (_, k) => ex[(k * 7) % ex.length]); })();
+const PRAC_DT = .32, MARGIN = 2;
 const clamp01 = t => Math.max(0, Math.min(1, t));
 const lerp = (a, b, t) => a + (b - a) * t;
-const fire = l => clamp01((l - .3) / .4);                         // how bright a neuron gets for the sum in its column
-const THR = .5;                                                   // the red line: the sum where it is half lit
-function fwd(W, a){
-  const h = W.h.map(w => w.reduce((s, v, i) => s + v * a[i], 0)), hb = h.map(fire);
-  const o = W.o.map(w => w.reduce((s, v, j) => s + v * hb[j], 0));
-  return { h, hb, o, ob:o.map(fire), guess:o[0] >= o[1] ? 'apple' : 'banana' };
-}
-// one lesson: nudge every weight in the direction that makes the right output fuller and the wrong one emptier
-function learn(W, fruit, lo, lh){
-  const a = NN_IN[fruit], r = fwd(W, a), t = OUTS.map(k => k === fruit ? 1 : 0), e = r.o.map((o, k) => t[k] - clamp01(o));
-  const d = r.hb.map((_, j) => e.reduce((s, ek, k) => s + ek * W.o[k][j], 0));
-  W.o = W.o.map((w, k) => w.map((v, j) => Math.max(.03, Math.min(1, v + lo * e[k] * r.hb[j]))));
-  W.h = W.h.map((w, j) => w.map((v, i) => Math.max(.03, Math.min(1, v + lh * d[j] * a[i]))));
-  return r.guess === fruit;
-}
-const cpW = W => ({ h:W.h.map(r => r.slice()), o:W.o.map(r => r.slice()) });
-const lerpW = (A, B, t) => ({ h:A.h.map((r, j) => r.map((v, i) => lerp(v, B.h[j][i], t))), o:A.o.map((r, k) => r.map((v, j) => lerp(v, B.o[k][j], t))) });
+const total = (w, p) => p.reduce((s, v, i) => s + v * w[i], 0);
+const sayOf = t => t > 0 ? 'X' : t < 0 ? 'O' : '?';
+const fmt = v => v > 0 ? `+${v}` : v < 0 ? `−${-v}` : '0';
+const turn = (w, p, truth) => w.map((v, i) => p[i] ? Math.max(-3, Math.min(3, v + (truth === 'X' ? 1 : -1))) : v);
 
 /* ---------- geometry ---------- */
-const XS = [16, 41, 66], XO = [28, 54], YI = 112, YH = 76, YO = 40;   // neurons: input and hidden x, output x, layer y
-const NB = 5.5, NH = 4, GR = 3.8, GZ1 = NH + 18, LV = 1.2;               // plinth half-width and height, glass, full column
-const PAD = [52, 150], PADR = 8, PADZ = 2.5;
-const CRATE = [8, 142, 26, 166, 9];
-const SLOT = { apple:[14, 149, 1], banana:[18, 159, 1] };
-const CAM = [PAD[0], PAD[1] - 15], CAMZ = 11, SCR = [38, 41, 3, 23, 8, 20];       // screen: x0, x1, y0, y1, z0, z1
-const BRD = [-2, -5, 88, 172, 3, 6];
-const SIG = '#f6c343', SIGM = { l:'#ffd866', m:'#efbd38', d:'#c4951f' }, ERR = '#8ec2f2';
-const LCD = '#1d2a26', LCD_T = '#8af0ae', RED = '#e2483d';
-const APPLE = matOf('#d8332f'), BAN = { l:'#ffd85a', m:'#f0c23a', d:'#c29621' }, STEM = matOf('#6b4a2b');
-const nIn = i => [XS[i], YI], nHid = j => [XS[j], YH], nOut = k => [XO[k], YO];
-const sw = w => `style="stroke-width:${f(w)}"`, CAPS = 'fill="none" stroke-linecap="round" stroke-linejoin="round"';
-const txZ = (x, y, z, str, size, col, weight = 600) => { const o = P(x, y, z);
-  return `<text transform="${txM(o, Dv(0,-1,0), Dv(1,0,0))}" font-size="${size}" fill="${col}" text-anchor="middle" font-family="${FONT_HEAD}" font-weight="${weight}" letter-spacing=".08em">${str}</text>`; };
-const colZ = l => NH + (GZ1 - NH) * clamp01(l / LV);
+const FX = 16, PANEL_Z = 52, GRID_TOP = 43.5, STEP = 13.5;
+const PIX_Y = 140, KNOB_Y = 90, PW = 44, CX0 = FX - 10;                  // left (high y) edge of each 3x3 panel, its width
+const ADD = [FX - 16, 0, 40, 44];                              // adder box: x0, y0, y1, height
+const BRD = [-3, -4, FX + 11, 145, 3, 6];
+const SIG = '#ffd23f', OFF = '#2c3140', LCD = '#1d2a26', LCD_T = '#8af0ae', RED = '#e2483d';
+const cell = (y1, i) => [y1 - 8.5 - (i % 3) * STEP, GRID_TOP - 6 - Math.floor(i / 3) * STEP];   // (y, z) centre
+const knobAt = i => { const [y, z] = cell(KNOB_Y, i); return [FX + 2.7, y, z]; };
+const INTO = [FX + .5, 36, 41];                            // where the numbers drop into the adder
+const GAUGE = [20, 25.5, 10];                                // adder gauge centre (y, z) and radius
+const gaugeAng = t => (90 - Math.max(-1, Math.min(1, t / 6)) * 78) * Math.PI / 180;
+const onFace = (y, z) => [FX + .06, y, z];
+const ringFX = (x, y, z, r, n = 20) => on(PX(x), ellUV(y, z, r, r, n));
+// upright text at a 3D point, sized like the labels: for the numbers students have to read (knobs, gauge, screen)
+const stx = (p3, str, size, col, weight = 700, fam = FONT_HEAD) => { const [X, Y] = P(...p3), k = INK_K;
+  return `<text x="${f(X)}" y="${f(Y + size * .36 * k)}" font-size="${f(size * k)}" text-anchor="middle" font-family="${fam}" font-weight="${weight}" fill="${col}">${str}</text>`; };
 
 /* ---------- drawing ---------- */
-// a wire lying on the board from a to b; its thickness is its weight
-function wire(a, b, w, col){
-  return `<path d="${pd([[a[0], a[1], .3], [b[0], b[1], .3]], false)}" ${CAPS} stroke="${col}" ${sw(.35 + 3.4 * w)}/>`;
-}
-// a pulse on a wire, t of the way from a to b; v = how much it carries
-function pulse(a, b, t, v, col){
-  if (t <= 0 || t >= 1 || v < .02) return '';
-  const p = P(lerp(a[0], b[0], t), lerp(a[1], b[1], t), .6), r = (.7 + 2.2 * Math.min(1, v)) * INK_K;
-  return `<circle cx="${f(p[0])}" cy="${f(p[1])}" r="${f(r)}" fill="${col}" stroke="${INK}" stroke-width=".6"/>`;
-}
-function neuron(st, m, x, y, lv, glow, label, thr){
-  const ring = z => on(PZ(z), ellUV(x, y, GR, GR, 20));
-  let s = box(x - NB, y - NB, 0, x + NB, y + NB, NH, m, tone, 1);
-  if (label) s += tx(x + NB + .05, y, 1.25, label, 2.2, m === PALS.white ? INK : '#ffffff', 700);
-  const glass = sp(hull([...ring(NH), ...ring(GZ1)].map(p => P(...p))));
-  s += fill(glass, '#eef5f8');
-  const top = colZ(lv);
-  if (top > NH + .25) s += cyl(x, y, NH, top, GR - .35, SIGM, toneI, .5, 20);
-  if (thr){ const zt = colZ(THR);
-    s += `<path d="${pd(on(PZ(zt), arcUV(x, y, GR + .05, -45, 135, 12)), false)}" fill="none" stroke="${RED}" stroke-width="1.3"/>`; }
-  s += fill(glass, '#cfe9f0', 'opacity=".25"')
-    + `<path d="${pd([[x + GR * .55, y + GR * .55, NH + 2], [x + GR * .55, y + GR * .55, GZ1 - 2]], false)}" stroke="#ffffff" stroke-width="1" opacity=".5" fill="none"/>`
-    + ink(glass, 1.1) + ink(pd(ring(GZ1)), .7);
-  s += cyl(x, y, GZ1, GZ1 + 1.4, GR + .45, METAL, toneI, .9, 20);
-  const c = P(x, y, GZ1 + 1.4 + 2.5), r = 2.5 * 1.2247;
-  if (glow > .02) s += `<circle cx="${f(c[0])}" cy="${f(c[1])}" r="${f(r * 2.2)}" fill="${SIG}" opacity="${(.35 * glow).toFixed(2)}"/>`;
-  s += `<circle cx="${f(c[0])}" cy="${f(c[1])}" r="${f(r)}" fill="${mix('#f4f6f8', SIG, glow)}" stroke="${INK}" stroke-width="1.1"/>`
-    + `<circle cx="${f(c[0] - r * .35)}" cy="${f(c[1] - r * .4)}" r="${f(r * .28)}" fill="#ffffff" opacity=".8"/>`;
+function cabinet(m, x0, y0, x1, y1, h){ return box(x0, y0, 0, x1, y1, h, m, tone, 1.4); }
+function pixPanel(st, m){
+  let s = cabinet(m, CX0, PIX_Y - PW, FX, PIX_Y, PANEL_Z);
+  s += shape(on(PX(FX + .03), rectUV(PIX_Y - PW + 1.5, 1.5, PIX_Y - 1.5, GRID_TOP + 1.5)), '#1b1f2b', .8);
+  for (let i = 0; i < 9; i++){ const [y, z] = cell(PIX_Y, i), lit = st.pix[i];
+    const t = shape(on(PX(FX + .06), rectUV(y - 6, z - 6, y + 6, z + 6)), lit ? SIG : OFF, .6)
+      + (lit ? `<path d="${pd(on(PX(FX + .08), [[y + 4.5, z + 4.5], [y + 1.5, z + 4.5]]), false)}" stroke="#ffffff" stroke-width="1" opacity=".7" fill="none"/>` : '');
+    s += act('tile', t, `data-i="${i}"`); }
+  s += tx(FX + .05, PIX_Y - PW / 2, GRID_TOP + 3.6, 'DRAW', 3.4, m === PALS.white ? INK : '#ffffff', 700);
   return s;
 }
-function apple(p){
-  const c = P(p[0], p[1], p[2] + 3), r = 3 * 1.2247;
-  return `<circle cx="${f(c[0])}" cy="${f(c[1])}" r="${f(r)}" fill="${APPLE.m}"/>`
-    + `<circle cx="${f(c[0] - r * .2)}" cy="${f(c[1] - r * .2)}" r="${f(r * .72)}" fill="${APPLE.l}"/>`
-    + `<circle cx="${f(c[0] - r * .38)}" cy="${f(c[1] - r * .42)}" r="${f(r * .18)}" fill="#ffffff" opacity=".7"/>`
-    + `<circle cx="${f(c[0])}" cy="${f(c[1])}" r="${f(r)}" fill="none" stroke="${INK}" stroke-width="1.1"/>`
-    + rod([p[0], p[1], p[2] + 5.6], [p[0] - .3, p[1] + .3, p[2] + 7.4], .3, STEM, toneI, .6)
-    + shape([[p[0] - .2, p[1] + .2, p[2] + 6.8], [p[0] - .4, p[1] - 1.6, p[2] + 7.8], [p[0] - .1, p[1] - 2.6, p[2] + 7]], '#43a047', .6);
-}
-function banana(p){
-  const q = [];
-  for (let i = 0; i <= 10; i++){ const t = i / 5 - 1; q.push([p[0] + 5 * t, p[1] - 2.4 * (1 - t * t), p[2] + 1.7 + .9 * t * t]); }
-  const d = pd(q, false);
-  return `<path d="${d}" ${CAPS} stroke="${INK}" ${sw(4.6)}/>` + `<path d="${d}" ${CAPS} stroke="${BAN.m}" ${sw(3.4)}/>`
-    + `<path d="${d}" ${CAPS} stroke="${BAN.l}" ${sw(1.4)} transform="translate(-.4 -.7)"/>`
-    + `<path d="${pd([q[0], q[1]], false)}" ${CAPS} stroke="${STEM.m}" ${sw(1.6)}/>`
-    + `<path d="${pd([q[10], q[9]], false)}" ${CAPS} stroke="${STEM.d}" ${sw(1.2)}/>`;
-}
-const fruitAt = (st, k) => { const t = k === 'apple' ? st.fa : st.fb, a = SLOT[k], b = [PAD[0], PAD[1], PADZ], e = ease(t);
-  return [lerp(a[0], b[0], e), lerp(a[1], b[1], e), lerp(a[2], b[2], e) + 11 * Math.sin(Math.PI * t)]; };
-const drawFruit = (st, k) => (k === 'apple' ? apple : banana)(fruitAt(st, k));
-function crate(st){
-  const [x0, y0, x1, y1, h] = CRATE, t = .9;
-  let s = shape(on(PZ(1), rectUV(x0 + t, y0 + t, x1 - t, y1 - t)), WOOD.d, .6)
-    + shape(on(PX(x0 + t), rectUV(y0 + t, 1, y1 - t, h)), WOOD.m, .6) + shape(on(PY(y0 + t), rectUV(x0 + t, 1, x1 - t, h)), WOOD.m, .6);
-  for (const k of ['apple', 'banana']) if ((k === 'apple' ? st.fa : st.fb) < .04) s += drawFruit(st, k);
-  s += shape(on(PX(x1), rectUV(y0, 0, y1, h)), WOOD.l, .9) + shape(on(PY(y1), rectUV(x0, 0, x1, h)), WOOD.m, .9);
-  for (const z of [3, 6]) s += line(on(PX(x1 + .05), [[y0 + .5, z], [y1 - .5, z]]), .5) + line(on(PY(y1 + .05), [[x0 + .5, z], [x1 - .5, z]]), .5);
-  s += shape(on(PZ(h), [[x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0], [x0 + t, y0 + t], [x0 + t, y1 - t], [x1 - t, y1 - t], [x1 - t, y0 + t], [x0 + t, y0 + t]]), WOOD.l, .7);
+function knob(st, i){
+  const [x, y, z] = knobAt(i), v = st.wv[i], a = v / 3 * 135 * Math.PI / 180, read = st.read.includes(i);
+  let s = '';
+  if (read) s += `<path d="${pd(ringFX(x, y, z, 6.1))}" fill="${SIG}" stroke="${INK}" stroke-width=".8"/>`;
+  s += cylX(FX, x - .05, y, z, 5, METAL, toneI, .9);
+  const dir = [-Math.sin(a), Math.cos(a)];
+  s += `<path d="${pd([[x + .03, y + dir[0] * 3.3, z + dir[1] * 3.3], [x + .03, y + dir[0] * 4.6, z + dir[1] * 4.6]], false)}" stroke="${INK}" stroke-width="1.6" stroke-linecap="round" fill="none"/>`;
+  s += stx([x + .1, y, z], fmt(Math.round(v)), 11, INK);
   return s;
 }
-// the camera: a box on a short post beside the stand, its lens toward the fruit; it is the sensor that measures it
-function camera(st, m){
-  const [cx, cy] = CAM, ly = cy + 4.6;
-  let s = box(cx - 2.5, cy - 2.5, 0, cx + 2.5, cy + 2.5, 1.5, DARK, toneI, .9) + rod([cx, cy, 1.5], [cx, cy, CAMZ - 2.5], .8, METAL, toneI, .9);
-  s += box(cx - 2.6, cy - 3, CAMZ - 2.5, cx + 2.6, cy + 3, CAMZ + 2.5, m, tone, 1) + rod([cx, cy + 3, CAMZ], [cx, ly, CAMZ], 1.7, DARK, toneI, .8);
-  s += shape(on(PX(cx + 2.65), ellUV(cy - 1.6, CAMZ + 1.2, .55, .55, 10)), st.cam > .01 ? '#43c25c' : DARK.l, .4);
-  if (st.cam > .01){ const lens = P(cx, ly, CAMZ), e = on(PZ(PADZ + 4), ellUV(PAD[0], PAD[1], 5, 5, 16)).map(p => P(...p));
-    s += `<path d="${sp(hull([lens, ...e]))}" fill="#fff3c4" opacity="${(.4 * st.cam).toFixed(2)}" pointer-events="none"/>`; }
+function knobPanel(st, m){
+  const light = m === PALS.white ? INK : '#ffffff';
+  let s = cabinet(m, CX0, KNOB_Y - PW, FX, KNOB_Y, PANEL_Z);
+  s += tx(FX + .05, KNOB_Y - PW / 2, GRID_TOP + 3.6, 'KNOBS', 3.4, light, 700);
+  for (let i = 0; i < 9; i++) s += knob(st, i);
   return s;
 }
-function screen(st){
-  const [x0, x1, y0, y1, z0, z1] = SCR, X = x1 + .06, yc = (y0 + y1) / 2;
-  let s = box(x0 + .5, yc - 1, 0, x0 + 2, yc + 1, z0, METAL, toneI, .8) + box(x0, y0, z0, x1, y1, z1, DARK, toneI, 1.1);
-  s += shape(on(PX(x1 + .03), rrUV(y0 + .9, z0 + .9, y1 - .9, z1 - .9, 1)), LCD, .7);
-  if (st.scr === 'truth') s += tx(X, yc, z1 - 3.7, 'IT IS', 2.2, '#ffffff', 600, FONT_MONO) + tx(X, yc, z0 + 3.2, NAME[st.fruit], 3.3, '#ffffff', 700, FONT_MONO);
-  else if (st.guess) s += tx(X, yc, z1 - 3.7, 'GUESS', 2.2, LCD_T, 600, FONT_MONO) + tx(X, yc, z0 + 3.2, NAME[st.guess], 3.3, LCD_T, 700, FONT_MONO);
-  else s += tx(X, yc, z0 + 4.6, 'READY', 2.8, LCD_T, 700, FONT_MONO);
+function adder(st, m){
+  const [x0, y0, y1, h] = ADD, [gy, gz, gr] = GAUGE, light = m === PALS.white ? INK : '#ffffff';
+  let s = cabinet(m, x0, y0, FX, y1, h);
+  // the slot the numbers drop into
+  s += shape(on(PZ(h + .05), rectUV(INTO[0] - 5, INTO[1] - 3, INTO[0] - 1, INTO[1] + 2)), '#1b1f2b', .7);
+  s += tx(FX + .05, gy, h - 4, 'ADD UP', 3.4, light, 700);
+  // the gauge: O on the left, 0 at the top, X on the right
+  const face = [[gy + gr + 1.5, gz - 2.5], ...arcUV(gy, gz, gr + 1.5, 180, 0, 14).map(([u, v]) => [2 * gy - u, v]), [gy - gr - 1.5, gz - 2.5]];
+  s += shape(on(PX(FX + .04), face), '#ffffff', 1);
+  for (let t = -6; t <= 6; t += 2){ const a = gaugeAng(t);
+    s += `<path d="${pd([onFace(gy - Math.cos(a) * (gr - 1.6), gz + Math.sin(a) * (gr - 1.6)), onFace(gy - Math.cos(a) * gr, gz + Math.sin(a) * gr)], false)}" stroke="${INK}" stroke-width="${t ? .8 : 1.4}" fill="none"/>`; }
+  s += stx(onFace(gy + gr - 2.6, gz + 1.2), 'O', 8, INK) + stx(onFace(gy - gr + 2.6, gz + 1.2), 'X', 8, INK)
+    + stx(onFace(gy, gz + gr - 4), '0', 6, INK, 600);
+  const a = gaugeAng(st.sumD);
+  s += `<path d="${pd([onFace(gy, gz), onFace(gy - Math.cos(a) * (gr - 2.4), gz + Math.sin(a) * (gr - 2.4))], false)}" stroke="${RED}" stroke-width="1.8" stroke-linecap="round" fill="none"/>`
+    + `<path d="${pd(ringFX(FX + .08, gy, gz, 1.1, 12))}" fill="${INK}"/>`;
+  // the screen: the running total and the answer
+  s += shape(on(PX(FX + .04), rrUV(y0 + 3, 4, y1 - 3, 15.5, 1)), LCD, .8);
+  const T = st.shown;
+  // printed on the screen itself (tilted with the box), big enough to read
+  if (T === null) s += tx(FX + .08, gy, 8.2, 'READY', 4.6, LCD_T, 700, FONT_MONO);
+  else {
+    s += tx(FX + .08, gy, 10.6, `TOTAL ${fmt(T)}`, 3.9, LCD_T, 600, FONT_MONO);
+    if (st.say) s += tx(FX + .08, gy, 5.4, st.say === '?' ? 'NOT SURE' : `SAYS ${st.say}`, 4.4, '#ffffff', 700, FONT_MONO);
+  }
   return s;
+}
+// a number on its way from a knob to the adder, drawn flat on screen so it stays readable
+function chip(c){
+  const a = knobAt(c.i), t = ease(clamp01(c.t)), p = P(lerp(a[0], INTO[0], t) + 6 * Math.sin(Math.PI * t), lerp(a[1], INTO[1], t), lerp(a[2], INTO[2], t) + 12 * Math.sin(Math.PI * t));
+  const k = INK_K, w = 22 * k, h = 13 * k, op = c.t > .92 ? (1 - c.t) / .08 : 1;
+  return `<g opacity="${clamp01(op).toFixed(2)}"><rect x="${f(p[0] - w / 2)}" y="${f(p[1] - h / 2)}" width="${f(w)}" height="${f(h)}" rx="${f(h / 2)}" fill="${SIG}" stroke="${INK}" stroke-width="1"/>`
+    + `<text x="${f(p[0])}" y="${f(p[1] + 3.9 * k)}" font-size="${f(11 * k)}" text-anchor="middle" font-family="${FONT_HEAD}" font-weight="700" fill="${INK}">${fmt(c.v)}</text></g>`;
 }
 function scene(st, m){
-  const W = st.W, pl = st.pl;
   let s = '';
   OY += BRD[4]; s += board(...BRD); OY -= BRD[4];
   const onBoard = on(PZ(0), rrUV(BRD[0], BRD[1], BRD[2], BRD[3], BRD[5]));
   const cube = (x0, y0, x1, y1, z1) => [[x0, y0, 0], [x1, y0, 0], [x1, y1, 0], [x0, y1, 0], [x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]];
-  const all = [...XS.map((x, i) => nIn(i)), ...XS.map((x, j) => nHid(j)), ...XO.map((x, k) => nOut(k))];
-  let sh = all.map(([x, y]) => castShadow(cube(x - NB, y - NB, x + NB, y + NB, GZ1 + 6))).join('');
-  sh += castShadow(cube(CRATE[0], CRATE[1], CRATE[2], CRATE[3], CRATE[4])) + castShadow(cube(SCR[0], SCR[2], SCR[1], SCR[3], SCR[5]))
-     + castShadow(cube(CAM[0] - 2.6, CAM[1] - 3, CAM[0] + 2.6, CAM[1] + 3, CAMZ + 2.5)) + castShadow(cube(PAD[0] - PADR, PAD[1] - PADR, PAD[0] + PADR, PAD[1] + PADR, PADZ));
-  s += clipTo(onBoard, sh);
-  // layer names lying on the board
-  const LBL = mix(INK, '#ffffff', .35);
-  s += txZ(BRD[2] - 6, YI, .05, 'INPUT', 3.4, LBL, 700) + txZ(BRD[2] - 6, YH, .05, 'HIDDEN', 3.4, LBL, 700) + txZ(BRD[2] - 6, YO, .05, 'OUTPUT', 3.4, LBL, 700);
-  // cables (fixed) and weighted wires, all lying on the board, then the pulses travelling on them
-  const CAB = mix(INK, '#ffffff', .55), WIRE = mix(INK, '#ffffff', .18), scrA = [SCR[0] + 1, (SCR[2] + SCR[3]) / 2];
-  for (let i = 0; i < 3; i++) s += `<path d="${pd([[CAM[0], CAM[1], .3], [nIn(i)[0], nIn(i)[1], .3]], false)}" ${CAPS} stroke="${CAB}" ${sw(1)}/>`;
-  for (let k = 0; k < 2; k++) s += `<path d="${pd([[nOut(k)[0], nOut(k)[1], .3], [scrA[0], scrA[1], .3]], false)}" ${CAPS} stroke="${CAB}" ${sw(1)}/>`;
-  for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) s += wire(nIn(i), nHid(j), W.h[j][i], WIRE);
-  for (let j = 0; j < 3; j++) for (let k = 0; k < 2; k++) s += wire(nHid(j), nOut(k), W.o[k][j], WIRE);
-  if (pl){ const t = pl.t;
-    if (pl.seg === 'ci') for (let i = 0; i < 3; i++) s += pulse(CAM, nIn(i), t, st.tin[i], SIG);
-    if (pl.seg === 'ih') for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) s += pulse(nIn(i), nHid(j), t, st.inp[i] * W.h[j][i], SIG);
-    if (pl.seg === 'ho') for (let j = 0; j < 3; j++) for (let k = 0; k < 2; k++) s += pulse(nHid(j), nOut(k), t, st.hb[j] * W.o[k][j], SIG);
-    if (pl.seg === 'os') for (let k = 0; k < 2; k++) s += pulse(nOut(k), scrA, t, st.ob[k], SIG);
-    if (pl.seg === 'back'){ const t1 = clamp01(t * 2), t2 = clamp01(t * 2 - 1);
-      for (let j = 0; j < 3; j++) for (let k = 0; k < 2; k++) s += pulse(nOut(k), nHid(j), t1, .35, ERR);
-      for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) s += pulse(nHid(j), nIn(i), t2, .35, ERR); } }
-  // everything standing on the board, back to front
-  const parts = [];
-  XS.forEach((x, i) => parts.push({ at:[x, YI, 10], svg:neuron(st, m, x, YI, st.inp[i], 0, ['ROUND', 'YELLOW', 'LONG'][i], false) }));
-  XS.forEach((x, j) => parts.push({ at:[x, YH, 10], svg:neuron(st, m, x, YH, st.hl[j], st.hb[j], '', true) }));
-  XO.forEach((x, k) => parts.push({ at:[x, YO, 10], svg:neuron(st, m, x, YO, st.ol[k], st.ob[k], NAME[OUTS[k]], true) }));
-  parts.push({ at:[PAD[0], PAD[1], 1], svg:act('pad', cyl(PAD[0], PAD[1], 0, PADZ, PADR, METAL, toneI, 1.2, 28)) });
-  parts.push({ at:[(CRATE[0] + CRATE[2]) / 2, (CRATE[1] + CRATE[3]) / 2, 4], svg:act('crate', crate(st)) });
-  for (const k of ['apple', 'banana']) if ((k === 'apple' ? st.fa : st.fb) >= .04){ const p = fruitAt(st, k); parts.push({ at:[p[0], p[1], p[2] + 3], svg:drawFruit(st, k) }); }
-  parts.push({ at:[CAM[0], CAM[1], 6], svg:camera(st, m) });
-  parts.push({ at:[SCR[1], (SCR[2] + SCR[3]) / 2, 10], svg:screen(st) });
-  s += byDepth(parts);
-  // labels
+  s += clipTo(onBoard, castShadow(cube(CX0, PIX_Y - PW, FX, PIX_Y, PANEL_Z)) + castShadow(cube(CX0, KNOB_Y - PW, FX, KNOB_Y, PANEL_Z))
+    + castShadow(cube(ADD[0], ADD[1], FX, ADD[2], ADD[3])));
+  // cables: screen to knobs, knobs to adder (drawn first: they run behind the cabinets' near edges)
+  const cab = (a, b) => rod(a, b, 1.1, DARK, toneI, .8);
+  s += byDepth([
+    { at:[FX - 5, (PIX_Y - PW + KNOB_Y) / 2, 30], svg:cab([FX - 5, PIX_Y - PW + .5, 30], [FX - 5, KNOB_Y - .5, 30]) },
+    { at:[FX - 5, (KNOB_Y - PW + ADD[2]) / 2, 30], svg:cab([FX - 5, KNOB_Y - PW + .5, 30], [FX - 5, ADD[2] - .5, 30]) },
+    { at:[FX - 5, ADD[2] - 20, 22], svg:adder(st, m) },
+    { at:[FX - 5, KNOB_Y - 22, 26], svg:knobPanel(st, m) },
+    { at:[FX - 5, PIX_Y - 22, 26], svg:pixPanel(st, m) },
+  ]);
+  s += st.chips.map(chip).join('');
   const ph = st.ph;
-  s += tag([CAM[0], CAM[1], CAMZ + 2.5], 14, 40, 'CAMERA', st.cam > .01);
-  s += tag([lerp(XS[0], XS[2], .5), lerp(YI, YH, .5), .3], 64, 44, 'WEIGHT', ph === 'nudge' || ph === 'prac');
-  s += tag([XS[2], YH, GZ1 + 4], 34, 22, 'NEURON', ph === 'fire');
-  s += tag([XS[0] + GR * .7, YH + GR * .7, colZ(THR)], -40, -36, 'THRESHOLD', ph === 'fire');
-  s += tag([SCR[1], SCR[3] - 2, SCR[5]], 30, -24, 'ANSWER', ph === 'answer' || st.scr === 'truth');
+  s += tag([FX, PIX_Y - 3, PANEL_Z], -18, -34, 'PIXELS', ph === 'draw');
+  s += tag([FX, KNOB_Y - 16, PANEL_Z], -10, -36, 'WEIGHT KNOBS', ph === 'read' || ph === 'turn' || ph === 'prac');
+  s += tag([FX, GAUGE[0] - 6, GAUGE[1] + 6], 46, -30, 'ADDER', ph === 'add');
+  s += tag([FX, ADD[1] + 5, 12], 44, 18, 'ANSWER', ph === 'answer' || ph === 'check');
   return s;
 }
 
 /* ---------- the steps ---------- */
 const CAP = {
-  fruit:k => `The ${k} moves from the crate to the stand, under the camera.`,
-  sense:'The camera turns the fruit into three numbers: how round, how yellow, how long.',
-  carry:'Each number travels along every wire. A thick wire counts a lot; a thin one barely counts.',
-  fire:'Each neuron adds up what arrives. Past the red line, it lights up and passes a signal on.',
-  wrong0:'APPLE fills higher, so it guesses apple. Wrong: its wires start out with random strengths.',
-  rightB1:'BANANA fills higher this time. The thicker wires now carry the banana there.',
-  wrongA1:'It guesses banana again. One lesson taught it to say banana, not to tell fruit apart.',
-  right2:k => k === 'apple' ? 'APPLE fills right up. Practice set the wires so round things lead to apple.'
-                            : 'BANANA fills right up. Practice set the wires so yellow, long things lead to banana.',
-  right:g => `${NAME[g]} fills higher, so it guesses ${g}. Right!`,
-  wrong:g => `${NAME[g]} fills higher, so it guesses ${g}. Wrong: its wires need more training.`,
-  back:'The screen shows the right answer. The error travels backward through the wires.',
-  nudge:(k, g) => `Wires that led toward ${NAME[k]} get thicker. Wires that led toward ${NAME[g]} get thinner.`,
-  prac1:'Now it practises on 200 fruits. After every guess, each wire is nudged a little.',
-  prac2:'Nobody wrote a rule for telling the fruit apart. The rule is in the wire strengths now.',
+  draw:n => `The squares of the ${n} light up on the screen.`,
+  read:'Each lit square uses the knob in the same spot. Plus votes X, minus votes O.',
+  sum:terms => `Add up those knob numbers: ${terms}.`,
+  turn:a => `You tell it: this is an ${a}. Each lit square's knob turns one click toward ${a}.`,
+  prac1:'Now it practises on 30 drawings. When it is wrong or unsure, the lit knobs turn.',
+  prac2:'Look at the knobs now. The middle one points hard toward X.',
+  prac3:'The edges point toward O. Corners stay near 0: X and O both use them.',
 };
 const BUSY = 'Wait for this step to finish';
 let ui;
-function run(st, ui, ph, phases, tick, done){
+function run(st, ui, phases, tick, done){
   st.busy = true; let T = 0, i = -1, end = 0, t0 = 0;
-  const enter = k => { i = k; t0 = end; const p = phases[k]; st.ph = p.ph || ph; if (p.enter) p.enter(st); st.cap = p.cap; end += Math.max(READ_S(p.cap), p.min || 0); };
+  const enter = k => { i = k; t0 = end; const p = phases[k]; st.ph = p.ph; if (p.enter) p.enter(st); st.cap = p.cap; end += Math.max(READ_S(p.cap), p.min || 0); };
   enter(0);
   ui.animate(dt => { T += dt; tick(st, i, T - t0, dt);
-    if (T >= end){ if (i < phases.length - 1) enter(i + 1); else { st.busy = false; st.ph = 'idle'; st.pl = null; done(st); return false; } }
+    if (T >= end){ if (i < phases.length - 1) enter(i + 1); else { st.busy = false; st.ph = 'idle'; done(st); return false; } }
     return true; });
 }
-const clearNet = st => { st.inp = [0, 0, 0]; st.hl = [0, 0, 0]; st.hb = [0, 0, 0]; st.ol = [0, 0]; st.ob = [0, 0]; st.guess = ''; st.scr = ''; st.done = ''; };
-function moveFruits(st, dt, target){
-  const v = dt / .7;
-  st.fa = target === 'apple' ? Math.min(1, st.fa + v) : Math.max(0, st.fa - v);
-  st.fb = target === 'banana' ? Math.min(1, st.fb + v) : Math.max(0, st.fb - v);
-}
-function pickFruit(st, ui, k){
+const forget = st => { st.shown = null; st.say = ''; st.guessed = false; st.read = []; st.chips = []; st.sumD = 0; };
+const easeKnobs = (st, dt, k = 4) => { st.wv = st.wv.map((v, i) => Math.abs(st.w[i] - v) < .02 ? st.w[i] : v + (st.w[i] - v) * Math.min(1, dt * k)); };
+function draw(st, ui, key){
   if (st.busy) return ui.flash(BUSY);
-  if (st.fruit === k) return ui.flash(`The ${k} is already on the stand`);
-  st.fruit = k; clearNet(st);
-  run(st, ui, 'fruit', [{ cap:CAP.fruit(k) }], (st, i, t, dt) => moveFruits(st, dt, k), () => {});
+  const sh = SHAPES[key], target = sh.pix.slice();
+  st.shape = key; st.truth = sh.truth; forget(st); st.pix = Array(9).fill(0);
+  const on_ = target.map((v, i) => v ? i : -1).filter(i => i >= 0);
+  run(st, ui, [{ cap:CAP.draw(sh.name), ph:'draw' }], (st, i, t) => {
+    const k = Math.min(on_.length, Math.floor(t / .18) + 1); on_.slice(0, k).forEach(j => { st.pix[j] = 1; });
+  }, st => { st.pix = target; });
 }
-function think(st, ui){
-  if (st.busy) return ui.flash(BUSY);
-  if (st.fruit === 'none') return ui.flash('Pick a fruit first: put one under the camera');
-  const k = st.fruit, r = fwd(st.W, NN_IN[k]), g = r.guess;
-  clearNet(st); st.tin = NN_IN[k].slice();
-  const right = g === k;
-  let ans = right ? CAP.right(g) : CAP.wrong(g);
-  if (st.nEx >= N_PRAC && right) ans = CAP.right2(k);
-  else if (st.nEx === 0 && k === 'banana' && g === 'apple') ans = CAP.wrong0;
-  else if (st.lessons === 1 && st.nEx === 1 && st.lastLesson === 'banana'){ if (k === 'banana' && right) ans = CAP.rightB1; if (k === 'apple' && !right) ans = CAP.wrongA1; }
-  run(st, ui, 'think', [{ cap:CAP.sense, ph:'sense' }, { cap:CAP.carry, ph:'carry' }, { cap:CAP.fire, ph:'fire' }, { cap:ans, ph:'answer' }], (st, i, t) => {
-    if (i === 0){ st.cam = clamp01(t / .6); st.pl = { seg:'ci', t:clamp01((t - .6) / 1) }; st.inp = st.tin.map(v => v * ease(clamp01((t - 1.5) / .8))); }
-    if (i === 1){ st.cam = 1 - clamp01(t / .6); st.inp = st.tin.slice(); st.pl = { seg:'ih', t:clamp01(t / 1.6) }; st.hl = r.h.map(v => v * ease(clamp01((t - 1.4) / 1))); }
-    if (i === 2){ st.cam = 0; st.hl = r.h.slice(); st.hb = r.hb.map(v => v * ease(clamp01(t / .7)));
-      st.pl = { seg:'ho', t:clamp01((t - .8) / 1.5) }; st.ol = r.o.map(v => v * ease(clamp01((t - 2.2) / 1))); }
-    if (i === 3){ st.hb = r.hb.slice(); st.ol = r.o.slice(); st.pl = { seg:'os', t:clamp01(t / .9) }; st.ob = r.ob.map(v => v * ease(clamp01(t / .6)));
-      if (t > .9 && !st.guess) st.guess = g; }
-  }, st => { st.guess = g; st.ob = r.ob.slice(); st.done = k; st.right = right; st.recent = [...st.recent, right ? 1 : 0].slice(-20); });
+function answerCap(st, t, say){
+  const side = t > 0 ? 'Above 0, so it says X.' : t < 0 ? 'Below 0, so it says O.' : 'Exactly 0, so it is not sure.';
+  let s = `Total ${fmt(t)}. ${side}`;
+  if (!st.truth || say === '?') return s;
+  if (say !== st.truth) return s + (st.shape === 'O' && st.lessons === 1 ? ' Wrong! An O uses the same corners.' : ' Wrong!');
+  if (st.shape === 'messy' && st.nEx >= PRAC.length) return `Total ${fmt(t)}, so it says X. It never saw this messy X before!`;
+  return s + ' Right!';
 }
-function correct(st, ui){
+function guess(st, ui){
   if (st.busy) return ui.flash(BUSY);
-  if (st.fruit === 'none') return ui.flash('Pick a fruit first, then let it guess');
-  if (st.done !== st.fruit) return ui.flash('Press Think first: it needs a guess to correct');
-  if (st.right) return ui.flash(`It got the ${st.fruit} right: there is nothing to correct`);
-  const k = st.fruit, g = st.guess, from = cpW(st.W), to = cpW(st.W);
-  learn(to, k, LR_O, LR_H);
-  run(st, ui, 'correct', [{ cap:CAP.back, ph:'back', enter:st => { st.scr = 'truth'; } }, { cap:CAP.nudge(k, g), ph:'nudge' }], (st, i, t) => {
-    if (i === 0) st.pl = { seg:'back', t:clamp01(t / 2.6) };
-    if (i === 1){ st.pl = null; st.W = lerpW(from, to, ease(clamp01(t / 2.2)));
-      const fade = 1 - clamp01((t - 2.4) / .6); st.hl = st.hl.map(v => v * fade); st.hb = st.hb.map(v => v * fade); st.ol = st.ol.map(v => v * fade); st.ob = st.ob.map(v => v * fade); }
-  }, st => { st.W = to; st.nEx++; st.lessons++; st.lastLesson = k; clearNet(st); st.inp = [0, 0, 0]; });
+  const lit = st.pix.map((v, i) => v ? i : -1).filter(i => i >= 0);
+  if (!lit.length) return ui.flash('Draw something first: pick a drawing or click the squares');
+  forget(st);
+  const t = total(st.w, st.pix), say = sayOf(t), terms = lit.map((i, k) => { const v = st.w[i];
+    return k === 0 ? fmt(v).replace('+', '') : v < 0 ? `− ${-v}` : `+ ${v}`; }).join(' ') + ` = ${fmt(t)}`;
+  run(st, ui, [{ cap:CAP.read, ph:'read' }, { cap:CAP.sum(terms), ph:'add' }, { cap:answerCap(st, t, say), ph:'answer' }], (st, i, tt, dt) => {
+    if (i === 0) st.read = lit.slice(0, Math.min(lit.length, Math.floor(tt / .3) + 1));
+    if (i === 1){ st.read = lit.slice(); st.shown = 0;
+      st.chips = lit.map((j, k) => ({ i:j, v:st.w[j], t:clamp01((tt - k * .5) / .8) })).filter(c => c.t > 0 && c.t < 1);
+      st.shown = lit.filter((j, k) => tt - k * .5 >= .8).reduce((s, j) => s + st.w[j], 0);
+      st.sumD += (st.shown - st.sumD) * Math.min(1, dt * 6); }
+    if (i === 2){ st.chips = []; st.read = []; st.shown = t; st.sumD += (t - st.sumD) * Math.min(1, dt * 6); st.say = say; }
+  }, st => { st.shown = t; st.sumD = t; st.say = say; st.guessed = true; st.recent = [...st.recent, say === st.truth ? 1 : 0].slice(-10); });
+}
+function correct(st, ui, a){
+  if (st.busy) return ui.flash(BUSY);
+  if (!st.guessed) return ui.flash('Press Guess first: it needs a guess to correct');
+  const t0 = total(st.w, st.pix);
+  if (sayOf(t0) === a && Math.abs(t0) >= MARGIN) return ui.flash(`It already says ${a}, and it is sure. Try another drawing.`);
+  if (!st.truth) st.truth = a;
+  const lit = st.pix.map((v, i) => v ? i : -1).filter(i => i >= 0), nw = turn(st.w, st.pix, a), t1 = total(nw, st.pix), say1 = sayOf(t1);
+  const after = `Now this drawing adds up to ${fmt(t1)}, so it says ${say1 === '?' ? 'it is not sure' : say1}.`;
+  run(st, ui, [{ cap:CAP.turn(a), ph:'turn', enter:st => { st.read = lit; } }, { cap:after, ph:'check' }], (st, i, tt, dt) => {
+    if (i === 0 && tt > .9) st.w = nw;
+    easeKnobs(st, dt, 3);
+    if (i === 1){ st.read = []; st.shown = t1; st.say = say1; st.sumD += (t1 - st.sumD) * Math.min(1, dt * 5); }
+  }, st => { st.w = nw; st.wv = nw.slice(); st.sumD = t1; st.nEx++; st.lessons++; st.truth = a; });
 }
 function practice(st, ui){
   if (st.busy) return ui.flash(BUSY);
-  if (st.nEx >= N_PRAC) return ui.flash('It has already practised: press Think to test it');
-  const keep = st.fruit, W = cpW(st.W), n0 = st.nEx;
+  if (st.nEx >= PRAC.length) return ui.flash('It has already practised. Draw something and press Guess.');
+  const keep = { pix:st.pix.slice(), shape:st.shape, truth:st.truth };
   let k = 0;
-  clearNet(st);
-  run(st, ui, 'prac', [{ cap:CAP.prac1, min:PRAC_S + 1 }, { cap:CAP.prac2 }], (st, i, t, dt) => {
-    const show = i === 0 && t < PRAC_S ? (Math.floor(t / 1.1) % 2 ? 'apple' : 'banana') : keep;
-    moveFruits(st, dt, show);
-    if (i === 0){ const want = Math.min(N_PRAC, Math.round(N_PRAC * clamp01(t / PRAC_S) ** 1.6));
-      while (k < want){ const fr = k % 2 ? 'apple' : 'banana', ok = learn(W, fr, LR_PO, LR_PH); st.recent = [...st.recent, ok ? 1 : 0].slice(-20); k++; }
-      st.W = cpW(W); st.nEx = n0 + k;
-      if (t < PRAC_S && show !== 'none'){ const r = fwd(st.W, NN_IN[show]), u = (t * 1.6) % 1;
-        st.inp = NN_IN[show].slice(); st.hl = r.h; st.hb = r.hb; st.ol = r.o; st.ob = r.ob;
-        st.pl = { seg:u < .5 ? 'ih' : 'ho', t:(u % .5) * 2 }; }
-      else { st.pl = null; clearNet(st); } }
-  }, st => { st.fruit = keep; clearNet(st); });
+  forget(st);
+  run(st, ui, [{ cap:CAP.prac1, ph:'prac', min:PRAC.length * PRAC_DT + .6 }, { cap:CAP.prac2, ph:'idle2' }, { cap:CAP.prac3, ph:'idle2' }], (st, i, tt, dt) => {
+    if (i === 0){ const want = Math.min(PRAC.length, Math.floor(tt / PRAC_DT) + 1);
+      while (k < want){ const [truth, pix] = PRAC[k], t = total(st.w, pix), ok = sayOf(t) === truth;
+        if (!ok || Math.abs(t) < MARGIN) st.w = turn(st.w, pix, truth);
+        st.pix = pix.slice(); st.shown = t; st.say = sayOf(t); st.recent = [...st.recent, ok ? 1 : 0].slice(-10); st.nEx++; k++; }
+      st.sumD += (st.shown - st.sumD) * Math.min(1, dt * 8); }
+    else { st.pix = keep.pix; st.shown = null; st.say = ''; }
+    easeKnobs(st, dt, 6);
+  }, st => { st.wv = st.w.slice(); Object.assign(st, keep); forget(st); });
 }
-// set a state directly, for screenshots: ?at=1 banana on the stand ... 5 after practice
+function toggleTile(st, ui, i){
+  if (st.busy) return ui.flash(BUSY);
+  st.pix = st.pix.slice(); st.pix[i] = st.pix[i] ? 0 : 1; st.shape = 'own'; st.truth = ''; forget(st);
+}
+// set a state directly, for screenshots: ?at=1 X drawn ... 5 the messy X guessed after practice
 function jumpTo(st, n){
-  if (n >= 1){ st.fruit = 'banana'; st.fb = 1; }
-  if (n >= 2){ learn(st.W, 'banana', LR_O, LR_H); st.nEx = 1; st.lessons = 1; st.lastLesson = 'banana'; }
-  if (n >= 3){ st.fruit = 'apple'; st.fb = 0; st.fa = 1; }
-  if (n >= 4){ for (let k = 0; k < N_PRAC - 1; k++){ const ok = learn(st.W, k % 2 ? 'apple' : 'banana', LR_PO, LR_PH); st.recent = [...st.recent, ok ? 1 : 0].slice(-20); } st.nEx = N_PRAC; }
-  if (n >= 5){ const r = fwd(st.W, NN_IN.apple); st.inp = NN_IN.apple.slice(); st.hl = r.h; st.hb = r.hb; st.ol = r.o; st.ob = r.ob; st.guess = r.guess; st.done = 'apple'; st.right = true; }
+  if (n >= 1){ Object.assign(st, { pix:SHAPES.X.pix.slice(), shape:'X', truth:'X' }); }
+  if (n >= 2){ st.w = turn(st.w, SHAPES.X.pix, 'X'); st.nEx = 1; st.lessons = 1; }
+  if (n >= 3){ Object.assign(st, { pix:SHAPES.O.pix.slice(), shape:'O', truth:'O' }); st.w = turn(st.w, SHAPES.O.pix, 'O'); st.nEx = 2; st.lessons = 2; }
+  if (n >= 4){ for (const [truth, pix] of PRAC){ const t = total(st.w, pix), ok = sayOf(t) === truth;
+      if (!ok || Math.abs(t) < MARGIN) st.w = turn(st.w, pix, truth); st.recent = [...st.recent, ok ? 1 : 0].slice(-10); st.nEx++; } }
+  if (n >= 5){ Object.assign(st, { pix:SHAPES.messy.pix.slice(), shape:'messy', truth:'X' }); const t = total(st.w, st.pix);
+    Object.assign(st, { shown:t, sumD:t, say:sayOf(t), guessed:true }); }
+  st.wv = st.w.slice();
 }
 ui = mountFigure({
   fig:'09', title:'Neural network: how a computer learns',
-  hint:'pick a fruit, think, correct it, then let it practise',
-  size:[BRD[2], BRD[3], GZ1 + 8],
-  state:{ busy:false, ph:'idle', cap:'', fruit:'none', fa:0, fb:0, W:cpW(NN_W0), tin:[0, 0, 0], inp:[0, 0, 0], hl:[0, 0, 0], hb:[0, 0, 0],
-    ol:[0, 0], ob:[0, 0], pl:null, cam:0, guess:'', scr:'', done:'', right:false, nEx:0, lessons:0, lastLesson:'', recent:[] },
+  hint:'draw an X or an O, guess, correct it, then let it practise',
+  size:[BRD[2], BRD[3], PANEL_Z + 4],
+  state:{ busy:false, ph:'idle', cap:'', pix:Array(9).fill(0), shape:'', truth:'', w:W0.slice(), wv:W0.slice(), read:[], chips:[],
+    shown:null, say:'', sumD:0, guessed:false, nEx:0, lessons:0, recent:[] },
   scene,
   caption: st => {
     if (st.busy) return st.cap;
-    if (st.fruit === 'none') return 'A fruit sorter made of neurons and wires. Pick a fruit to put under the camera.';
-    if (st.done === st.fruit){
-      if (!st.right) return st.nEx === 0 ? 'Press Correct it to show it the right answer.' : 'Correct it again, or let it practise on lots of fruit.';
-      if (st.nEx >= N_PRAC) return 'It learned this from examples. Nobody wrote it a rule.';
-      return 'Right this time. Try the other fruit to test it.';
-    }
-    if (st.nEx >= N_PRAC) return `Practice is done. Press Think to test it on the ${st.fruit}.`;
-    if (st.lessons && st.lastLesson === st.fruit) return `The wires have changed. Press Think to try the ${st.fruit} again.`;
-    return `The ${st.fruit} is under the camera. Press Think to see what the network guesses.`;
+    if (!st.pix.some(Boolean)) return 'One neuron with 9 knobs. Pick a drawing, or click the squares to draw.';
+    if (!st.guessed) return st.nEx >= PRAC.length ? 'Press Guess to test it on this drawing.' : 'Press Guess to see what it thinks this is.';
+    if (!st.truth) return 'Is it right? If not, press Correct it and tell it the answer.';
+    const t = total(st.w, st.pix);
+    if (sayOf(t) !== st.truth || Math.abs(t) < MARGIN) return 'Press Correct it to tell it the right answer.';
+    if (st.nEx >= PRAC.length) return 'It learned what makes an X from examples. Real AI learns this way, with billions of knobs.';
+    return st.lessons ? 'Its knobs changed. Try another drawing, or let it practise.' : 'Right! Try another drawing.';
   },
-  stats: st => [ { label:'Examples learned', value:st.nEx }, { label:'Right', value:st.recent.length ? `${Math.round(100 * st.recent.reduce((a, b) => a + b, 0) / st.recent.length)}%` : '–', small:true } ],
+  stats: st => [ { label:'Examples learned', value:st.nEx }, { label:'Right (last 10)', value:st.recent.length ? `${Math.round(100 * st.recent.reduce((a, b) => a + b, 0) / st.recent.length)}%` : '–', small:true } ],
   buttonsLabel:'Neural network',
   buttons:[
-    { label:'Fruit', choices:st => ['banana', 'apple'].map(k => ({ label:k === 'banana' ? 'Banana' : 'Apple', current:st.fruit === k,
-      onClick:(st, ui) => pickFruit(st, ui, k), disabled:st.busy || st.fruit === k, why:st.busy ? BUSY : `The ${k} is already on the stand` })) },
-    { label:'Think', onClick:think, predict:st => `Nobody has taught this network anything yet. What will it guess for the ${st.fruit === 'none' ? 'fruit' : st.fruit}?` },
-    { label:'Correct it', onClick:correct, predict:'Nobody can open it up and rewrite its rules. So what could change to make it right next time?' },
-    { label:'Practice', onClick:practice, predict:'It will see 200 fruits. What changes inside it: the neurons, the wires, or both?' },
+    { label:'Draw', choices:st => [['X', 'X'], ['O', 'O'], ['messy', 'Messy X']].map(([k, l]) => ({ label:l, current:st.shape === k,
+      onClick:(st, ui) => draw(st, ui, k), disabled:st.busy, why:BUSY })) },
+    { label:'Guess', onClick:guess, predict:'The knobs start at random settings. Will it know what this drawing is?' },
+    { label:'Correct it', choices:st => ['X', 'O'].map(a => ({ label:`It's an ${a}`, onClick:(st, ui) => correct(st, ui, a),
+      disabled:st.busy || !st.guessed, why:st.busy ? BUSY : 'Press Guess first: it needs a guess to correct' })),
+      predict:'Nobody can rewrite its rules. So what could change to fix its mistake?' },
+    { label:'Practice', onClick:practice, predict:'After 30 drawings, which knobs will point toward X?' },
   ],
-  walk:['Fruit>Banana', 'Think', 'Correct it', 'Think', 'Fruit>Apple', 'Think', 'Practice', 'Think'],
-  acts:{ crate:(st, el, ui) => pickFruit(st, ui, st.fruit === 'banana' ? 'apple' : 'banana'), pad:(st, el, ui) => think(st, ui) },
+  walk:['Draw>X', 'Guess', "Correct it>It's an X", 'Draw>O', 'Guess', "Correct it>It's an O", 'Practice', 'Draw>Messy', 'Guess'],
+  acts:{ tile:(st, el, ui) => toggleTile(st, ui, +el.dataset.i) },
   params:(st, q) => { if (q.has('at')) jumpTo(st, +q.get('at')); },
 });
 </script>
