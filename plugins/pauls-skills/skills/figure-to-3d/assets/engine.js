@@ -10,8 +10,9 @@
               //   sampled from the photo in the read-back. cut = the colour of cut faces (default: each part darker)
      parts: [{ id, name, info?,                // info: one plain sentence, shown when the part is tapped
                mesh?: 'bp3d/heart/aorta',      // a mesh-library id (build.mjs inlines it), or
-               shape?: { box|cylinder|sphere|cone|torus|lathe|tube: {…} },   // a procedural part (see SHAPES)
-               at?: [x,y,z], rot?: [x,y,z],    // where a procedural part sits (cm, radians)
+               shape?: { box|cylinder|sphere|cone|torus|lathe|tube|gear: {…} },   // a procedural part (see SHAPES)
+               at?: [x,y,z], rot?: [x,y,z],    // where a procedural part sits (cm, radians); it turns about `at`
+               offset?: [x,y,z],               // moves the shape off its own origin (a crank handle on an axle)
                color: '#c0392b', group?: 'chambers',   // group = a layer id
                label?: false | [x,y,z],        // false: never labelled; a point: the label's anchor (default: auto)
                tap?: false }],                 // false: tapping it does nothing (a case, a stand)
@@ -27,10 +28,16 @@
      section?: { normal: [1,0,0], range?: [min,max], caption?: 'sentence' },   // the Cut slider
      steps: [{ label, caption, predict?, view?: name | {az,el,dist}, highlight?: [ids], layers?: {id: bool},
                flows?: [flowIds], apart?: 0|1, cut?: null | 0..1, move?: { partId: [dx,dy,dz] },
+               run?: bool, speed?: n, reset?: true,    // motion: start or stop it, set the speed, zero the count
                beats?: [{ caption, highlight?, flows?, move? }] }],
               //   move: where parts sit in this step, as offsets from where they're built (a piston pressed
               //   down, a lever thrown). Parts a step doesn't move go back home.
               //   Walk through. A step with beats plays them in order, each held READ_S(caption) seconds.
+     motion?: { drive: (turns) => ({ partId: { rot?: [x,y,z], at?: [dx,dy,dz] } }), speed?: { value: .5, min: .1, max: 2,
+                name: 'Speed', unit: 'turns a second' }, running?: false },
+              //   a machine that runs: `turns` counts up while it runs (speed × seconds); drive says where each
+              //   moving part is at that point. Adds Run/Stop and a speed slider. Steps take run, speed, reset.
+     stats?: st => [{ label, value }],          // live readouts, top right. st: { turns, speed, running, step }
      caption: 'sentence',                      // the caption before Walk through starts
    })
    Testing hooks: window.F3D (ready, go, apart, cut, view, labels, info) and ?step= ?apart=1 ?cut=0.4 ?view=
@@ -98,6 +105,10 @@ button,input{font:inherit;color:inherit}
 .f3d-sw{display:inline-flex;align-items:center;gap:4px;font-size:calc(13px*var(--scale));color:var(--muted);cursor:pointer}
 .f3d-cut{display:inline-flex;align-items:center;gap:6px;font-size:calc(13px*var(--scale))}
 .f3d-cut[hidden]{display:none}
+.f3d-stats{position:absolute;right:0;top:0;display:flex;gap:14px;margin:0;padding:4px 6px;background:color-mix(in srgb,var(--paper) 88%,transparent);font-variant-numeric:tabular-nums}
+.f3d-stats div{display:flex;flex-direction:column;align-items:flex-end}
+.f3d-stats dt{font-size:calc(12px*var(--scale));color:var(--muted);order:2}
+.f3d-stats dd{margin:0;font-size:calc(20px*var(--scale));font-weight:700;order:1}
 .f3d-cut input{width:140px;accent-color:var(--accent)}
 .f3d-pop{position:absolute;right:16px;top:52px;z-index:5;background:var(--paper);border:1.5px solid var(--ink);padding:10px 12px;max-width:min(420px,90vw);font-size:13px;line-height:1.45;box-shadow:3px 3px 0 color-mix(in srgb,var(--ink) 18%,transparent)}
 .f3d-pop[hidden]{display:none}
@@ -119,6 +130,16 @@ const SHAPES = {
   lathe: ({ profile, seg = 64 }) => new THREE.LatheGeometry(profile.map(([x, y]) => new THREE.Vector2(x, y)), seg),
   tube: ({ points, r = .2, seg = 64, closed = false }) =>
     new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points.map(p => new THREE.Vector3(...p)), closed), seg, r, 12, closed),
+  // a spur gear in the XY plane, w thick along Z: pitch radius = m × teeth / 2, a tooth centred on +X at angle 0
+  gear: ({ teeth = 12, m = .5, w = 1, hole = 0 }) => {
+    const r = m * teeth / 2, tip = r + m, root = r - 1.25 * m, p = 2 * Math.PI / teeth, sh = new THREE.Shape();
+    const pts = [];                                  // each tooth: up a flank, across the tip, down the other flank
+    for (let i = 0; i < teeth; i++)
+      for (const [rad, da] of [[root, -.3], [tip, -.13], [tip, .13], [root, .3]]) pts.push([rad * Math.cos((i + da) * p), rad * Math.sin((i + da) * p)]);
+    sh.moveTo(...pts[0]); for (const q of pts.slice(1)) sh.lineTo(...q);
+    if (hole) { const h = new THREE.Path(); h.absarc(0, 0, hole, 0, Math.PI * 2, true); sh.holes.push(h); }
+    return new THREE.ExtrudeGeometry(sh, { depth: w, bevelEnabled: false, curveSegments: 24 }).translate(0, 0, -w / 2);
+  },
 };
 
 function toonRamp() {
@@ -213,6 +234,7 @@ export async function mountModel(cfg) {
     if (p.at) obj.position.set(...p.at);
     // bake the rotation into the shape, so every bound, centre and label anchor below is in model space
     if (p.rot) geo.applyMatrix4(new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(...p.rot)));
+    if (p.offset) geo.translate(...p.offset);
     model.add(obj);
     geo.computeBoundingBox(); geo.computeBoundingSphere();
     parts.set(p.id, { cfg: p, obj, mat, home: obj.position.clone() });
@@ -256,7 +278,8 @@ export async function mountModel(cfg) {
   // ---- state ----
   const S = { step: -1, pending: null, beat: 0, highlight: null, flows: new Set(), ex: 0, exTo: 0, cut: null,
     labels: param.get('labels') !== '0', predict: param.get('predict') === '1', asked: new Set(),
-    layers: Object.fromEntries((cfg.layers || []).map(l => [l.id, l.on !== false])), picked: null };
+    layers: Object.fromEntries((cfg.layers || []).map(l => [l.id, l.on !== false])), picked: null,
+    turns: 0, speed: cfg.motion?.speed?.value ?? .5, running: !!cfg.motion?.running };
   let dirty = true; const anims = new Set();
   const invalidate = () => { dirty = true; };
   controls.addEventListener('change', invalidate);
@@ -300,9 +323,20 @@ export async function mountModel(cfg) {
     if ([...mv].every(([id, v]) => v.distanceTo(to.get(id)) < 1e-6)) return;
     tween(.45, k => { for (const [id, v] of mv) v.lerpVectors(from.get(id), to.get(id), k); applyApart(); });
   }
+  // motion: where the drive puts each moving part at S.turns
+  let drv = {};
+  function applyDrive() {
+    if (!cfg.motion) return;
+    drv = cfg.motion.drive(S.turns) || {};
+    for (const [id, P] of parts) { const d = drv[id]; P.obj.rotation.set(...(d?.rot || [0, 0, 0])); }
+    applyApart();
+  }
   function applyApart() {
     const k = ease(S.ex);
-    for (const [id, P] of parts) P.obj.position.copy(P.home).add(mv.get(id)).addScaledVector(exOffset(id), k);
+    for (const [id, P] of parts) {
+      P.obj.position.copy(P.home).add(mv.get(id)).addScaledVector(exOffset(id), k);
+      if (drv[id]?.at) P.obj.position.add(new THREE.Vector3(...drv[id].at));
+    }
     drawPath(S.ex > .02 ? pathPoints(cfg.apart?.path || cfg.apart?.order || [], true) : null, Math.min(1, S.ex * 1.4));
   }
   // the path through the parts: thick dashes with an arrowhead on each leg, drawn over the model
@@ -467,7 +501,8 @@ export async function mountModel(cfg) {
       // spread: push down, then pull back up from the bottom
       let y = -Infinity; for (const it of col) { it.ly = Math.max(it.y, y + gap); y = it.ly; }
       let bottom = h - gap / 2; for (let i = col.length - 1; i >= 0; i--) { col[i].ly = Math.min(col[i].ly, bottom); bottom = col[i].ly - gap; }
-      for (const it of col) it.ly = Math.max(gap / 2, it.ly);
+      const top = side === 'r' && cfg.stats ? statsEl.offsetHeight + gap / 2 : gap / 2;   // clear of the readouts
+      for (const it of col) it.ly = Math.max(top, it.ly);
       for (const it of col) {
         const { L } = it; const hl = S.highlight?.includes(it.id) || S.picked === it.id;
         L.el.className = 'f3d-lab ' + side + (hl ? ' on' : '') + (L.occluded && !hl ? ' dim' : '');
@@ -526,6 +561,9 @@ export async function mountModel(cfg) {
     S.highlight = s.highlight || null;
     S.flows = new Set(s.flows || []);
     setMove(s.move);
+    if (s.reset) { S.turns = 0; applyDrive(); }
+    if (s.speed != null) setSpeed(s.speed);
+    if (s.run != null) setRun(s.run);
     if ((s.apart ? 1 : 0) !== S.exTo) setApart(s.apart ? 1 : 0);     // steps put it back together unless they say apart
     if (s.cut !== undefined) { setCut(s.cut); cutIn.value = s.cut == null ? 50 : Math.round(s.cut * 100); cutWrap.hidden = s.cut == null; cutBtn.setAttribute('aria-pressed', s.cut != null); }
     if (s.view) setView(s.view);
@@ -585,7 +623,16 @@ export async function mountModel(cfg) {
     cutBtn.setAttribute('aria-pressed', on); if (on && sec?.caption) newStepCaption(sec.caption); scheduleOcc();
   };
   cutIn.oninput = () => { setCut(cutIn.value / 100); scheduleOcc(); };
+  const runBtn = $('button', '', 'Run'), spWrap = $('label', 'f3d-cut'), spIn = $('input');
+  const sp = { min: .1, max: 2, name: 'Speed', unit: 'turns a second', ...cfg.motion?.speed };
+  spIn.type = 'range'; spIn.min = sp.min; spIn.max = sp.max; spIn.step = (sp.max - sp.min) / 100; spIn.value = S.speed;
+  spIn.setAttribute('aria-label', `${sp.name} (${sp.unit})`); spWrap.append(document.createTextNode(sp.name), spIn);
+  runBtn.onclick = () => setRun(!S.running);
+  spIn.oninput = () => setSpeed(+spIn.value);
+  function setRun(on) { S.running = on && !still; runBtn.textContent = S.running ? 'Stop' : 'Run'; runBtn.setAttribute('aria-pressed', S.running); invalidate(); }
+  function setSpeed(v) { S.speed = v; spIn.value = v; showStats(); }
   bar.append(back, next, stepN);
+  if (cfg.motion) bar.append(runBtn, spWrap);
   if (cfg.apart) bar.append(apartBtn);
   if (sec) bar.append(cutBtn, cutWrap);
   bar.append($('span', 'sep'));
@@ -649,6 +696,16 @@ export async function mountModel(cfg) {
     if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); if (!back.disabled) back.onclick(); }
   });
 
+  // ---- stats: live readouts, top right of the stage ----
+  const statsEl = $('dl', 'f3d-stats'); if (cfg.stats) stage.append(statsEl);
+  let statsText = '';
+  function showStats() {
+    if (!cfg.stats) return;
+    const rows = cfg.stats({ turns: S.turns, speed: S.speed, running: S.running, step: S.step }) || [];
+    const t = JSON.stringify(rows); if (t === statsText) return; statsText = t;
+    statsEl.replaceChildren(...rows.map(r => { const d = $('div'); d.append($('dt', '', r.label), $('dd', '', r.value)); return d; }));
+  }
+
   // ---- tap a part ----
   let down = null;
   renderer.domElement.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; });
@@ -681,9 +738,10 @@ export async function mountModel(cfg) {
       if (a.t >= 1) { anims.delete(a); a.done?.(); scheduleOcc(); }
     }
     const moving = controls.update();
+    if (S.running && cfg.motion) { S.turns += dt * S.speed; applyDrive(); showStats(); }
     const flowing = S.ex < .02 && stepFlows(dt);
     if (S.ex >= .02) for (const F of Object.values(flowObjs)) F.dots.visible = false;
-    if (dirty || anims.size || moving || flowing) {
+    if (dirty || anims.size || moving || flowing || S.running) {
       effect.render(scene, camera); dirty = false; layoutLabels();
     }
     requestAnimationFrame(frame);
@@ -702,7 +760,7 @@ export async function mountModel(cfg) {
   if (param.has('az') || param.has('el')) setView({ az: +param.get('az') || 0, el: +param.get('el') || 0 }, true);
   if (param.get('view')) setView(param.get('view'), true);
   newStepCaption(cfg.caption || steps[0]?.caption || '');
-  applyLook(); syncBar();
+  applyLook(); syncBar(); setRun(S.running); applyDrive(); showStats();
   if (param.get('present') === '1') setPresent(true);
   if (param.has('step')) { const i = +param.get('step'); S.predict = false; applyStep(i); finishAnims(); }
   if (param.get('apart') === '1') { setApart(1, true); newStepCaption(cfg.apart.caption); syncBar(); }
@@ -718,11 +776,12 @@ export async function mountModel(cfg) {
     cut: v => { setCut(v); effect.render(scene, camera); checkOcclusion(); },
     view: v => { setView(v, true); effect.render(scene, camera); checkOcclusion(); },
     present: on => { setPresent(on); },
+    turns: n => { S.turns = n; applyDrive(); showStats(); effect.render(scene, camera); checkOcclusion(); },
     camera: () => ({ position: camera.position.toArray().map(v => +v.toFixed(2)), target: controls.target.toArray().map(v => +v.toFixed(2)) }),
     labels: () => [...labEls.values()].filter(L => L.el.style.display !== 'none' && L.el.className.startsWith('f3d-lab'))
       .map(L => { const r = L.el.getBoundingClientRect(); return { part: L.el.dataset.part, text: L.el.textContent, l: r.left, t: r.top, r: r.right, b: r.bottom }; }),
     info: () => { effect.render(scene, camera); return { triangles: renderer.info.render.triangles, calls: renderer.info.render.calls,
-      parts: parts.size, steps: steps.length, views: Object.keys(views), apart: !!cfg.apart, section: !!sec }; },
+      parts: parts.size, steps: steps.length, views: Object.keys(views), apart: !!cfg.apart, section: !!sec, motion: !!cfg.motion }; },
   });
   html.dataset.ready = '1';
   doneReady();

@@ -254,8 +254,11 @@ What changed from the plan above while the engine and heart were built:
   the parts it highlights.
 - **Gallery cards** for 3D pages need WebGL in headless Chrome; the workflow passes the SwiftShader flags, but this
   was not testable in the cloud container (headless `--screenshot` hangs there for every page, ops-figures too).
-- **Not built yet:** math sliders, assembly steps, running motion (rollout step 3), and the NIH 3D search (no public
+- **Not built yet:** math sliders, assembly steps (rollout step 3), and the NIH 3D search (no public
   API answered; `fetch-mesh.mjs get url` takes a GLB downloaded from the site).
 - **A trumpet** joined the heart as the machine reference, ahead of the gears: all procedural parts, and a small
   engine addition, per-step `move`, for the pistons. Parts given a rotation have it baked into their geometry so
   bounds and label anchors are in model space.
+- **Gear train** (rollout step 3, machines): `shape: { gear }` (spur gears by teeth and module), `motion` (a drive
+  function of turns, Run/Stop, a speed slider), `stats` (live readouts), a part `offset`, and steps that `run`,
+  set `speed` and `reset`.
