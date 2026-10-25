@@ -103,10 +103,11 @@ function adder(st, m){
   // the screen: the running total and the answer
   s += shape(on(PX(FX + .04), rrUV(y0 + 3, 4, y1 - 3, 15.5, 1)), LCD, .8);
   const T = st.shown;
-  if (T === null) s += stx(onFace(gy, 9.7), 'READY', 8, LCD_T, 700, FONT_MONO);
+  // printed on the screen itself (tilted with the box), big enough to read
+  if (T === null) s += tx(FX + .08, gy, 8.2, 'READY', 4.6, LCD_T, 700, FONT_MONO);
   else {
-    s += stx(onFace(gy + 1, 12.2), `TOTAL ${fmt(T)}`, 8, LCD_T, 600, FONT_MONO);
-    if (st.say) s += stx(onFace(gy - 1, 7.2), st.say === '?' ? 'NOT SURE' : `SAYS ${st.say}`, 9, '#ffffff', 700, FONT_MONO);
+    s += tx(FX + .08, gy, 10.6, `TOTAL ${fmt(T)}`, 3.9, LCD_T, 600, FONT_MONO);
+    if (st.say) s += tx(FX + .08, gy, 5.4, st.say === '?' ? 'NOT SURE' : `SAYS ${st.say}`, 4.4, '#ffffff', 700, FONT_MONO);
   }
   return s;
 }
