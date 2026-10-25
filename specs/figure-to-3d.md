@@ -256,3 +256,6 @@ What changed from the plan above while the engine and heart were built:
   was not testable in the cloud container (headless `--screenshot` hangs there for every page, ops-figures too).
 - **Not built yet:** math sliders, assembly steps, running motion (rollout step 3), and the NIH 3D search (no public
   API answered; `fetch-mesh.mjs get url` takes a GLB downloaded from the site).
+- **A trumpet** joined the heart as the machine reference, ahead of the gears: all procedural parts, and a small
+  engine addition, per-step `move`, for the pistons. Parts given a rotation have it baked into their geometry so
+  bounds and label anchors are in model space.
