@@ -13,6 +13,9 @@
                shape?: { box|cylinder|sphere|cone|torus|lathe|tube|gear: {…} },   // a procedural part (see SHAPES)
                at?: [x,y,z], rot?: [x,y,z],    // where a procedural part sits (cm, radians); it turns about `at`
                offset?: [x,y,z],               // moves the shape off its own origin (a crank handle on an axle)
+               opacity?: 1,                    // below 1: see-through (a ghost cylinder to compare against)
+               spin?: p => [x,y,z],            // a turn that follows the sliders (radians)
+               // shape and at may also be functions of the slider values: p => ({ lathe: {…} }), p => [x,y,z]
                color: '#c0392b', group?: 'chambers',   // group = a layer id
                label?: false | [x,y,z],        // false: never labelled; a point: the label's anchor (default: auto)
                tap?: false }],                 // false: tapping it does nothing (a case, a stand)
@@ -29,7 +32,8 @@
      steps: [{ label, caption, predict?, view?: name | {az,el,dist}, highlight?: [ids], layers?: {id: bool},
                flows?: [flowIds], apart?: 0|1, cut?: null | 0..1, move?: { partId: [dx,dy,dz] },
                run?: bool, speed?: n, reset?: true,    // motion: start or stop it, set the speed, zero the count
-               beats?: [{ caption, highlight?, flows?, move? }] }],
+               params?: { id: value },         // sliders: where this step slides them to (beats take params too)
+               beats?: [{ caption, highlight?, flows?, move?, params? }] }],
               //   move: where parts sit in this step, as offsets from where they're built (a piston pressed
               //   down, a lever thrown). Parts a step doesn't move go back home.
               //   Walk through. A step with beats plays them in order, each held READ_S(caption) seconds.
@@ -37,7 +41,10 @@
                 name: 'Speed', unit: 'turns a second' }, running?: false },
               //   a machine that runs: `turns` counts up while it runs (speed × seconds); drive says where each
               //   moving part is at that point. Adds Run/Stop and a speed slider. Steps take run, speed, reset.
-     stats?: st => [{ label, value }],          // live readouts, top right. st: { turns, speed, running, step }
+     params?: [{ id, name, min, max, step?, value, unit?, time? }],
+              //   sliders (math): shapes, positions and spins that are functions of them rebuild as they move.
+              //   time = seconds a step takes to slide it (default 1.2)
+     stats?: st => [{ label, value }],          // live readouts, top right. st: { turns, speed, running, step, p }
      caption: 'sentence',                      // the caption before Walk through starts
    })
    Testing hooks: window.F3D (ready, go, apart, cut, view, labels, info) and ?step= ?apart=1 ?cut=0.4 ?view=
@@ -69,7 +76,7 @@ const CSS = `
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--paper);color:var(--ink);font-family:var(--font)}
 button,input{font:inherit;color:inherit}
-.f3d{display:grid;grid-template-rows:auto 1fr auto auto;height:100%;max-width:1400px;margin:0 auto;padding-block:12px 14px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));gap:8px}
+.f3d{display:grid;grid-template-rows:auto 1fr auto auto auto;height:100%;max-width:1400px;margin:0 auto;padding-block:12px 14px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));gap:8px}
 .f3d-head{display:flex;align-items:baseline;gap:.7em;flex-wrap:wrap;border-bottom:1.5px solid var(--ink);padding-bottom:6px}
 .f3d-fig{font-weight:700;letter-spacing:.02em;font-size:calc(15px*var(--scale))}
 .f3d-title{font-size:calc(19px*var(--scale));font-weight:600}
@@ -105,6 +112,10 @@ button,input{font:inherit;color:inherit}
 .f3d-sw{display:inline-flex;align-items:center;gap:4px;font-size:calc(13px*var(--scale));color:var(--muted);cursor:pointer}
 .f3d-cut{display:inline-flex;align-items:center;gap:6px;font-size:calc(13px*var(--scale))}
 .f3d-cut[hidden]{display:none}
+.f3d-params{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center}
+.f3d-params label{display:inline-flex;align-items:center;gap:6px;font-size:calc(14px*var(--scale))}
+.f3d-params input{width:150px;accent-color:var(--accent)}
+.f3d-params output{min-width:4.5em;font-variant-numeric:tabular-nums;font-weight:700}
 .f3d-stats{position:absolute;right:0;top:0;display:flex;gap:14px;margin:0;padding:4px 6px;background:color-mix(in srgb,var(--paper) 88%,transparent);font-variant-numeric:tabular-nums}
 .f3d-stats div{display:flex;flex-direction:column;align-items:flex-end}
 .f3d-stats dt{font-size:calc(12px*var(--scale));color:var(--muted);order:2}
@@ -127,7 +138,12 @@ const SHAPES = {
   sphere: ({ r = .5, seg = 48 }) => new THREE.SphereGeometry(r, seg, Math.round(seg * .6)),
   cone: ({ r = .5, h = 1, seg = 48 }) => new THREE.ConeGeometry(r, h, seg),
   torus: ({ r = 1, tube = .2, seg = 64 }) => new THREE.TorusGeometry(r, tube, 16, seg),
-  lathe: ({ profile, seg = 64 }) => new THREE.LatheGeometry(profile.map(([x, y]) => new THREE.Vector2(x, y)), seg),
+  // phi: how far round it goes, in degrees (a partly swept solid); it starts facing +Z
+  lathe: ({ profile, seg = 64, phi = 360 }) => new THREE.LatheGeometry(profile.map(([x, y]) => new THREE.Vector2(x, y)),
+    Math.max(2, Math.round(seg * Math.max(phi, .5) / 360)), 0, THREE.MathUtils.degToRad(Math.max(phi, .5))),
+  // a flat shape in the XY plane (a triangle, a net), depth thick along Z
+  plate: ({ points, depth = .1 }) => new THREE.ExtrudeGeometry(new THREE.Shape(points.map(([x, y]) => new THREE.Vector2(x, y))),
+    { depth, bevelEnabled: false }).translate(0, 0, -depth / 2),
   tube: ({ points, r = .2, seg = 64, closed = false }) =>
     new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points.map(p => new THREE.Vector3(...p)), closed), seg, r, 12, closed),
   // a spur gear in the XY plane, w thick along Z: pitch radius = m × teeth / 2, a tooth centred on +X at angle 0
@@ -201,6 +217,17 @@ export async function mountModel(cfg) {
   const clip = new THREE.Plane(new THREE.Vector3(1, 0, 0), 1e6);
   const model = new THREE.Group(); scene.add(model);
   const parts = new Map();          // id -> { cfg, obj, mat, home, center, radius, cands, anchor }
+  const P0 = Object.fromEntries((cfg.params || []).map(q => [q.id, q.value]));   // slider values at the start
+  // a procedural part's geometry, with its rot and offset baked in (so bounds and anchors are in model space)
+  function shapeGeo(p, pv = P0) {
+    const spec = typeof p.shape === 'function' ? p.shape(pv) : p.shape;
+    const [kind, opts] = Object.entries(spec)[0];
+    if (!SHAPES[kind]) { err('unknown shape ' + kind); return null; }
+    const geo = SHAPES[kind](opts);
+    if (p.rot) geo.applyMatrix4(new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(...p.rot)));
+    if (p.offset) geo.translate(...p.offset);
+    return geo;
+  }
   const darken = (shader) => {
     shader.fragmentShader = shader.fragmentShader.replace('#include <dithering_fragment>',
       '#include <dithering_fragment>\n if (!gl_FrontFacing) gl_FragColor.rgb *= 0.6;');
@@ -222,19 +249,18 @@ export async function mountModel(cfg) {
       geo.setIndex(found.geometry.index);
       geo.applyMatrix4(found.matrixWorld);
     } else if (p.shape) {
-      const [kind, opts] = Object.entries(p.shape)[0];
-      if (!SHAPES[kind]) { err('unknown shape ' + kind); continue; }
-      geo = SHAPES[kind](opts);
+      geo = shapeGeo(p); if (!geo) continue;
     } else { err('part ' + p.id + ' has no mesh or shape'); continue; }
+    // a see-through part draws only its outside, or its inside would show through as the darker cut colour
     const mat = new THREE.MeshToonMaterial({ color: new THREE.Color(p.color || '#bbbbbb'), gradientMap: ramp,
-      side: THREE.DoubleSide, clippingPlanes: [clip], transparent: false });
+      side: (p.opacity ?? 1) < 1 ? THREE.FrontSide : THREE.DoubleSide, clippingPlanes: [clip], transparent: false });
     mat.onBeforeCompile = darken;
     mat.userData.outlineParameters = { thickness: .0035, color: new THREE.Color(style.ink).toArray(), alpha: .9, visible: true };
     const obj = new THREE.Mesh(geo, mat); obj.name = p.id; obj.userData.part = p.id;
-    if (p.at) obj.position.set(...p.at);
-    // bake the rotation into the shape, so every bound, centre and label anchor below is in model space
-    if (p.rot) geo.applyMatrix4(new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(...p.rot)));
-    if (p.offset) geo.translate(...p.offset);
+    const at = typeof p.at === 'function' ? p.at(P0) : p.at;
+    if (at) obj.position.set(...at);
+    if (p.mesh && p.rot) geo.applyMatrix4(new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(...p.rot)));
+    if (p.spin) obj.rotation.set(...p.spin(P0));
     model.add(obj);
     geo.computeBoundingBox(); geo.computeBoundingSphere();
     parts.set(p.id, { cfg: p, obj, mat, home: obj.position.clone() });
@@ -242,19 +268,22 @@ export async function mountModel(cfg) {
   // the model's centre and size, then each part's centre and label anchor
   const box = new THREE.Box3().setFromObject(model), mid = box.getCenter(new THREE.Vector3());
   const radius = box.getSize(new THREE.Vector3()).length() / 2;
-  for (const P of parts.values()) {
-    const g = P.obj.geometry, c = g.boundingBox.getCenter(new THREE.Vector3()).add(P.obj.position);
+  for (const P of parts.values()) measure(P);
+  // a part's centre, size and label anchor candidates (again whenever a slider rebuilds it)
+  function measure(P) {
+    const g = P.obj.geometry; g.computeBoundingBox(); g.computeBoundingSphere();
+    const c = g.boundingBox.getCenter(new THREE.Vector3()).add(P.home);
     P.center = c; P.radius = g.boundingSphere.radius;
     // label anchors: a point given by the scene, or candidates on the part's surface facing six ways plus
     // outward; checkOcclusion() picks the one that faces the camera, isn't hidden and isn't cut away
-    if (Array.isArray(P.cfg.label)) { P.cands = [{ p: new THREE.Vector3(...P.cfg.label), d: null }]; P.anchor = P.cands[0].p; continue; }
+    if (Array.isArray(P.cfg.label)) { P.cands = [{ p: new THREE.Vector3(...P.cfg.label), d: null }]; P.anchor = P.cands[0].p; return; }
     const out = c.clone().sub(mid); if (out.lengthSq() < 1e-6) out.set(0, 0, 1); out.normalize();
     const dirs = [out, ...[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]].map(a => new THREE.Vector3(...a))];
     const pos = g.attributes.position, v = new THREE.Vector3(), step = Math.max(1, Math.floor(pos.count / 2500));
     P.cands = dirs.map(d => {
       let best = -Infinity; const bv = c.clone();
       for (let i = 0; i < pos.count; i += step) {
-        v.fromBufferAttribute(pos, i).add(P.obj.position).sub(c);
+        v.fromBufferAttribute(pos, i).add(P.home).sub(c);
         const along = v.dot(d), off = Math.sqrt(Math.max(0, v.lengthSq() - along * along));
         const sc = along - .8 * off;                    // far out along d, but near the line through the centre
         if (sc > best) { best = sc; bv.copy(v).add(c); }
@@ -279,7 +308,7 @@ export async function mountModel(cfg) {
   const S = { step: -1, pending: null, beat: 0, highlight: null, flows: new Set(), ex: 0, exTo: 0, cut: null,
     labels: param.get('labels') !== '0', predict: param.get('predict') === '1', asked: new Set(),
     layers: Object.fromEntries((cfg.layers || []).map(l => [l.id, l.on !== false])), picked: null,
-    turns: 0, speed: cfg.motion?.speed?.value ?? .5, running: !!cfg.motion?.running };
+    turns: 0, speed: cfg.motion?.speed?.value ?? .5, running: !!cfg.motion?.running, p: { ...P0 } };
   let dirty = true; const anims = new Set();
   const invalidate = () => { dirty = true; };
   controls.addEventListener('change', invalidate);
@@ -328,7 +357,7 @@ export async function mountModel(cfg) {
   function applyDrive() {
     if (!cfg.motion) return;
     drv = cfg.motion.drive(S.turns) || {};
-    for (const [id, P] of parts) { const d = drv[id]; P.obj.rotation.set(...(d?.rot || [0, 0, 0])); }
+    for (const [id, P] of parts) { const d = drv[id]; if (d?.rot) P.obj.rotation.set(...d.rot); }
     applyApart();
   }
   function applyApart() {
@@ -527,8 +556,9 @@ export async function mountModel(cfg) {
       P.obj.visible = !g || S.layers[g] !== false;
       const hl = S.highlight, picked = S.picked;
       const faded = (hl && !hl.includes(id)) || (picked && picked !== id && !(hl && hl.includes(id)));
-      P.mat.transparent = !!faded; P.mat.opacity = faded ? .22 : 1; P.mat.depthWrite = !faded;
-      P.mat.userData.outlineParameters.visible = !faded;
+      const base = P.cfg.opacity ?? 1, op = faded ? Math.min(.22, base) : base;
+      P.mat.transparent = op < 1; P.mat.opacity = op; P.mat.depthWrite = op >= 1;
+      P.mat.userData.outlineParameters.visible = op >= 1;   // an outline hull shows through anything see-through
       P.mat.needsUpdate = true;
     }
     invalidate();
@@ -562,6 +592,7 @@ export async function mountModel(cfg) {
     S.flows = new Set(s.flows || []);
     setMove(s.move);
     if (s.reset) { S.turns = 0; applyDrive(); }
+    if (s.params) slideParams(s.params);
     if (s.speed != null) setSpeed(s.speed);
     if (s.run != null) setRun(s.run);
     if ((s.apart ? 1 : 0) !== S.exTo) setApart(s.apart ? 1 : 0);     // steps put it back together unless they say apart
@@ -580,6 +611,7 @@ export async function mountModel(cfg) {
       if (bt.highlight) S.highlight = bt.highlight;
       if (bt.flows) S.flows = new Set(bt.flows);
       if (bt.move) setMove(bt.move);
+      if (bt.params) slideParams(bt.params);
       applyLook(); setCaption(bt.caption, true);
       if (b + 1 < s.beats.length) playBeat(b + 1);
     }, READ_S(prev) * 1000);
@@ -696,12 +728,41 @@ export async function mountModel(cfg) {
     if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); if (!back.disabled) back.onclick(); }
   });
 
+  // ---- sliders: parts that are functions of the values rebuild as they move ----
+  const live = [...parts.values()].filter(P => typeof P.cfg.shape === 'function' || typeof P.cfg.at === 'function' || P.cfg.spin);
+  const paramRow = $('div', 'f3d-params'), outs = {}, ins = {};
+  for (const q of cfg.params || []) {
+    const l = $('label'), i = $('input'), o = $('output');
+    i.type = 'range'; i.min = q.min; i.max = q.max; i.step = q.step ?? (q.max - q.min) / 100; i.value = q.value; i.id = 'f3d-' + q.id;
+    i.oninput = () => setParams({ [q.id]: +i.value });
+    l.append(document.createTextNode(q.name), i, o); paramRow.append(l); outs[q.id] = o; ins[q.id] = i;
+  }
+  if (cfg.params?.length) root.insertBefore(paramRow, bar);
+  const fmt = (q, v) => (Math.round(v * 100) / 100) + (q.unit ? ' ' + q.unit : '');
+  function setParams(vals) {
+    Object.assign(S.p, vals);
+    for (const q of cfg.params || []) { ins[q.id].value = S.p[q.id]; outs[q.id].textContent = fmt(q, S.p[q.id]); }
+    for (const P of live) {
+      const c = P.cfg;
+      if (typeof c.shape === 'function') { const g = shapeGeo(c, S.p); if (g) { P.obj.geometry.dispose(); P.obj.geometry = g; } }
+      if (typeof c.at === 'function') P.home.set(...c.at(S.p));
+      if (c.spin) P.obj.rotation.set(...c.spin(S.p));
+      measure(P);
+    }
+    applyApart(); showStats(); invalidate(); scheduleOcc();
+  }
+  function slideParams(to) {
+    const from = { ...S.p }, keys = Object.keys(to);
+    const sec = Math.max(...keys.map(k => (cfg.params.find(q => q.id === k)?.time ?? 1.2)));
+    tween(sec, k => setParams(Object.fromEntries(keys.map(id => [id, from[id] + (to[id] - from[id]) * k]))));
+  }
+
   // ---- stats: live readouts, top right of the stage ----
   const statsEl = $('dl', 'f3d-stats'); if (cfg.stats) stage.append(statsEl);
   let statsText = '';
   function showStats() {
     if (!cfg.stats) return;
-    const rows = cfg.stats({ turns: S.turns, speed: S.speed, running: S.running, step: S.step }) || [];
+    const rows = cfg.stats({ turns: S.turns, speed: S.speed, running: S.running, step: S.step, p: { ...S.p } }) || [];
     const t = JSON.stringify(rows); if (t === statsText) return; statsText = t;
     statsEl.replaceChildren(...rows.map(r => { const d = $('div'); d.append($('dt', '', r.label), $('dd', '', r.value)); return d; }));
   }
@@ -760,7 +821,7 @@ export async function mountModel(cfg) {
   if (param.has('az') || param.has('el')) setView({ az: +param.get('az') || 0, el: +param.get('el') || 0 }, true);
   if (param.get('view')) setView(param.get('view'), true);
   newStepCaption(cfg.caption || steps[0]?.caption || '');
-  applyLook(); syncBar(); setRun(S.running); applyDrive(); showStats();
+  applyLook(); syncBar(); setRun(S.running); applyDrive(); if (cfg.params) setParams({}); showStats();
   if (param.get('present') === '1') setPresent(true);
   if (param.has('step')) { const i = +param.get('step'); S.predict = false; applyStep(i); finishAnims(); }
   if (param.get('apart') === '1') { setApart(1, true); newStepCaption(cfg.apart.caption); syncBar(); }
@@ -776,6 +837,7 @@ export async function mountModel(cfg) {
     cut: v => { setCut(v); effect.render(scene, camera); checkOcclusion(); },
     view: v => { setView(v, true); effect.render(scene, camera); checkOcclusion(); },
     present: on => { setPresent(on); },
+    params: v => { setParams(v); effect.render(scene, camera); checkOcclusion(); },
     turns: n => { S.turns = n; applyDrive(); showStats(); effect.render(scene, camera); checkOcclusion(); },
     camera: () => ({ position: camera.position.toArray().map(v => +v.toFixed(2)), target: controls.target.toArray().map(v => +v.toFixed(2)) }),
     labels: () => [...labEls.values()].filter(L => L.el.style.display !== 'none' && L.el.className.startsWith('f3d-lab'))
