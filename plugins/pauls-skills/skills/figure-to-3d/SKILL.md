@@ -40,6 +40,9 @@ Never write "students will…" or "teachers can…" on the page.
    - `assets/examples/solid.scene.js`, **the math reference**: `params` sliders, parts whose `shape`, `at` and
      `spin` are functions of them (a triangle spun into a cone), a see-through comparison solid (`opacity`), live
      volumes in `stats`, and steps and beats that slide the values.
+   - `assets/examples/bookcase.scene.js`, **the instruction-manual reference**: a parts list (`tray: true`), parts
+     added step by step (`adds`) that fly in or slide over from the tray, the manual's step numbers (`manual`), and
+     the manual's exploded drawing as Take apart.
    - The comment at the top of `assets/engine.js`, which lists every option `mountModel` takes.
 5. **Build:** `node scripts/build.mjs <name>.scene.js OUT.html`. It inlines Three.js, the engine, the scene and the
    meshes into one file and prints the size.
@@ -68,7 +71,7 @@ Short, in this order:
 - **Geometry per part:** which mesh (source and license) or procedural. Then **the features this model gets**: Take
   apart and tapping single parts need separate parts; with only one solid mesh, labels pin to points on it, Cut still
   works, Take apart is off.
-- **Extras** you plan: layers, flows. Say plainly if the figure needs something the engine can't do yet (below).
+- **Extras** you plan: layers, flows. Say plainly if the figure needs something the engine can't do.
 
 ## Meshes
 
@@ -146,6 +149,12 @@ The ops-figures rules, unchanged.
   can reason about. Make the shapes functions of them, so the solid rebuilds as they move, and show the formula's
   result live in `stats`. A Predict step slides one value (in a beat) so the change happens after the question.
   A ghost solid to compare against takes `opacity: .2`. A math idea gets no Take apart.
+- **Assembly** (manuals): `assembly: { tray, from }` and steps with `adds`. Step 1 is the parts list (`tray: true`,
+  `manual: 'Parts'`) with every part laid out and the counts in its caption; then one step per manual step, in the
+  manual's order and with its numbers (`manual: '3'`), adding only what that step adds; then a last `Done` step.
+  Parts fly in from `from` (the direction you'd push them: a shelf from the front, a back panel from behind).
+  Name parts with the manual's letters ("Shelf (B)"), use `style.labels: 'boxed'`, and label one of each repeated
+  part. Before Walk through the piece is shown finished.
 - **Present:** full screen, bigger type, → and ← keys. Nothing to configure.
 
 ## Look
@@ -153,16 +162,9 @@ The ops-figures rules, unchanged.
 The page matches the book, not the OPS brand: `style` takes `paper`, `ink`, `muted`, `accent`, `font` (`serif` or
 `sans`, system fonts only so it works offline) and `labels`. Sample them from the photo in the read-back. The model
 gets the figure's own colors with soft toon shading and thin ink outlines, which reads like a printed illustration
-and holds up on a projector. Colors that carry meaning are never changed for looks.
+and holds up on a projector. Colors that carry meaning are never changed for looks. Build machines, solids and
+furniture at real size in centimetres, and route tubes so they don't pass through each other: the shots show it.
 
-## What the engine can't do yet
+## Not supported
 
-The engine covers science, anatomy, machines and math. This figure-type extra is designed (in the spec) but not
-built; if a figure needs it, say so in the read-back and build what the engine can do:
-
-- **Manuals:** step-by-step assembly with the manual's step numbers.
-
-Build machines and solids at real size in centimetres, and route tubes so they don't pass through each other: the
-shots show it.
-
-There's also no SpartBoard version: a Three.js page is far over the mini-app limit, and `build.mjs` says so.
+There is no SpartBoard version: a Three.js page is far over the mini-app limit, and `build.mjs` says so.

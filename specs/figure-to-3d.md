@@ -254,7 +254,7 @@ What changed from the plan above while the engine and heart were built:
   the parts it highlights.
 - **Gallery cards** for 3D pages need WebGL in headless Chrome; the workflow passes the SwiftShader flags, but this
   was not testable in the cloud container (headless `--screenshot` hangs there for every page, ops-figures too).
-- **Not built yet:** assembly steps (rollout step 3), and the NIH 3D search (no public
+- **Not built:** the NIH 3D search (no public
   API answered; `fetch-mesh.mjs get url` takes a GLB downloaded from the site).
 - **A trumpet** joined the heart as the machine reference, ahead of the gears: all procedural parts, and a small
   engine addition, per-step `move`, for the pistons. Parts given a rotation have it baked into their geometry so
@@ -265,3 +265,8 @@ What changed from the plan above while the engine and heart were built:
 - **Solid of revolution** (rollout step 3, math): `params` sliders; part `shape`, `at` and `spin` as functions of
   them, rebuilt live; `plate` and a partial `lathe` (`phi`); `opacity` for a ghost solid (drawn front faces only,
   no outline, so it stays light); `stats` see the values; steps and beats slide them.
+- **Bookcase assembly** (rollout step 3, manuals; the last of the v1 examples): `assembly` (a parts tray, parts that
+  fly in from a direction), steps with `adds`, `tray` and `manual` (a step-number badge), and a manual step labels
+  only the parts it adds. Two engine fixes it turned up: label rows are spaced by the labels' real height (boxed
+  labels are taller), and framing fits the model's height and width as well as its bounding sphere, so tall or long
+  objects aren't cropped.
