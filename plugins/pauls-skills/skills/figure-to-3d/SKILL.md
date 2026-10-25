@@ -34,6 +34,9 @@ Never write "students will…" or "teachers can…" on the page.
      path, a Cut, a Walk through with beats and Predict, and its read-back written out at the top.
    - `assets/examples/trumpet.scene.js`, **the machine reference**: every part procedural (tube, lathe, cylinder) at
      real size, pistons that move per step (`move`), and an air path that changes with the valves pressed.
+   - `assets/examples/gears.scene.js`, **the running-machine reference**: real meshing spur gears (`shape: { gear }`),
+     `motion` with Run/Stop and a speed slider, live `stats` (turn counters), and steps that `run`, set `speed` and
+     `reset`.
    - The comment at the top of `assets/engine.js`, which lists every option `mountModel` takes.
 5. **Build:** `node scripts/build.mjs <name>.scene.js OUT.html`. It inlines Three.js, the engine, the scene and the
    meshes into one file and prints the size.
@@ -132,6 +135,10 @@ The ops-figures rules, unchanged.
   arrows. A path is a list of points in the model's centimetres (front view: +x is the body's left, +y up, +z toward
   you) or part ids. Keep every point inside the vessel or chamber it means: the shots show strays.
 - **Layers:** a switch per system (chambers, valves, vessels). Group parts with `group:`.
+- **Motion** (machines that run): `motion.drive(turns)` returns each moving part's `rot` (and `at`) for a count of
+  turns that climbs while it runs. A part turns about its `at`; use `offset` to put a shape off that axis (a crank
+  arm). Mesh real gears with one module and centre distances that add up to the pitch radii; check in the front
+  shot that teeth meet gaps. `stats` shows live numbers (turns, rpm): count something a student can predict.
 - **Present:** full screen, bigger type, → and ← keys. Nothing to configure.
 
 ## Look
@@ -143,15 +150,14 @@ and holds up on a projector. Colors that carry meaning are never changed for loo
 
 ## What the engine can't do yet
 
-The engine covers science and anatomy figures fully. These figure-type extras are designed (in the spec) but not
-built; if a figure needs one, say so in the read-back and build what the engine can do:
+The engine covers science, anatomy and machines. These figure-type extras are designed (in the spec) but not built;
+if a figure needs one, say so in the read-back and build what the engine can do:
 
 - **Math:** parameter sliders with live measurements (change the radius, the slice angle, unfold a net).
 - **Manuals:** step-by-step assembly with the manual's step numbers.
-- **Machines:** continuous running motion with a speed control (gears turning, an engine cycling). A part can
-  already move between steps (`move`, as the trumpet's pistons do).
 
-Procedural `shape:` parts (box, cylinder, sphere, cone, torus, lathe, tube) already work, so a machine or a solid
-can be modelled, labelled, taken apart, cut and stepped through; it just doesn't run continuously or take sliders.
-Build machines at real size in centimetres, and route tubes so they don't pass through each other: the shots show it. There's also no SpartBoard
-version: a Three.js page is far over the mini-app limit, and `build.mjs` says so.
+Procedural `shape:` parts (box, cylinder, sphere, cone, torus, lathe, tube, gear) already work, so a solid can be
+modelled, labelled, taken apart, cut and stepped through; it just doesn't take sliders yet. Build machines at real
+size in centimetres, and route tubes so they don't pass through each other: the shots show it.
+
+There's also no SpartBoard version: a Three.js page is far over the mini-app limit, and `build.mjs` says so.
