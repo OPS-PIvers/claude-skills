@@ -7,6 +7,8 @@ Figures come from two places:
   - the ops-figures skill's examples (plugins/pauls-skills/skills/ops-figures/assets/examples), and
   - gallery/figures/: drop more figures here. A page that loads <script src="core.js"> is built with the skill's
     build.py; a page that is already self-contained (a built OUT.html, or a figure saved from SpartBoard) is copied.
+  - the figure-to-3d skill's examples (plugins/pauls-skills/skills/figure-to-3d/assets/examples/*.scene.js), built
+    with that skill's build.mjs (needs Node, and `npm ci` once in the skill folder), meshes from mesh-library/.
 A figure in gallery/figures/ with the same file name as an example replaces it.
 
 --shots takes a screenshot of each figure with headless Chrome for its card (set CHROME to the browser's path if it
@@ -20,6 +22,8 @@ SKILL = os.path.join(ROOT, 'plugins', 'pauls-skills', 'skills', 'ops-figures')
 EXAMPLES = os.path.join(SKILL, 'assets', 'examples')
 EXTRA = os.path.join(ROOT, 'gallery', 'figures')
 SKILL_BUILD = os.path.join(SKILL, 'scripts', 'build.py')
+F3D = os.path.join(ROOT, 'plugins', 'pauls-skills', 'skills', 'figure-to-3d')
+F3D_EXAMPLES = os.path.join(F3D, 'assets', 'examples')
 CORE_TAG = re.compile(r'<script\s+src=["\'](?:\./)?core\.js["\']\s*>\s*</script>')
 
 def meta(page, name):
@@ -39,7 +43,8 @@ def find_chrome():
 def shoot(chrome, page_path, png_path, profile):
     url = 'file:///' + os.path.abspath(page_path).replace('\\', '/').lstrip('/') + '?present=0&steps=0&settings=0'
     subprocess.run([chrome, '--headless=new', '--hide-scrollbars', '--no-sandbox', f'--user-data-dir={profile}',
-                    '--window-size=1000,720', '--virtual-time-budget=2500', f'--screenshot={os.path.abspath(png_path)}', url],
+                    '--use-angle=swiftshader', '--enable-unsafe-swiftshader',      # WebGL for the 3D models
+                    '--window-size=1000,720', '--virtual-time-budget=6000', f'--screenshot={os.path.abspath(png_path)}', url],
                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=90)
     if not os.path.exists(png_path): return None
     try:                                    # crop to the drawing (no buttons, stats or caption) and shrink to a WebP
@@ -94,8 +99,9 @@ INDEX = '''<!doctype html>
 <body><main>
   <header>
     <h1>OPS Figures</h1>
-    <p>Interactive drawings of everyday machines and of how AI works. Each one opens ready to project: Next (or the → key) runs the real
-      steps in order, and the buttons work in any order. Explore freely opens it without the step-by-step bar.</p>
+    <p>Interactive drawings of everyday machines and of how AI works, and 3D models built from textbook figures. Each one opens ready to
+      project: Next (or the → key) runs the real steps in order, and the buttons work in any order. Explore freely opens it without the
+      step-by-step bar.</p>
   </header>
   <ul>
 __CARDS__
@@ -115,6 +121,9 @@ def main(argv):
             for n in sorted(os.listdir(d)):
                 p = os.path.join(d, n)             # only real files in the folder: no links out of the repo
                 if n.lower().endswith(('.html', '.htm')) and os.path.isfile(p) and not os.path.islink(p): sources[n] = p
+    if os.path.isdir(F3D_EXAMPLES):
+        for n in sorted(os.listdir(F3D_EXAMPLES)):
+            if n.endswith('.scene.js'): sources[n[:-len('.scene.js')] + '.html'] = os.path.join(F3D_EXAMPLES, n)
     chrome = find_chrome() if shots else None
     if shots and not chrome: print('Chrome not found: building without screenshots')
     figs = []
@@ -122,7 +131,11 @@ def main(argv):
         slug = re.sub(r'[^a-z0-9]+', '-', os.path.splitext(name)[0].lower()).strip('-')
         dest = os.path.join(out, slug + '.html')
         page = open(src, encoding='utf-8').read()
-        if CORE_TAG.search(page):
+        if src.endswith('.scene.js'):
+            if not os.path.isdir(os.path.join(F3D, 'node_modules')):
+                print(f'  skipped {name}: run npm ci in {os.path.relpath(F3D, ROOT)} first'); continue
+            subprocess.run(['node', os.path.join(F3D, 'scripts', 'build.mjs'), src, dest], check=True, stdout=subprocess.DEVNULL)
+        elif CORE_TAG.search(page):
             subprocess.run([sys.executable, SKILL_BUILD, src, dest], check=True, stdout=subprocess.DEVNULL)
         else:
             shutil.copyfile(src, dest)

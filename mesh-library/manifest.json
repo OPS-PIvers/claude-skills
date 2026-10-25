@@ -1,0 +1,597 @@
+{
+  "groups": {
+    "bp3d/heart": {
+      "source": {
+        "id": "bp3d",
+        "name": "BodyParts3D 4.0",
+        "url": "https://dbarchive.biosciencedbc.jp/en/bodyparts3d/download.html",
+        "file": "https://dbarchive.biosciencedbc.jp/data/bodyparts3d/LATEST/partof_BP3D_4.0_obj_99.zip",
+        "license": "CC BY 4.0",
+        "credit": "BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International",
+        "note": "The 2013 OBJ headers name CC BY-SA 2.1 JP; the database's current license (README, updated 2025-02-25) is CC BY 4.0."
+      },
+      "units": "cm",
+      "recipe": "bp3d/heart/recipe.json",
+      "origin": [
+        1.022,
+        123.975,
+        11.318
+      ],
+      "triangles": 76651
+    }
+  },
+  "meshes": {
+    "bp3d/heart/aorta": {
+      "id": "bp3d/heart/aorta",
+      "name": "Aorta",
+      "file": "bp3d/heart/aorta.glb",
+      "source": "bp3d",
+      "sourceIds": [
+        "FJ3413",
+        "FJ3411"
+      ],
+      "ref": "FMA3736 ascending aorta + FMA3768 arch",
+      "triangles": 1066,
+      "bytes": 9284,
+      "units": "cm",
+      "bounds": [
+        [
+          -1.71,
+          -0.57,
+          -6.33
+        ],
+        [
+          2.46,
+          7.73,
+          2.43
+        ]
+      ],
+      "center": [
+        0.38,
+        3.58,
+        -1.95
+      ],
+      "sha256": "5f7be2374c77d62e945a1251b1cf239bf578a0ee8665783751bc08766be7d1a0"
+    },
+    "bp3d/heart/aortic-valve": {
+      "id": "bp3d/heart/aortic-valve",
+      "name": "Aortic valve",
+      "file": "bp3d/heart/aortic-valve.glb",
+      "source": "bp3d",
+      "sourceIds": [
+        "FJ2426",
+        "FJ2431",
+        "FJ2435"
+      ],
+      "ref": "FMA7236",
+      "triangles": 2150,
+      "bytes": 17132,
+      "units": "cm",
+      "bounds": [
+        [
+          -0.46,
+          -0.63,
+          -0.84
+        ],
+        [
+          2.22,
+          1.53,
+          1.93
+        ]
+      ],
+      "center": [
+        0.88,
+        0.45,
+        0.55
+      ],
+      "sha256": "7759f4c02864c44a23c8f3b68573412b9390e1c7001520f19c560fd65e558036"
+    },
+    "bp3d/heart/cardiac-veins": {
+      "id": "bp3d/heart/cardiac-veins",
+      "name": "Cardiac veins",
+      "file": "bp3d/heart/cardiac-veins.glb",
+      "source": "bp3d",
+      "sourceIds": [
+        "FJ2655",
+        "FJ2656",
+        "FJ2724",
+        "FJ2727",
+        "FJ2728",
+        "FJ2729",
+        "FJ2731"
+      ],
+      "ref": "FMA4706 coronary sinus and tributaries",
+      "triangles": 4000,
+      "bytes": 27872,
+      "units": "cm",
+      "bounds": [
+        [
+          -3.11,
+          -6.1,
+          -3.21
+        ],
+        [
+          4.46,
+          1.37,
+          5.92
+        ]
+      ],
+      "center": [
+        0.68,
+        -2.37,
+        1.36
+      ],
+      "sha256": "c2e0b911f1457ada8ec735dc12e224636a0ad0edfe8092a2b5ed5581d0839fc1"
+    },
+    "bp3d/heart/coronary-arteries": {
+      "id": "bp3d/heart/coronary-arteries",
+      "name": "Coronary arteries",
+      "file": "bp3d/heart/coronary-arteries.glb",
+      "source": "bp3d",
+      "sourceIds": [
+        "FJ2631",
+        "FJ2632",
+        "FJ2633",
+        "FJ2634",
+        "FJ2635",
+        "FJ2636",
+        "FJ2637",
+        "FJ2638",
+        "FJ2639",
+        "FJ2640",
+        "FJ2641",
+        "FJ2642",
+        "FJ2643",
+        "FJ2644",
+        "FJ2645",
+        "FJ2646",
+        "FJ2647",
+        "FJ2648",
+        "FJ2649",
+        "FJ2650",
+        "FJ2651",
+        "FJ2652",
+        "FJ2653",
+        "FJ2654",
+        "FJ2667",
+        "FJ2668",
+        "FJ2670",
+        "FJ2671",
+        "FJ2672",
+        "FJ2673",
+        "FJ2674",
+        "FJ2675",
+        "FJ2676",
+        "FJ2677",
+        "FJ2692",
+        "FJ2693",
+        "FJ2694",
+        "FJ2695",
+        "FJ2696",
+        "FJ2697",
+        "FJ2698",
+        "FJ2699",
+        "FJ2700",
+        "FJ2714",
+        "FJ2715",
+        "FJ2716",
+        "FJ2717",
+        "FJ2718",
+        "FJ2719",
+        "FJ2720",
+        "FJ2721",
+        "FJ2722",
+        "FJ2723",
+        "FJ2737"
+      ],
+      "ref": "FMA3802 + FMA3855 and branches",
+      "triangles": 12000,
+      "bytes": 80568,
+      "units": "cm",
+      "bounds": [
+        [
+          -3.2,
+          -6.48,
+          -2.62
+        ],
+        [
+          6.92,
+          2.13,
+          6.33
+        ]
+      ],
+      "center": [
+        1.86,
+        -2.18,
+        1.86
+      ],
+      "sha256": "2e78cc96d8ad6a94a25039a80e7e3bdf10dd28fb43c2f9b8e28c98579f8efe82"
+    },
+    "bp3d/heart/inferior-vena-cava": {
+      "id": "bp3d/heart/inferior-vena-cava",
+      "name": "Inferior vena cava",
+      "file": "bp3d/heart/inferior-vena-cava.glb",
+      "source": "bp3d",
+      "sourceIds": [
+        "FJ3441"
+      ],
+      "ref": "FMA10951, cut to a stub",
+      "triangles": 773,
+      "bytes": 7320,
+      "units": "cm",
+      "bounds": [
+        [
+          -3.7,
+          -7.73,
+          -0.96
+        ],
+        [
+          -1.42,
+          -4.92,
+          1.34
+        ]
+      ],
+      "center": [
+        -2.56,
+        -6.33,
+        0.19
+      ],
+      "sha256": "1ef3404edcbfae8856c35be09497417961bc3ae70c01827e49f17e233cc8bd6e"
+    },
+    "bp3d/heart/left-atrium": {
+      "id": "bp3d/heart/left-atrium",
+      "name": "Left atrium",
+      "file": "bp3d/heart/left-atrium.glb",
+      "source": "bp3d",
+      "sourceIds": [
+        "FJ2438"
+      ],
+      "ref": "FMA9531 wall of left atrium",
+      "triangles": 7544,
+      "bytes": 52296,
+      "units": "cm",
+      "bounds": [
+        [
+          -3.31,
+          -4.03,
+          -4.3
+        ],
+        [
+          5.3,
+          3.27,
+          3.8
+        ]
+      ],
+      "center": [
+        1,
+        -0.38,
+        -0.25
+      ],
+      "sha256": "e6e79a80a58e11b70ee0e1ddd6854a5efade649cd7a48b04b0499f6f891a2965"
+    },
+    "bp3d/heart/left-ventricle": {
+      "id": "bp3d/heart/left-ventricle",
+      "name": "Left ventricle",
+      "file": "bp3d/heart/left-ventricle.glb",
+      "source": "bp3d",
+      "sourceIds": [
+        "FJ2422"
+      ],
+      "ref": "FMA9466 cavity of left ventricle",
+      "triangles": 1722,
+      "bytes": 13824,
+      "units": "cm",
+      "bounds": [
+        [
+          -0.38,
+          -5.57,
+          -2.68
+        ],
+        [
+          6,
+          1.18,
+          4.53
+        ]
+      ],
+      "center": [
+        2.81,
+        -2.19,
+        0.93
+      ],
+      "sha256": "cb79356520cdf1f277feb7e33aaa36d39bd3e016467977609d6d27e573924b86"
+    },
+    "bp3d/heart/mitral-valve": {
+      "id": "bp3d/heart/mitral-valve",
+      "name": "Mitral valve",
+      "file": "bp3d/heart/mitral-valve.glb",
+      "source": "bp3d",
+      "sourceIds": [
+        "FJ2420",
+        "FJ2432"
+      ],
+      "ref": "FMA7235",
+      "triangles": 7000,
+      "bytes": 49192,
+      "units": "cm",
+      "bounds": [
+        [
+          0.15,
+          -4.01,
+          -2.77
+        ],
+        [
+          5.26,
+          -0.38,
+          2.84
+        ]
+      ],
+      "center": [
+        2.71,
+        -2.2,
+        0.04
+      ],
+      "sha256": "406e3c648a39816463de1f25596e1f4f8018afacc3c0b352f6f4017bd8a0ffa6"
+    },
+    "bp3d/heart/papillary-muscles": {
+      "id": "bp3d/heart/papillary-muscles",
+      "name": "Papillary muscles",
+      "file": "bp3d/heart/papillary-muscles.glb",
+      "source": "bp3d",
+      "sourceIds": [
+        "FJ2418",
+        "FJ2419",
+        "FJ2429",
+        "FJ2430",
+        "FJ2437"
+      ],
+      "ref": "FMA7259 + FMA9352",
+      "triangles": 4000,
+      "bytes": 28936,
+      "units": "cm",
+      "bounds": [
+        [
+          -0.31,
+          -6.13,
+          -0.84
+        ],
+        [
+          6.43,
+          0.04,
+          5.95
+        ]
+      ],
+      "center": [
+        3.06,
+        -3.04,
+        2.56
+      ],
+      "sha256": "e630f8a87fd5ce3b49d7f1699509f8952da6b07cdea328cc335d440c924c1fbb"
+    },
+    "bp3d/heart/pulmonary-trunk": {
+      "id": "bp3d/heart/pulmonary-trunk",
+      "name": "Pulmonary artery",
+      "file": "bp3d/heart/pulmonary-trunk.glb",
+      "source": "bp3d",
+      "sourceIds": [
+        "FJ2966",
+        "FJ3019",
+        "FJ2924"
+      ],
+      "ref": "FMA8612 pulmonary trunk + first segments of FMA50872, FMA50873",
+      "triangles": 6000,
+      "bytes": 40108,
+      "units": "cm",
+      "bounds": [
+        [
+          -6.92,
+          -1.53,
+          -5.51
+        ],
+        [
+          6.89,
+          5.43,
+          4.57
+        ]
+      ],
+      "center": [
+        -0.02,
+        1.95,
+        -0.47
+      ],
+      "sha256": "ec3ee02e45183980f209f26cc8082e6b017dc16d8d565198500a9558f544a726"
+    },
+    "bp3d/heart/pulmonary-valve": {
+      "id": "bp3d/heart/pulmonary-valve",
+      "name": "Pulmonary valve",
+      "file": "bp3d/heart/pulmonary-valve.glb",
+      "source": "bp3d",
+      "sourceIds": [
+        "FJ2417",
+        "FJ2427",
+        "FJ2434"
+      ],
+      "ref": "FMA7246",
+      "triangles": 3638,
+      "bytes": 27260,
+      "units": "cm",
+      "bounds": [
+        [
+          -0.15,
+          0.52,
+          1.44
+        ],
+        [
+          3.07,
+          2.55,
+          4.64
+        ]
+      ],
+      "center": [
+        1.46,
+        1.53,
+        3.04
+      ],
+      "sha256": "f31c288e845f1c7fbce8253381404c2b318e2afcd44bcc3dca580c33f93174e6"
+    },
+    "bp3d/heart/pulmonary-veins": {
+      "id": "bp3d/heart/pulmonary-veins",
+      "name": "Pulmonary veins",
+      "file": "bp3d/heart/pulmonary-veins.glb",
+      "source": "bp3d",
+      "sourceIds": [
+        "FJ3040",
+        "FJ2944",
+        "FJ2925",
+        "FJ3020"
+      ],
+      "ref": "first segments of FMA49911, FMA49913, FMA49914, FMA49916",
+      "triangles": 1244,
+      "bytes": 10140,
+      "units": "cm",
+      "bounds": [
+        [
+          -4.74,
+          -3.82,
+          -5.97
+        ],
+        [
+          4.58,
+          3.35,
+          -0.66
+        ]
+      ],
+      "center": [
+        -0.08,
+        -0.24,
+        -3.32
+      ],
+      "sha256": "6512c99a1b5d5057e5a177da425ac7d5ce2cef93e9382ce604080165377f31fe"
+    },
+    "bp3d/heart/right-atrium": {
+      "id": "bp3d/heart/right-atrium",
+      "name": "Right atrium",
+      "file": "bp3d/heart/right-atrium.glb",
+      "source": "bp3d",
+      "sourceIds": [
+        "FJ2439"
+      ],
+      "ref": "FMA9457 wall of right atrium",
+      "triangles": 14000,
+      "bytes": 91948,
+      "units": "cm",
+      "bounds": [
+        [
+          -4.65,
+          -5.67,
+          -1.68
+        ],
+        [
+          -0.34,
+          3.98,
+          4.95
+        ]
+      ],
+      "center": [
+        -2.5,
+        -0.85,
+        1.63
+      ],
+      "sha256": "4898d31a7e7fe22f39fa4de9adc5ca2e83ea79adce301dcdae8686a985b4ff99"
+    },
+    "bp3d/heart/right-ventricle": {
+      "id": "bp3d/heart/right-ventricle",
+      "name": "Right ventricle",
+      "file": "bp3d/heart/right-ventricle.glb",
+      "source": "bp3d",
+      "sourceIds": [
+        "FJ2423"
+      ],
+      "ref": "FMA9291 cavity of right ventricle",
+      "triangles": 1918,
+      "bytes": 15108,
+      "units": "cm",
+      "bounds": [
+        [
+          -2.91,
+          -6.03,
+          0.2
+        ],
+        [
+          4.24,
+          2.03,
+          6.02
+        ]
+      ],
+      "center": [
+        0.67,
+        -2,
+        3.11
+      ],
+      "sha256": "632e32f70cb41fa5245d6c59f5af66efd6d752b9a50bec08a102483de39f6f99"
+    },
+    "bp3d/heart/superior-vena-cava": {
+      "id": "bp3d/heart/superior-vena-cava",
+      "name": "Superior vena cava",
+      "file": "bp3d/heart/superior-vena-cava.glb",
+      "source": "bp3d",
+      "sourceIds": [
+        "FJ3645"
+      ],
+      "ref": "FMA4720",
+      "triangles": 598,
+      "bytes": 5960,
+      "units": "cm",
+      "bounds": [
+        [
+          -3.69,
+          3.51,
+          -0.96
+        ],
+        [
+          -1.43,
+          7.01,
+          1.41
+        ]
+      ],
+      "center": [
+        -2.56,
+        5.26,
+        0.23
+      ],
+      "sha256": "99c3394754407dc5ef3732679a890fac550de1e4b22b52c63895177156bea34b"
+    },
+    "bp3d/heart/tricuspid-valve": {
+      "id": "bp3d/heart/tricuspid-valve",
+      "name": "Tricuspid valve",
+      "file": "bp3d/heart/tricuspid-valve.glb",
+      "source": "bp3d",
+      "sourceIds": [
+        "FJ2421",
+        "FJ2433",
+        "FJ2436"
+      ],
+      "ref": "FMA7234",
+      "triangles": 8998,
+      "bytes": 63004,
+      "units": "cm",
+      "bounds": [
+        [
+          -3.13,
+          -5.11,
+          0.04
+        ],
+        [
+          1.93,
+          -0.33,
+          4.31
+        ]
+      ],
+      "center": [
+        -0.6,
+        -2.72,
+        2.18
+      ],
+      "sha256": "1799ad38c7e6e24a89af1ecd459c0a4496b1f8f8813b038a10ddd3d0a5d1604a"
+    }
+  }
+}

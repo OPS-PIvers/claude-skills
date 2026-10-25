@@ -1,7 +1,7 @@
 # figure-to-3d: design spec
 
-Status: draft for review. No code yet. Settled in a grill-me session on 2026-10-25; the decision numbers (D1–D28)
-match the questions asked there.
+Status: rollout step 2 built (engine + heart); see "As built" at the end. Settled in a grill-me session on
+2026-10-25; the decision numbers (D1–D28) match the questions asked there.
 
 ## What it is
 
@@ -132,7 +132,7 @@ for one. Machines and math are procedural.
 
 | Source | What | License | Key |
 |---|---|---|---|
-| BodyParts3D | human anatomy, one file per structure | CC BY-SA 2.1 JP | none |
+| BodyParts3D | human anatomy, one file per structure | CC BY 4.0 | none |
 | NIH 3D | biology, anatomy, molecules | per model (often CC BY or public domain) | none |
 | Smithsonian Open Access 3D | specimens, artifacts, fossils | CC0 | none |
 | Sketchfab | everything | CC BY or CC0 only | token, only if one is saved on the environment |
@@ -157,12 +157,13 @@ In a session on this repo the skill reads the library directly; elsewhere it fet
 local copy for the session. New meshes are added to the library in the same PR as the gallery entry.
 
 **Licenses:** every mesh's license and credit go in the manifest and on the page's Credits panel. BodyParts3D is
-share-alike, so a page that contains its meshes carries CC BY-SA for those meshes; say so in Credits. The original
+CC BY 4.0 (its 2013 OBJ headers still name CC BY-SA 2.1 JP; the database's license page, updated 2025, is CC BY 4.0,
+and the recipe records both). The original
 textbook photo never goes on the page (D19); labels are retyped, and the book is named only if the person names it.
 
 ## Packaging and scripts (D15, D23)
 
-One self-contained HTML file: a pinned, vendored Three.js, the engine, the scene, and the meshes inlined as base64
+One self-contained HTML file: a pinned Three.js (bundled with the engine by esbuild at build time), the engine, the scene, and the meshes inlined as base64
 GLB. Target under 10 MB, hard limit 16 MB (the artifact limit). It opens from disk, works offline on a projector
 laptop, and can be emailed or put on Drive.
 
@@ -198,10 +199,10 @@ plugins/pauls-skills/skills/figure-to-3d/
   README.md                # credits
   assets/
     engine.js              # mountModel(): scene, controls, teaching layer, style
-    three.module.min.js    # vendored, pinned
     examples/              # heart, gears, solid of revolution, furniture step (scene files)
   scripts/                 # fetch-mesh, prep-mesh, build, verify (.mjs)
-  package.json             # pinned @gltf-transform and Playwright versions
+  package.json             # pinned three, esbuild, @gltf-transform, meshoptimizer, draco3dgltf (Playwright is the
+                           # environment's own)
 mesh-library/              # repo root, see above
 ```
 
@@ -234,9 +235,24 @@ Each one tests a different path and becomes a SKILL.md reference and a gallery e
   building a weak model.
 - **Matching the textbook's look automatically** depends on reading the photo well. If sampled styles turn out
   unreliable, fall back to a small set of named page styles and pick the nearest.
-- **Share-alike meshes** (BodyParts3D) put CC BY-SA on those meshes in any page that uses them. That's fine for school
-  use, but it's worth knowing before a model is shared widely.
 - **Size.** Three.js plus several detailed meshes can approach 10 MB, so the budget per part needs tuning on the
   heart.
 - **Scene spec shape** is a sketch. Expect it to change while the heart is built; keep it renderer-neutral when it
   does.
+
+## As built (rollout step 2)
+
+What changed from the plan above while the engine and heart were built:
+
+- **The heart is 16 parts and about 77k triangles; the built page is 1.4 MB** (Three.js and engine about 700 KB,
+  meshes about 700 KB). Far under the 10 MB target.
+- **BodyParts3D has no ventricle walls** in its part-of tree: the ventricles are the blood-filled cavities. The
+  model says so in those parts' info. Vessels that run on into the body are cut to stubs with a recipe `keep` range.
+- **Three.js is pinned in `package.json` and bundled by esbuild** rather than vendored as a file.
+- **Labels** are laid out in columns either side of the model with leader lines (the textbook way), each part
+  choosing among seven anchor points the one facing the camera that isn't hidden or cut away. A step labels only
+  the parts it highlights.
+- **Gallery cards** for 3D pages need WebGL in headless Chrome; the workflow passes the SwiftShader flags, but this
+  was not testable in the cloud container (headless `--screenshot` hangs there for every page, ops-figures too).
+- **Not built yet:** math sliders, assembly steps, running motion (rollout step 3), and the NIH 3D search (no public
+  API answered; `fetch-mesh.mjs get url` takes a GLB downloaded from the site).
