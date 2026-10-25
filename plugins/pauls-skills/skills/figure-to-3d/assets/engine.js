@@ -26,8 +26,10 @@
               //   through `order` (or `path`). Parts not in order or offsets move outward too.
      section?: { normal: [1,0,0], range?: [min,max], caption?: 'sentence' },   // the Cut slider
      steps: [{ label, caption, predict?, view?: name | {az,el,dist}, highlight?: [ids], layers?: {id: bool},
-               flows?: [flowIds], apart?: 0|1, cut?: null | 0..1,
-               beats?: [{ caption, highlight?, flows? }] }],
+               flows?: [flowIds], apart?: 0|1, cut?: null | 0..1, move?: { partId: [dx,dy,dz] },
+               beats?: [{ caption, highlight?, flows?, move? }] }],
+              //   move: where parts sit in this step, as offsets from where they're built (a piston pressed
+              //   down, a lever thrown). Parts a step doesn't move go back home.
               //   Walk through. A step with beats plays them in order, each held READ_S(caption) seconds.
      caption: 'sentence',                      // the caption before Walk through starts
    })
@@ -209,7 +211,8 @@ export async function mountModel(cfg) {
     mat.userData.outlineParameters = { thickness: .0035, color: new THREE.Color(style.ink).toArray(), alpha: .9, visible: true };
     const obj = new THREE.Mesh(geo, mat); obj.name = p.id; obj.userData.part = p.id;
     if (p.at) obj.position.set(...p.at);
-    if (p.rot) obj.rotation.set(...p.rot);
+    // bake the rotation into the shape, so every bound, centre and label anchor below is in model space
+    if (p.rot) geo.applyMatrix4(new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(...p.rot)));
     model.add(obj);
     geo.computeBoundingBox(); geo.computeBoundingSphere();
     parts.set(p.id, { cfg: p, obj, mat, home: obj.position.clone() });
@@ -289,9 +292,17 @@ export async function mountModel(cfg) {
     const P = parts.get(id); const d = P.center.clone().sub(mid);
     return d.multiplyScalar(.9 * (cfg.apart?.spread ?? 1));
   };
+  // a part sits at home + its step offset (move) + its take-apart offset
+  const mv = new Map([...parts.keys()].map(id => [id, new THREE.Vector3()]));
+  function setMove(move = {}) {
+    const from = new Map([...mv].map(([id, v]) => [id, v.clone()]));
+    const to = new Map([...mv.keys()].map(id => [id, new THREE.Vector3(...(move[id] || [0, 0, 0]))]));
+    if ([...mv].every(([id, v]) => v.distanceTo(to.get(id)) < 1e-6)) return;
+    tween(.45, k => { for (const [id, v] of mv) v.lerpVectors(from.get(id), to.get(id), k); applyApart(); });
+  }
   function applyApart() {
     const k = ease(S.ex);
-    for (const [id, P] of parts) P.obj.position.copy(P.home).addScaledVector(exOffset(id), k);
+    for (const [id, P] of parts) P.obj.position.copy(P.home).add(mv.get(id)).addScaledVector(exOffset(id), k);
     drawPath(S.ex > .02 ? pathPoints(cfg.apart?.path || cfg.apart?.order || [], true) : null, Math.min(1, S.ex * 1.4));
   }
   // the path through the parts: thick dashes with an arrowhead on each leg, drawn over the model
@@ -514,6 +525,7 @@ export async function mountModel(cfg) {
     if (s.layers) Object.assign(S.layers, s.layers);
     S.highlight = s.highlight || null;
     S.flows = new Set(s.flows || []);
+    setMove(s.move);
     if ((s.apart ? 1 : 0) !== S.exTo) setApart(s.apart ? 1 : 0);     // steps put it back together unless they say apart
     if (s.cut !== undefined) { setCut(s.cut); cutIn.value = s.cut == null ? 50 : Math.round(s.cut * 100); cutWrap.hidden = s.cut == null; cutBtn.setAttribute('aria-pressed', s.cut != null); }
     if (s.view) setView(s.view);
@@ -529,6 +541,7 @@ export async function mountModel(cfg) {
       const bt = s.beats[b];
       if (bt.highlight) S.highlight = bt.highlight;
       if (bt.flows) S.flows = new Set(bt.flows);
+      if (bt.move) setMove(bt.move);
       applyLook(); setCaption(bt.caption, true);
       if (b + 1 < s.beats.length) playBeat(b + 1);
     }, READ_S(prev) * 1000);

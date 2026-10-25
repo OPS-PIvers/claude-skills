@@ -32,6 +32,8 @@ Never write "students will…" or "teachers can…" on the page.
 4. **Write `<name>.scene.js`**: one `mountModel({...})` call. Read first:
    - `assets/examples/heart.scene.js`, **the reference**: segmented meshes, layers, flows, Take apart along the blood
      path, a Cut, a Walk through with beats and Predict, and its read-back written out at the top.
+   - `assets/examples/trumpet.scene.js`, **the machine reference**: every part procedural (tube, lathe, cylinder) at
+     real size, pistons that move per step (`move`), and an air path that changes with the valves pressed.
    - The comment at the top of `assets/engine.js`, which lists every option `mountModel` takes.
 5. **Build:** `node scripts/build.mjs <name>.scene.js OUT.html`. It inlines Three.js, the engine, the scene and the
    meshes into one file and prints the size.
@@ -116,7 +118,8 @@ The ops-figures rules, unchanged.
 - **Tap a part** to name it: give every part one plain `info:` sentence about what it does, not what it looks like.
 - **Walk through:** 5–9 steps in the real order of the process. Each sets a `view` that shows its parts (check the
   shots: a step about the back of the heart needs a back view), `highlight`s what it's about (the rest fades), and
-  can turn `layers` and `flows` on.
+  can turn `layers` and `flows` on, and `move` parts (a piston pressed down: offsets from where the part is built;
+  parts the step doesn't move go back).
 - **Predict:** one question on each of 2–4 key steps, about the mechanism and not a fact to recall ("This blood has
   to reach your toes. Which chamber has to push hardest?"). Never put the answer in the question; the caption that
   follows is the answer. Off by default, the Predict first switch turns it on.
@@ -145,8 +148,10 @@ built; if a figure needs one, say so in the read-back and build what the engine 
 
 - **Math:** parameter sliders with live measurements (change the radius, the slice angle, unfold a net).
 - **Manuals:** step-by-step assembly with the manual's step numbers.
-- **Machines:** running motion with a speed control (gears turning, pistons moving).
+- **Machines:** continuous running motion with a speed control (gears turning, an engine cycling). A part can
+  already move between steps (`move`, as the trumpet's pistons do).
 
 Procedural `shape:` parts (box, cylinder, sphere, cone, torus, lathe, tube) already work, so a machine or a solid
-can be modelled, labelled, taken apart and cut; it just doesn't move or take sliders yet. There's also no SpartBoard
+can be modelled, labelled, taken apart, cut and stepped through; it just doesn't run continuously or take sliders.
+Build machines at real size in centimetres, and route tubes so they don't pass through each other: the shots show it. There's also no SpartBoard
 version: a Three.js page is far over the mini-app limit, and `build.mjs` says so.

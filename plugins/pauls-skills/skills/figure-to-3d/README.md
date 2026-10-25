@@ -12,7 +12,8 @@ node scripts/verify.mjs heart.html                            # shots in heart.s
 ## Files
 
 - `assets/engine.js`: `mountModel()`, the look, controls and teaching layer. Its header lists every scene option.
-- `assets/examples/heart.scene.js`: the reference scene.
+- `assets/examples/heart.scene.js`: the reference scene (anatomy, meshes).
+- `assets/examples/trumpet.scene.js`: the machine reference (procedural parts, pistons that move).
 - `scripts/fetch-mesh.mjs`, `scripts/prep-mesh.mjs`: find raw meshes and clean them into the mesh library
   (`mesh-library/` at the repo root).
 - `scripts/build.mjs`: one self-contained HTML page. `F3D_DEBUG=1` adds a source map for debugging.
