@@ -15,6 +15,7 @@ node scripts/verify.mjs heart.html                            # shots in heart.s
 - `assets/examples/heart.scene.js`: the reference scene (anatomy, meshes).
 - `assets/examples/trumpet.scene.js`: the machine reference (procedural parts, pistons that move).
 - `assets/examples/gears.scene.js`: a machine that runs (meshing gears, Run/Stop, speed, live readouts).
+- `assets/examples/solid.scene.js`: math (sliders that rebuild a cone from a spun triangle, live volumes).
 - `scripts/fetch-mesh.mjs`, `scripts/prep-mesh.mjs`: find raw meshes and clean them into the mesh library
   (`mesh-library/` at the repo root).
 - `scripts/build.mjs`: one self-contained HTML page. `F3D_DEBUG=1` adds a source map for debugging.

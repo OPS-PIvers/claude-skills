@@ -37,6 +37,9 @@ Never write "students will…" or "teachers can…" on the page.
    - `assets/examples/gears.scene.js`, **the running-machine reference**: real meshing spur gears (`shape: { gear }`),
      `motion` with Run/Stop and a speed slider, live `stats` (turn counters), and steps that `run`, set `speed` and
      `reset`.
+   - `assets/examples/solid.scene.js`, **the math reference**: `params` sliders, parts whose `shape`, `at` and
+     `spin` are functions of them (a triangle spun into a cone), a see-through comparison solid (`opacity`), live
+     volumes in `stats`, and steps and beats that slide the values.
    - The comment at the top of `assets/engine.js`, which lists every option `mountModel` takes.
 5. **Build:** `node scripts/build.mjs <name>.scene.js OUT.html`. It inlines Three.js, the engine, the scene and the
    meshes into one file and prints the size.
@@ -139,6 +142,10 @@ The ops-figures rules, unchanged.
   turns that climbs while it runs. A part turns about its `at`; use `offset` to put a shape off that axis (a crank
   arm). Mesh real gears with one module and centre distances that add up to the pitch radii; check in the front
   shot that teeth meet gaps. `stats` shows live numbers (turns, rpm): count something a student can predict.
+- **Sliders** (math): `params` are the figure's variables (r, h, an angle), with real units and ranges a student
+  can reason about. Make the shapes functions of them, so the solid rebuilds as they move, and show the formula's
+  result live in `stats`. A Predict step slides one value (in a beat) so the change happens after the question.
+  A ghost solid to compare against takes `opacity: .2`. A math idea gets no Take apart.
 - **Present:** full screen, bigger type, → and ← keys. Nothing to configure.
 
 ## Look
@@ -150,14 +157,12 @@ and holds up on a projector. Colors that carry meaning are never changed for loo
 
 ## What the engine can't do yet
 
-The engine covers science, anatomy and machines. These figure-type extras are designed (in the spec) but not built;
-if a figure needs one, say so in the read-back and build what the engine can do:
+The engine covers science, anatomy, machines and math. This figure-type extra is designed (in the spec) but not
+built; if a figure needs it, say so in the read-back and build what the engine can do:
 
-- **Math:** parameter sliders with live measurements (change the radius, the slice angle, unfold a net).
 - **Manuals:** step-by-step assembly with the manual's step numbers.
 
-Procedural `shape:` parts (box, cylinder, sphere, cone, torus, lathe, tube, gear) already work, so a solid can be
-modelled, labelled, taken apart, cut and stepped through; it just doesn't take sliders yet. Build machines at real
-size in centimetres, and route tubes so they don't pass through each other: the shots show it.
+Build machines and solids at real size in centimetres, and route tubes so they don't pass through each other: the
+shots show it.
 
 There's also no SpartBoard version: a Three.js page is far over the mini-app limit, and `build.mjs` says so.
