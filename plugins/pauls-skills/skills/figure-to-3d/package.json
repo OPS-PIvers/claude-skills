@@ -1,0 +1,19 @@
+{
+  "name": "figure-to-3d",
+  "private": true,
+  "type": "module",
+  "description": "Build and check scripts for the figure-to-3d skill.",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "verify": "node scripts/verify.mjs"
+  },
+  "dependencies": {
+    "@gltf-transform/core": "4.5.1",
+    "@gltf-transform/extensions": "4.5.1",
+    "@gltf-transform/functions": "4.5.1",
+    "draco3dgltf": "1.5.9",
+    "esbuild": "0.28.2",
+    "meshoptimizer": "1.3.0",
+    "three": "0.186.1"
+  }
+}

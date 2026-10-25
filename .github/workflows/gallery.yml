@@ -1,11 +1,13 @@
 name: OPS Figures gallery
 
-# Builds every ops-figures example (plus anything in gallery/figures/) into a GitHub Pages site with an index.
+# Builds every ops-figures and figure-to-3d example (plus anything in gallery/figures/) into a GitHub Pages site with an index.
 on:
   push:
     branches: [main]
     paths:
       - 'plugins/pauls-skills/skills/ops-figures/**'
+      - 'plugins/pauls-skills/skills/figure-to-3d/**'
+      - 'mesh-library/**'
       - 'gallery/**'
       - '.github/workflows/gallery.yml'
   workflow_dispatch:
@@ -26,6 +28,10 @@ jobs:
         with:
           python-version: '3.12'
       - run: pip install pillow
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --prefix plugins/pauls-skills/skills/figure-to-3d
       - run: python gallery/build.py _site --shots
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

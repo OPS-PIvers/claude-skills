@@ -1,0 +1,34 @@
+{
+  "group": "bp3d/heart",
+  "about": "An adult human heart with its great vessels, from BodyParts3D 4.0 (part-of tree). The ventricles are the blood-filled cavities (BodyParts3D has no separate ventricle wall); the atria are their walls.",
+  "source": {
+    "id": "bp3d",
+    "name": "BodyParts3D 4.0",
+    "url": "https://dbarchive.biosciencedbc.jp/en/bodyparts3d/download.html",
+    "file": "https://dbarchive.biosciencedbc.jp/data/bodyparts3d/LATEST/partof_BP3D_4.0_obj_99.zip",
+    "license": "CC BY 4.0",
+    "credit": "BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International",
+    "note": "The 2013 OBJ headers name CC BY-SA 2.1 JP; the database's current license (README, updated 2025-02-25) is CC BY 4.0."
+  },
+  "units": "mm", "up": "z", "front": "-y", "scale": 0.1,
+  "budget": 110000,
+  "parts": [
+    { "id": "right-atrium",       "name": "Right atrium",        "ref": "FMA9457 wall of right atrium", "files": ["FJ2439"], "tris": 14000 },
+    { "id": "left-atrium",        "name": "Left atrium",         "ref": "FMA9531 wall of left atrium",  "files": ["FJ2438"], "tris": 10000 },
+    { "id": "right-ventricle",    "name": "Right ventricle",     "ref": "FMA9291 cavity of right ventricle", "files": ["FJ2423"], "tris": 6000 },
+    { "id": "left-ventricle",     "name": "Left ventricle",      "ref": "FMA9466 cavity of left ventricle",  "files": ["FJ2422"], "tris": 6000 },
+    { "id": "tricuspid-valve",    "name": "Tricuspid valve",     "ref": "FMA7234", "files": ["FJ2421", "FJ2433", "FJ2436"], "tris": 9000 },
+    { "id": "mitral-valve",       "name": "Mitral valve",        "ref": "FMA7235", "files": ["FJ2420", "FJ2432"], "tris": 7000 },
+    { "id": "pulmonary-valve",    "name": "Pulmonary valve",     "ref": "FMA7246", "files": ["FJ2417", "FJ2427", "FJ2434"], "tris": 4000 },
+    { "id": "aortic-valve",       "name": "Aortic valve",        "ref": "FMA7236", "files": ["FJ2426", "FJ2431", "FJ2435"], "tris": 3000 },
+    { "id": "papillary-muscles",  "name": "Papillary muscles",   "ref": "FMA7259 + FMA9352", "files": ["FJ2418", "FJ2419", "FJ2429", "FJ2430", "FJ2437"], "tris": 4000 },
+    { "id": "aorta",              "name": "Aorta",               "ref": "FMA3736 ascending aorta + FMA3768 arch", "files": ["FJ3413", "FJ3411"], "tris": 5000 },
+    { "id": "pulmonary-trunk",    "name": "Pulmonary artery",    "ref": "FMA8612 pulmonary trunk + first segments of FMA50872, FMA50873", "files": ["FJ2966", "FJ3019", "FJ2924"], "tris": 6000 },
+    { "id": "superior-vena-cava", "name": "Superior vena cava",  "ref": "FMA4720", "files": ["FJ3645"], "tris": 2500 },
+    { "id": "inferior-vena-cava", "name": "Inferior vena cava",  "ref": "FMA10951, cut to a stub", "files": ["FJ3441"], "keep": { "z": [1160, null] }, "tris": 2000 },
+    { "id": "pulmonary-veins",    "name": "Pulmonary veins",     "ref": "first segments of FMA49911, FMA49913, FMA49914, FMA49916", "files": ["FJ3040", "FJ2944", "FJ2925", "FJ3020"], "tris": 4000 },
+    { "id": "coronary-arteries",  "name": "Coronary arteries",   "ref": "FMA3802 + FMA3855 and branches",
+      "files": ["FJ2631","FJ2632","FJ2633","FJ2634","FJ2635","FJ2636","FJ2637","FJ2638","FJ2639","FJ2640","FJ2641","FJ2642","FJ2643","FJ2644","FJ2645","FJ2646","FJ2647","FJ2648","FJ2649","FJ2650","FJ2651","FJ2652","FJ2653","FJ2654","FJ2667","FJ2668","FJ2670","FJ2671","FJ2672","FJ2673","FJ2674","FJ2675","FJ2676","FJ2677","FJ2692","FJ2693","FJ2694","FJ2695","FJ2696","FJ2697","FJ2698","FJ2699","FJ2700","FJ2714","FJ2715","FJ2716","FJ2717","FJ2718","FJ2719","FJ2720","FJ2721","FJ2722","FJ2723","FJ2737"], "tris": 12000 },
+    { "id": "cardiac-veins",      "name": "Cardiac veins",       "ref": "FMA4706 coronary sinus and tributaries", "files": ["FJ2655", "FJ2656", "FJ2724", "FJ2727", "FJ2728", "FJ2729", "FJ2731"], "tris": 4000 }
+  ]
+}
