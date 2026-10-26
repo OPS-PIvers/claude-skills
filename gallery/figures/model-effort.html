@@ -3,27 +3,32 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Model and effort</title>
+<title>Model or effort?</title>
 </head>
 <body>
 <script src="core.js"></script>
 <script>
-/* What this figure models (a sketch of the trade-off, not benchmarks):
-   1. Pick a task. Harder tasks have more steps that all have to be right.
-   2. Pick a model. A bigger model reasons better, but it is slower and each answer uses more of your limit.
-   3. Pick an effort (Claude only). Effort sets how much the model thinks before it answers: each round of thinking
-      adds time and usage. Gemini sets its own: Flash doesn't think, Flash (Thinking) and Pro decide how long.
-   4. Run: the task card goes into the model, one draft sheet rises per round of thinking, the usage tank fills,
-      and the answer card comes out onto the tray.
-   5. The answer is right when model + effort meet what the task needs. More than that only costs time and usage,
-      and effort can't fully make up for a model that is too small. */
+/* A troubleshooter: when an answer goes wrong, which knob to turn.
+   Effort = how long the same model thinks before it answers. More rounds of thinking catch sloppy mistakes (a missed
+   step, a broken rule, a slip in the maths) but add no knowledge. Model = what it knows and how well it judges. A
+   bigger model fixes shallow or wrong answers that more thinking can't.
+   1. Start: pick the kind of task. Quick → Haiku Low or Gemini Flash; everyday → Sonnet Low or Flash (Thinking);
+      hard → Opus Low or Gemini 3.1 Pro.
+   2. What went wrong? Each problem names its cause, then turns one knob one notch:
+      missed a step → effort up (Gemini: Flash → Flash (Thinking)); at top effort → a bigger model, from Medium.
+      shallow or wrong facts → a bigger model.
+      too slow → effort down first, then a smaller model.
+      the same mistake every time → no knob: add the missing context to the ask.
+   3. Opus at Medium and 3.1 Pro are the top: past them, split the task or check that part yourself.
+   The machine shows the setup: its size is the model, the dial and the sheets on top are the effort, the tank is
+   the usage. The knob that turns lights up. */
 const EY = 78, EXF = 46;                                       // the model's centre (y) and front face (x)
 const DIMS = { d:[22, 28, 34], w:[28, 34, 40], h:[24, 31, 38] }; // small, middle, large model
-const TRAY_IN = [30, 54, 110, 134], TRAY_OUT = [30, 54, 14, 38], TRAY_H = 2.2, CARD_Z = 5.6;
+const TRAY_IN = [30, 54, 110, 134], TRAY_OUT = [30, 54, 14, 38], TRAY_H = 2.2;
 const TANK = [12, 18, 5, 30], TANK_MAX = 15;
 const BRD = [0, 4, 58, 140, 3, 6];
 const SHEET_H = 9, SLOT_GAP = 4.2;
-const GOOD = '#2f9a46', OKAY = '#b7860f', BAD = '#e2483d', LAMP_OK = '#43c25c', LAMP_BUSY = '#ffc94a';
+const BAD = '#e2483d', LAMP_OK = '#43c25c', LAMP_BUSY = '#ffc94a';
 const FUEL = matOf('#e9b949'), SCREEN = '#1d2a26', LCD = '#8af0ae';
 const clamp01 = t => Math.max(0, Math.min(1, t));
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -31,7 +36,7 @@ const lerp = (a, b, t) => a + (b - a) * t;
 const EFF = ['Low', 'Medium', 'High', 'Extra', 'Max'];
 const MODELS = {
   flash:  { label:'Gemini 3.6 Flash', brand:'GEMINI', scr:'FLASH 3.6', tier:0, auto:0, slots:0,
-            cap:"Gemini 3.6 Flash: fast and light. It answers without thinking first, and that can't be changed." },
+            cap:"Gemini 3.6 Flash: small and fast. It answers without thinking first, and that can't be changed." },
   flashT: { label:'Gemini 3.6 Flash (Thinking)', brand:'GEMINI', scr:'FLASH 3.6', tier:0, auto:3, slots:3,
             cap:'Gemini 3.6 Flash (Thinking): the same small model, but it thinks first. Gemini decides how long.' },
   pro:    { label:'Gemini 3.1 Pro', brand:'GEMINI', scr:'PRO 3.1', tier:2, auto:2, slots:2,
@@ -43,79 +48,102 @@ const MODELS = {
   opus:   { label:'Claude Opus 5.5', brand:'CLAUDE', scr:'OPUS 5.5', tier:2, max:1, slots:2,
             cap:'Claude Opus 5.5: the most capable Claude model. Here effort goes from Low to Medium.' },
 };
-const TASKS = {
-  easy:{ label:'Reword a parent email', card:'EMAIL', sub:'ONE STEP', need:1,
-         cap:'Reword a parent email: a simple task with one step.' },
-  mid: { label:'Plan a 5-day unit', card:'UNIT PLAN', sub:'SEVERAL STEPS', need:2,
-         cap:'Plan a 5-day unit: several parts that have to fit together.' },
-  hard:{ label:'Fix a gradebook formula', card:'FORMULA', sub:'MANY STEPS', need:3,
-         cap:'Fix a broken gradebook formula: many steps, and one slip makes it wrong.' },
+const STARTS = {
+  quick:{ label:'Quick, routine ask', card:'QUICK', sub:'ROUTINE ASK', claude:'haiku', gemini:'flash',
+          cap:'A quick, routine ask: start small and fast. Haiku at Low, or Gemini Flash.' },
+  mid:  { label:'Everyday, several steps', card:'EVERYDAY', sub:'SEVERAL STEPS', claude:'sonnet', gemini:'flashT',
+          cap:'Everyday work with several parts: start mid-size. Sonnet at Low, or Flash (Thinking).' },
+  hard: { label:'Hard or high stakes', card:'HARD', sub:'HIGH STAKES', claude:'opus', gemini:'pro',
+          cap:'Hard or high stakes: start with the strongest. Opus at Low, or Gemini 3.1 Pro.' },
+};
+const PROBS = {
+  missed: { label:'Missed a step', card:'SLOPPY', sub:'MISSED A STEP',
+            diag:"It missed a step. That's a sloppy mistake, not a gap in what it knows." },
+  shallow:{ label:'Shallow or wrong facts', card:'SHALLOW', sub:'WRONG FACTS',
+            diag:"Shallow, or the facts are wrong: it doesn't know enough. More thinking won't add knowledge." },
+  slow:   { label:'Too slow for the job', card:'SLOW', sub:'TOO SLOW',
+            diag:"It's right, but slow, or it's using up your limit on an easy ask." },
+  same:   { label:'Same mistake every time', card:'REPEATS', sub:'SAME MISTAKE',
+            diag:'The same mistake every time usually means it is missing something only you know.' },
 };
 const CAP = {
-  intro:'Pick a task, a model and an effort, then press Run. The numbers sketch the trade-off; they are not benchmarks.',
-  feed: m => `The task goes into ${m.label}.`,
-  noThink:"Flash doesn't stop to think. It starts writing the answer straight away.",
+  intro:'Effort fixes sloppy. A bigger model fixes shallow. Pick a starting point, then say what went wrong.',
   effort:[
-    'Low effort: one short round of thinking. Start here for simple tasks.',
-    'Medium effort: two rounds of thinking. A good default for everyday work.',
-    'High effort: three rounds. Worth it for work with several steps.',
+    'Low effort: one short round of thinking. Start here, and raise it only when you need to.',
+    'Medium effort: two rounds of thinking. It checks its work once.',
+    'High effort: three rounds. For work where one slip spoils the answer.',
     'Extra effort: four rounds. Slower, so save it for hard problems.',
     'Max effort: five rounds. The slowest setting, and it uses the most.'],
+  sameAct:"Don't turn a knob yet. Add the grade, audience, format or an example, then ask again.",
+  topMissed:'This is the top setting you have. Split the task into smaller asks, or check that step yourself.',
+  topShallow:'This is already the strongest model. Give it the source to work from, or check the facts yourself.',
+  floor:"This is already the fastest setup. Ask for less, or shorten what you paste in.",
 };
-const RES = { right:'Right', over:'Right, overkill', close:'Close', wrong:'Wrong' };
+const KNOB = { effUp:'Effort up', effDown:'Effort down', modelUp:'Bigger model', modelDown:'Smaller model', ask:'Your ask', top:'Split the task' };
+const UP = { haiku:'sonnet', sonnet:'opus' }, DOWN = { opus:'sonnet', sonnet:'haiku' };
 
-// the model: how strong a setup is, and what it costs
-const BONUS = [0, 0, .5, .9, 1.2, 1.4], COST = [1, 3, 5], BASE_T = [2, 4, 6], ROUND_T = [2, 3, 5];
+// a sketch of what each setup costs: bigger models cost more per answer, and each round of thinking adds to it
+const COST = [1, 3, 5];
+const gemK = k => MODELS[k].brand === 'GEMINI';
+const roundsOf = (k, e) => gemK(k) ? MODELS[k].auto : e + 1;
+const usageOf = (k, e) => COST[MODELS[k].tier] * (1 + roundsOf(k, e));
 const M = st => MODELS[st.model];
-const gem = st => M(st).brand === 'GEMINI';
-const rounds = st => gem(st) ? M(st).auto : st.eff + 1;
-const score = st => M(st).tier + 1 + BONUS[rounds(st)];
-const usage = st => COST[M(st).tier] * (1 + rounds(st));
-const secs = st => BASE_T[M(st).tier] + rounds(st) * ROUND_T[M(st).tier];
-function outcome(st){ const d = score(st) - TASKS[st.task].need;
-  return d < -.5 ? 'wrong' : d < 0 ? 'close' : d >= 1.35 ? 'over' : 'right'; }
-const short = st => M(st).label.replace(/^(Claude|Gemini) /, '');
-const effName = st => gem(st) ? 'Gemini sets the effort' : `${EFF[st.eff]} effort`;
+const gem = st => gemK(st.model);
+const name = k => MODELS[k].label.replace(/^(Claude|Gemini) /, '');
+const effLabel = st => gem(st) ? (M(st).auto ? 'Auto' : 'No thinking') : EFF[st.eff];
 
-function resultCap(st, r){
-  const m = M(st), top = gem(st) || st.eff >= m.max;
-  if (r === 'right') return 'Right, and no more model or effort than this task needed.';
-  if (r === 'over') return st.model === 'pro' ? 'Right, but Pro always thinks hard. A smaller model would be faster and use less.'
-    : st.eff > 0 ? 'Right, but more than it needed. Lower effort would be faster and use less.'
-    : 'Right, but a smaller model would do this faster and use less of your limit.';
-  if (r === 'close') return top ? 'Close, but it missed a step. Move up to a bigger model.'
-    : 'Close, but it missed a step. Raise the effort, or move up a model.';
-  if (st.model === 'flash') return "Wrong. Flash doesn't stop to think. Try Flash (Thinking), or Pro for hard tasks.";
-  if (st.model === 'flashT') return 'Wrong. Thinking helps, but Flash is too small for this. Try 3.1 Pro.';
-  if (top) return `Wrong. Even at ${EFF[st.eff]}, ${short(st)} can't think past what it doesn't know. Move up a model.`;
-  return 'Wrong. This task needs more: raise the effort, or move up a model.';
+// what to do about problem p from the current setup: the knob, where it ends up, and the caption that says why
+function plan(st, p){
+  const k = st.model, e = st.eff, mm = MODELS[k], g = gem(st), diag = PROBS[p].diag;
+  const go = (knob, to, cap) => ({ knob, to, caps:[diag, cap] });
+  if (p === 'same') return go('ask', null, CAP.sameAct);
+  if (p === 'missed'){
+    if (k === 'flash') return go('effUp', { model:'flashT' }, "Gemini has no effort dial, so switch to Flash (Thinking): the same model, but it thinks first.");
+    if (!g && e < mm.max) return go('effUp', { eff:e + 1 }, `So turn up effort: ${EFF[e]} to ${EFF[e + 1]}. Same model, one more round of checking.`);
+    if (k === 'flashT') return go('modelUp', { model:'pro' }, 'Flash (Thinking) already thinks as long as Gemini lets it. Move up to 3.1 Pro.');
+    if (UP[k]) return go('modelUp', { model:UP[k], eff:1 }, `${name(k)} is already at its top effort. Move up to ${name(UP[k])}, starting at Medium.`);
+    return go('top', null, CAP.topMissed);
+  }
+  if (p === 'shallow'){
+    if (g) return k === 'pro' ? go('top', null, CAP.topShallow) : go('modelUp', { model:'pro' }, `So switch to a bigger model: ${name(k)} to 3.1 Pro.`);
+    if (!UP[k]) return go('top', null, CAP.topShallow);
+    return go('modelUp', { model:UP[k], eff:Math.min(e, MODELS[UP[k]].max) }, `So switch to a bigger model: ${name(k)} to ${name(UP[k])}, at the same effort.`);
+  }
+  // slow
+  if (k === 'pro') return go('modelDown', { model:'flashT' }, "Pro can't be turned down. Try Flash (Thinking) for this one.");
+  if (k === 'flashT') return go('effDown', { model:'flash' }, 'Switch to plain Flash: no thinking, so the fastest answer.');
+  if (!g && e > 0) return go('effDown', { eff:e - 1 }, `Turn effort down first: ${EFF[e]} to ${EFF[e - 1]}. Try a smaller model only if it's still slow.`);
+  if (DOWN[k]) return go('modelDown', { model:DOWN[k], eff:0 }, `Effort is already at Low, so drop to a smaller model: ${name(DOWN[k])}.`);
+  return go('', null, CAP.floor);
 }
-function thinkCap(st){ const n = rounds(st);
-  if (gem(st)) return `${short(st)} sets its own effort. Here it thinks for ${n} rounds before it answers.`;
-  return `${EFF[st.eff]} effort: ${n === 1 ? 'one round' : n + ' rounds'} of thinking. Each round adds time and usage.`; }
 
-const fresh = () => ({ task:'easy', model:'flash', eff:0, sz:0, phase:'idle', act:'', capText:'',
-  cin:0, cop:1, aout:0, ans:null, rise:[], use:0, t:0, res:'' });
+const fresh = () => ({ start:'mid', model:'sonnet', eff:0, effV:0, sz:1, rise:[1, 0, 0, 0, 0], use:usageOf('sonnet', 0),
+  prob:'', knob:'', ctx:false, aop:0, phase:'idle', act:'', capText:'' });
 const busy = st => st.phase !== 'idle';
-const clearRun = st => Object.assign(st, { ans:null, rise:[], use:0, t:0, res:'', aout:0, cin:0, cop:1 });
 
-/* ---------- running a task ---------- */
-function runList(st){
-  const n = rounds(st), r = outcome(st), U = usage(st), T = secs(st), q = n / (n + 1);
-  let rise0 = [];
+/* ---------- moving the knobs ---------- */
+// one step that moves the setup to `to` ({model?, eff?}) over k = 0..1: the model grows or shrinks, the dial turns,
+// the sheets rise or sink, and the tank fills or drains
+function turnStep(cap, act, to, extra){
+  let from = null;
+  return { cap, act, tm:1.6,
+    start: st => { const m1 = to && to.model || st.model, e1 = to && to.eff != null ? to.eff : (MODELS[m1].max != null ? Math.min(st.eff, MODELS[m1].max) : st.eff);
+      from = { sz:st.sz, effV:st.effV, rise:st.rise.slice(), use:st.use, m1, e1 }; if (extra && extra.start) extra.start(st); },
+    go: (st, k) => { const t = ease(k), mm = MODELS[from.m1], n = roundsOf(from.m1, from.e1);
+      st.sz = lerp(from.sz, mm.tier, t); st.effV = lerp(from.effV, gemK(from.m1) ? 0 : from.e1, t);
+      st.use = lerp(from.use, usageOf(from.m1, from.e1), t);
+      if (k >= .5){ st.model = from.m1; st.eff = from.e1; }
+      st.rise = st.rise.map((v, i) => lerp(from.rise[i], i < n ? 1 : 0, t));
+      if (extra && extra.go) extra.go(st, k); },
+    end: st => { if (extra && extra.end) extra.end(st); } };
+}
+function fixSteps(st, p){
+  const pl = plan(st, p);
   return [
-    { cap:CAP.feed(M(st)), act:'feed', tm:1.8,
-      start: st => { rise0 = st.rise.slice(); st.ans = null; st.res = ''; st.use = 0; st.t = 0; st.aout = 0; st.cop = 1; },
-      go: (st, k) => { st.cin = k; st.rise = rise0.map(v => v * (1 - Math.min(1, k * 2))); } },
-    n ? { cap:thinkCap(st), act:'think', tm:n * .9 + .4,
-          start: st => { st.rise = []; },
-          go: (st, k) => { st.rise = Array.from({ length:n }, (_, i) => ease(clamp01(k * n - i))); st.use = U * q * k; st.t = T * q * k; } }
-      : { cap:CAP.noThink, act:'think', tm:.6, go: () => {} },
-    { cap:resultCap(st, r), act:'out', tm:1.8,
-      start: st => { st.ans = { r, task:st.task }; },
-      go: (st, k) => { st.aout = k; st.use = U * (q + (1 - q) * k); st.t = T * (q + (1 - q) * k);
-        if (k > .6){ st.cin = 0; st.cop = (k - .6) / .4; } },
-      end: st => { st.res = r; st.cop = 1; } },
+    { cap:pl.caps[0], act:'diag', tm:1, start: st => { st.prob = p; st.knob = ''; st.aop = 0; }, go: (st, k) => { st.aop = k; } },
+    pl.to ? turnStep(pl.caps[1], pl.knob, pl.to, { end: st => { st.knob = pl.knob; } })
+      : { cap:pl.caps[1], act:pl.knob || 'top', tm:1,
+          go: (st, k) => { if (pl.knob === 'ask') st.ctx = k > .3; }, end: st => { st.knob = pl.knob; } },
   ];
 }
 function play(st, ui, list){
@@ -128,15 +156,14 @@ function play(st, ui, list){
     if (t >= dur){ if (cur.end) cur.end(st); if (!next()){ st.phase = 'idle'; st.act = ''; return false; } }
     return true; });
 }
-function runNow(st){ for (const s of runList(st)){ if (s.start) s.start(st); s.go(st, 1); if (s.end) s.end(st); st.capText = s.cap; } }
-
-function pickModel(k){ return (st, ui) => {
-  const mm = MODELS[k]; st.model = k; if (mm.max != null) st.eff = Math.min(st.eff, mm.max);
-  clearRun(st); st.capText = mm.cap;
-  const goal = mm.tier;
-  ui.animate(dt => { const d = goal - st.sz; if (Math.abs(d) < .002){ st.sz = goal; return false; }
-    st.sz += Math.sign(d) * Math.min(Math.abs(d), dt * 2.4); return true; });
-}; }
+function runNow(st, list){ for (const s of list){ if (s.start) s.start(st); s.go(st, 1); if (s.end) s.end(st); st.capText = s.cap; } }
+const clearProb = st => Object.assign(st, { prob:'', knob:'', aop:0 });
+const setup = (to, cap, extra) => [turnStep(cap, 'set', to, extra)];
+const startSteps = (st, s) => { const S0 = STARTS[s], k = gem(st) ? S0.gemini : S0.claude;
+  return setup({ model:k, eff:0 }, S0.cap, { start: st => { clearProb(st); st.start = s; st.ctx = false; } }); };
+const modelSteps = k => setup({ model:k }, MODELS[k].cap, { start: clearProb });
+const effSteps = i => setup({ eff:i }, CAP.effort[i], { start: clearProb });
+const press = build => (st, ui) => { if (busy(st)) return ui.flash(wait); play(st, ui, build(st)); };
 
 /* ---------- drawing ---------- */
 const boxPts = (x0, y0, z0, x1, y1, z1) => { const o = []; for (const x of [x0, x1]) for (const y of [y0, y1]) for (const z of [z0, z1]) o.push([x, y, z]); return o; };
@@ -153,25 +180,11 @@ function tray([x0, x1, y0, y1]){
     + shape(on(PZ(TRAY_H + .02), rectUV(x0 + 1.4, y0 + 1.4, x1 - 1.4, y1 - 1.4)), METAL.m, .7)
     + hullInk(boxPts(x0, y0, 0, x1, y1, TRAY_H), 1.6);
 }
-// a card: 16 deep (x) by 20 wide (y), cut to the part with yLo <= y <= yHi (the part outside the model)
-function card(cx, cy, z, yLo, yHi, lines){
-  const a = Math.max(cy - 10, yLo), b = Math.min(cy + 10, yHi);
-  if (b - a < .2) return '';
-  let s = box(cx - 8, a, z, cx + 8, b, z + .8, CERAMIC, toneI, .8);
-  if (lines && b - a > 19.8){
-    s += txZ(cx - 1.8, cy, z + .82, lines[0], 3.4, lines[2] || INK, 700);
-    s += txZ(cx + 2.6, cy, z + .82, lines[1], 2.0, lines[3] || INK, 500);
-  }
-  return s;
+// a card 16 deep (x) by 20 wide (y), lying on a tray, with two lines of print
+function card(cx, cy, z, l1, l2, c1 = INK, c2 = INK){
+  return box(cx - 8, cy - 10, z, cx + 8, cy + 10, z + .8, CERAMIC, toneI, .8)
+    + txZ(cx - 1.8, cy, z + .82, l1, 3.2, c1, 700) + txZ(cx + 2.6, cy, z + .82, l2, 2.0, c2, 500);
 }
-function taskPos(st, E){ const k = st.cin, yIn = E.y1 + 11;
-  if (k < .4){ const t = ease(k / .4); return [lerp(42, E.cx, t), lerp(122, yIn, t), lerp(TRAY_H, CARD_Z, t)]; }
-  return [E.cx, lerp(yIn, EY - 2, ease((k - .4) / .6)), CARD_Z]; }
-function ansPos(st, E){ const k = st.aout, yOut = E.y0 - 11;
-  if (k < .55) return [E.cx, lerp(EY + 2, yOut, ease(k / .55)), CARD_Z];
-  const t = ease((k - .55) / .45); return [lerp(E.cx, 42, t), lerp(yOut, 26, t), lerp(CARD_Z, TRAY_H, t)]; }
-const RES_COL = { right:GOOD, over:GOOD, close:OKAY, wrong:BAD };
-const RES_SUB = { right:'JUST RIGHT', over:'MORE THAN NEEDED', close:'MISSED A STEP', wrong:'NOT RIGHT' };
 
 function tank(st){
   const [x, y, r, top] = TANK, lv = 2 + (top - 4) * clamp01(st.use / TANK_MAX);
@@ -198,7 +211,7 @@ function dial(st, E, m){
   for (let i = 0; i < 5; i++){ const ok = i <= mm.max;
     s += `<path d="${pd([pt(i, 4.3), pt(i, 5.6)], false)}" stroke="${ok ? INK : mix(m.l, INK, .25)}" stroke-width="${ok ? 1.2 : .7}" fill="none" stroke-linecap="round"/>`; }
   s += cylX(E.x1, E.x1 + 1.6, dy, dz, 3, CERAMIC, toneI, 1);
-  const c = [E.x1 + 1.65, dy, dz], a = (225 - st.eff * 67.5) * Math.PI / 180;
+  const c = [E.x1 + 1.65, dy, dz], a = (225 - st.effV * 67.5) * Math.PI / 180;
   s += `<path d="${pd([c, [c[0], dy - 2.3 * Math.cos(a), dz + 2.3 * Math.sin(a)]], false)}" stroke="${INK}" stroke-width="1.3" fill="none" stroke-linecap="round"/>`;
   return s;
 }
@@ -206,21 +219,17 @@ function dial(st, E, m){
 function model(st, m, E){
   const mm = M(st), prof = rrUV(E.y0, 0, E.y1, E.h, 3), txt = m === PALS.white ? INK : '#ffffff';
   let s = extrude(prof, E.x0, E.x1, m) + shape(on(PX(E.x1), prof), m.l, 2.2);
-  // side (+y): the brand and the slot the task card goes in
   s += txY(E.cx, E.y1 + .05, E.h * .62, mm.brand, 3.4, txt, 700);
-  s += shape(on(PY(E.y1 + .05), rectUV(E.cx - 9, CARD_Z - .5, E.cx + 9, CARD_Z + 1.5)), '#1a1d24', .8);
   // front: screen, effort dial, status lamp
   const sy0 = E.y0 + 3, sy1 = E.y1 - 3, cy = (sy0 + sy1) / 2;
   s += shape(on(PX(E.x1 + .05), rrUV(sy0, E.h - 10.5, sy1, E.h - 3, 1.2)), SCREEN, 1);
-  const n = rounds(st), up = st.rise.filter(v => v > .02).length;
-  const l2 = st.act === 'think' && n ? `THINKING ${Math.max(1, up)} OF ${n}`
-    : gem(st) ? (mm.auto ? 'THINKS: AUTO' : 'NO THINKING') : `EFFORT: ${EFF[st.eff].toUpperCase()}`;
+  const l2 = gem(st) ? (mm.auto ? 'THINKS: AUTO' : 'NO THINKING') : `EFFORT: ${EFF[st.eff].toUpperCase()}`;
   s += tx(E.x1 + .1, cy, E.h - 6.2, mm.scr, 2.5, LCD, 700, FONT_MONO);
-  s += tx(E.x1 + .1, cy, E.h - 9.2, l2, 1.9, st.act === 'think' ? '#ffd27a' : LCD, 600, FONT_MONO);
+  s += tx(E.x1 + .1, cy, E.h - 9.2, l2, 1.9, LCD, 600, FONT_MONO);
   s += dial(st, E, m);
   s += shape(on(PX(E.x1 + .05), ellUV(E.y0 + 5, 6.8, 1.3, 1.3, 14)), busy(st) ? LAMP_BUSY : LAMP_OK, .7);
   s += hullInk([...on(PX(E.x0), prof), ...on(PX(E.x1), prof)], 2.6);
-  // top: one slot per round of thinking this model can do, and the draft sheets rising out of them (far to near)
+  // top: one slot per round of thinking this model can do, and a draft sheet up in each round it does (far to near)
   for (let i = 0; i < mm.slots; i++){ const y = slotY(mm.slots, i);
     s += shape(on(PZ(E.h + .05), rectUV(E.cx - 6.5, y - .7, E.cx + 6.5, y + .7)), '#1a1d24', .7); }
   st.rise.forEach((k, i) => { if (k < .02 || i >= mm.slots) return; const y = slotY(mm.slots, i), zt = E.h + SHEET_H * k;
@@ -239,61 +248,59 @@ function scene(st, m){
   s += clipTo(onBoard, castShadow(boxPts(E.x0, E.y0, 0, E.x1, E.y1, E.h)) + castShadow(boxPts(tx0 - tr, ty0 - tr, 0, tx0 + tr, ty0 + tr, ttop + 2))
     + castShadow(boxPts(TRAY_IN[0], TRAY_IN[2], 0, TRAY_IN[1], TRAY_IN[3], TRAY_H)) + castShadow(boxPts(TRAY_OUT[0], TRAY_OUT[2], 0, TRAY_OUT[1], TRAY_OUT[3], TRAY_H)));
 
-  // 1. usage tank (farthest back), 2. answer tray and card (it comes out of the hidden right side)
+  // 1. usage tank (farthest back), 2. answer tray and the problem card, 3. the model, 4. task tray and card
   s += tank(st);
   s += tray(TRAY_OUT);
-  if (st.ans){ const [x, y, z] = ansPos(st, E), r = st.ans.r;
-    s += card(x, y, z, -1e9, 1e9, st.aout > .99 ? [RES[r].split(',')[0].toUpperCase(), RES_SUB[r], RES_COL[r]] : null); }
-  // 3. the model, 4. task tray and the part of the task card still outside the model
+  if (st.prob && st.aop > .01){ const pr = PROBS[st.prob];
+    s += `<g opacity="${f(st.aop)}">${card(42, 26, TRAY_H, pr.card, pr.sub, BAD)}</g>`; }
   s += model(st, m, E);
   s += tray(TRAY_IN);
-  const T = TASKS[st.task];
-  if (st.cin > 0){ const [x, y, z] = taskPos(st, E); s += card(x, y, z, E.y1, 1e9, st.cin < .4 ? [T.card, T.sub] : null); }
-  if (st.cin === 0 || st.cop < 1) s += `<g opacity="${f(st.cin === 0 ? st.cop : 0)}">${card(42, 122, TRAY_H, -1e9, 1e9, [T.card, T.sub])}</g>`;
+  const S0 = STARTS[st.start];
+  s += card(42, 122, TRAY_H, S0.card, st.ctx ? '+ CONTEXT' : S0.sub, INK, st.ctx ? ACCENT : INK);
 
-  // 5. labels
+  // 5. labels: the knob being turned lights up
   const a = st.act, mm = M(st);
-  s += tag([50, 116, TRAY_H + .8], -20, 40, 'TASK', a === 'feed');
-  s += tag([E.cx, E.y1, E.h * .85], -62, -34, 'MODEL', a === 'feed');
-  if (!gem(st)) s += tag([E.x1 + 1.6, E.y1 - 7.5, 4], 6, 58, 'EFFORT', a === 'think');
-  if (mm.slots) s += tag([E.cx - 6, slotY(mm.slots, mm.slots - 1), E.h + 1], -40, -58, 'THINKING', a === 'think');
-  s += tag([tx0, ty0 + tr, ttop - 4], 56, -34, 'USAGE', a === 'think' || a === 'out');
-  s += tag([TRAY_OUT[1], 22, TRAY_H], 40, 30, 'ANSWER', a === 'out');
+  const effA = a === 'effUp' || a === 'effDown', modA = a === 'modelUp' || a === 'modelDown';
+  s += tag([50, 116, TRAY_H + .8], -20, 40, 'YOUR ASK', a === 'ask');
+  s += tag([E.cx, E.y1, E.h * .85], -62, -34, 'MODEL', modA);
+  if (!gem(st)) s += tag([E.x1 + 1.6, E.y1 - 7.5, 4], 6, 58, 'EFFORT', effA);
+  if (mm.slots) s += tag([E.cx - 6, slotY(mm.slots, mm.slots - 1), E.h + 1], -40, -58, 'THINKING', effA);
+  s += tag([tx0, ty0 + tr, ttop - 4], 56, -34, 'USAGE', st.prob === 'slow' && a !== '');
+  s += tag([TRAY_OUT[1], 22, TRAY_H], 40, 30, 'ANSWER', a === 'diag');
   return s;
 }
 
-const wait = 'Wait for the answer first';
+const wait = 'Wait for this step to finish';
 mountFigure({
-  fig:'10', title:'Model and effort', hint:'pick a task, a model and an effort, then run it',
+  fig:'10', title:'Model or effort?', hint:'pick a starting point, then say what went wrong',
   size:[58, 140, 50],
   state:fresh(),
   scene,
   caption: st => st.capText || CAP.intro,
   stats: st => [
-    { label:'Time', value:st.t ? `${Math.round(st.t)} s` : '–' },
-    { label:'Usage vs Flash', value:st.use ? `${Math.max(1, Math.round(st.use))}×` : '–' },
-    { label:'Answer', value:st.res ? RES[st.res] : '–', small:true } ],
-  buttonsLabel:'Set up',
+    { label:'Setup', value:`${name(st.model)} · ${effLabel(st)}`, small:true },
+    { label:'Turn', value:st.knob ? KNOB[st.knob] : '–', small:true },
+    { label:'Usage vs Flash', value:`${Math.max(1, Math.round(st.use))}×` } ],
+  buttonsLabel:'Troubleshoot',
   buttons:[
-    { label:'Task', choices: st => Object.keys(TASKS).map(k => ({ label:TASKS[k].label, current:st.task === k, disabled:busy(st), why:wait,
-        onClick: st => { st.task = k; clearRun(st); st.capText = TASKS[k].cap; } })) },
-    { label:'Model', predict:'A bigger model is slower and uses more of your limit. When is that worth it?',
-      choices: st => Object.keys(MODELS).map(k => ({ label:MODELS[k].label, current:st.model === k, disabled:busy(st), why:wait, onClick:pickModel(k) })) },
-    { label:'Effort', predict:'More effort means more thinking. Can a small model at Max match a bigger one?',
-      choices: st => EFF.map((name, i) => { const mm = M(st), g = gem(st);
-        return { label:name, current:!g && st.eff === i, disabled:busy(st) || g || i > mm.max,
-          why:busy(st) ? wait : g ? 'Gemini sets its own effort: pick another model to change it' : `${short(st)} goes up to ${EFF[mm.max]} here`,
-          onClick: st => { st.eff = i; clearRun(st); st.capText = CAP.effort[i]; } }; }) },
-    { label:'Run', predict: st => `${M(st).label}, ${effName(st)}. Will it get "${TASKS[st.task].label.toLowerCase()}" right?`,
-      onClick: (st, ui) => { if (busy(st)) return ui.flash(wait); play(st, ui, runList(st)); } },
+    { label:'Start', choices: st => Object.keys(STARTS).map(k => ({ label:STARTS[k].label, current:false, disabled:busy(st), why:wait,
+        onClick:press(st => startSteps(st, k)) })) },
+    { label:'Model', choices: st => Object.keys(MODELS).map(k => ({ label:MODELS[k].label, current:st.model === k, disabled:busy(st), why:wait,
+        onClick:press(() => modelSteps(k)) })) },
+    { label:'Effort', choices: st => EFF.map((n, i) => { const mm = M(st), g = gem(st);
+        return { label:n, current:!g && st.eff === i, disabled:busy(st) || g || i > mm.max,
+          why:busy(st) ? wait : g ? 'Gemini sets its own effort: pick another model to change it' : `${name(st.model)} goes up to ${EFF[mm.max]} here`,
+          onClick:press(() => effSteps(i)) }; }) },
+    { label:'What went wrong?', predict:'Before you pick: which problems does more thinking fix, and which need a bigger model?',
+      choices: st => Object.keys(PROBS).map(k => ({ label:PROBS[k].label, disabled:busy(st), why:wait, onClick:press(st => fixSteps(st, k)) })) },
   ],
-  walk:['Run', 'Task>Fix', 'Run', 'Model>Claude Haiku', 'Effort>Max', 'Run', 'Model>Claude Opus', 'Run',
-        'Task>Reword', 'Run', 'Task>Plan', 'Model>Claude Sonnet', 'Effort>Low', 'Run'],
+  walk:['Start>Quick', 'What>Missed', 'What>Shallow', 'What>Too slow', 'Start>Hard', 'What>Missed', 'What>Missed',
+        'Model>Gemini 3.6 Flash', 'What>Missed', 'What>Missed', 'What>Same'],
   params:(st, q) => {
-    if (TASKS[q.get('task')]) st.task = q.get('task');
-    if (MODELS[q.get('model')]){ st.model = q.get('model'); st.sz = M(st).tier; }
-    if (q.has('eff')) st.eff = Math.min(+q.get('eff') || 0, M(st).max ?? 0);
-    if (q.get('run') === '1') runNow(st);
+    if (MODELS[q.get('model')]) runNow(st, modelSteps(q.get('model')));
+    if (q.has('eff') && !gem(st)) runNow(st, effSteps(Math.min(+q.get('eff') || 0, M(st).max)));
+    if (STARTS[q.get('start')]) st.start = q.get('start');
+    if (PROBS[q.get('prob')]) runNow(st, fixSteps(st, q.get('prob')));
   },
 });
 </script>
