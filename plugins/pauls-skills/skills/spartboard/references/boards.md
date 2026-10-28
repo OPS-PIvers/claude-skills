@@ -13,7 +13,7 @@ If the board tools (`list_boards`, `get_board`, `get_board_guide`, `create_board
    > I'll make "Period 3 Stations" from the Stations template: a Stations widget with your four station names, a 12-minute timer and Expectations set to partner voices. Building it now.
 
 4. **Look at the picture.** Every board tool returns a wireframe image of the board on the teacher's screen plus a `layout_check` (overlaps, widgets under the app's buttons or dock, empty space). Fix anything it flags before you hand back.
-5. **Hand back in 2–3 lines:** the board name and `where_to_find_it`, anything the teacher still has to do (pick a class, share a Google file), and that `restore_revision` undoes the change for 30 days.
+5. **Hand back in 2–3 lines:** the board name and `where_to_find_it`, anything the teacher still has to do (pick a class, share a Google file, assign or start a quiz or video activity from their library), and that `restore_revision` undoes the change for 30 days.
 
 **Small tweaks** after that ("make the timer 5 minutes", "move the QR code left") need no new plan. Read `get_board` once for widget ids, then send the change.
 
@@ -22,15 +22,15 @@ If the board tools (`list_boards`, `get_board`, `get_board_guide`, `create_board
 - **New boards:** `create_board` makes up to 5 boards per call, each with up to 20 widgets, at the top of the Boards list. Pass `collection_id` only when the teacher names a collection (ids come from `list_boards`).
 - **Existing boards:** find it with `list_boards` (`search` works), read `get_board`, then send every change in one `edit_board` call (up to 30 changes): `add_widget`, `update_widget`, `move_widget`, `remove_widget`, `apply_template`, `rename`, `set_background`. If any change is refused, nothing is saved; the error says which and why, so fix it and send the call again.
 - **Placement:** put widgets on a template's zones (`template_id` plus each widget's `zone_id`) or on snap-layout zones (`layout_id` plus `zone_id`). There are no pixel positions.
-- **Settings:** send only the settings you want to change, by the names in `get_board_guide`. Class and student fields are refused: class-based widgets (stations, name picker, seating chart, attendance, scoreboard teams) use the class the teacher picks on the board. Never write student names anywhere.
+- **Settings:** send only the settings you want to change, by the names in `get_board_guide`. Class and student fields are refused: class-based widgets (stations, name picker, seating chart, lunch count, scoreboard teams) use the class the teacher picks on the board, so you can add them but not fill in students or groups. Never write student names anywhere.
 - **Tidy:** when a teacher arranged a board by hand and wants it neat, use `tidy_board`. It snaps widgets onto the best-fitting layout and changes nothing else; locked, pinned and minimized widgets stay put.
 - **Screen shape:** boards are tuned to the screen the teacher last used full screen. If the board is for a different screen, pass `screen` (for example `{w: 1024, h: 768}`) on every board call.
 
 ## Chaining library items
 
-Library items go on a board by id with `library_item_id`: a quiz, video activity, flashcard set, Activity Wall, Guided Learning activity or mini-app. Make the item first with its own `create_*` tool (following that type's reference file and plan step), then add the widget with the id the create call returned.
+Library items go on a board by id with `library_item_id`: a quiz, video activity, flashcard set, Activity Wall, Guided Learning activity or mini-app. Make the item first with its own `create_*` tool (following that type's reference file and plan step), then add the widget with the id the create call returned (the key varies: `quiz_id`, `activity_id`, `wall_id`, `app_id` and so on). Putting a quiz or video activity on a board doesn't assign it; the teacher does that from their library.
 
-- **Quiz board:** `create_quiz`, then `edit_board` adding a Quiz widget with that quiz, a QR code with the join link and a timer.
+- **Quiz board:** `create_quiz`, then `edit_board` adding a Quiz widget with that quiz and a timer. A QR code only gets a link the teacher gives you; the join code exists once they start the quiz in SpartBoard, so never make one up.
 - **Discussion:** a Text widget with the question, a name picker, and an Activity Wall made with `create_activity_wall` for responses.
 - **Lesson slides:** an Embed widget with the Google Slides link (an edit link works) and a Text widget for key points beside it. Tell the teacher that students only see a Google file if it's shared with view access.
 
@@ -38,11 +38,11 @@ Library items go on a board by id with `library_item_id`: a quiz, video activity
 
 - **In use:** if `get_board` or a result says the board changed in SpartBoard in the last few minutes, it may be on screen in class. Ask before changes students would see.
 - **Shared live:** if a result says the board is shared live, the teachers it's shared with see the change too. Mention it.
-- **Boards you can't change:** boards another teacher owns and View-Only copies are refused. The teacher changes those in SpartBoard.
+- **Boards you can't change:** any board another teacher shares with this teacher (View-Only and live guest copies included; `get_board` shows `shared_with_you_as`) is refused. The owner changes those in SpartBoard.
 
 ## Limits
 
 - No deleting boards, and no uploading files or pictures (links and embeds only).
 - About 20 widgets per board, 5 boards per call, 30 changes per `edit_board`.
 - 500 board changes a day, separate from the 300 library changes. One call counts once.
-- Every change keeps the previous version for 30 days; `list_revisions` and `restore_revision` undo it. Drawing ink isn't part of a saved version.
+- Every change keeps the previous version for 30 days; `list_revisions` and `restore_revision` undo it. Restoring doesn't undo drawing ink; say so if the teacher drew on the board.
