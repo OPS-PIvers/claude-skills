@@ -18,6 +18,8 @@ const HOUSE = [9, 33, 4, 18, 18, 44];
 const BASE = [9, 33, 4, 142, 18];
 const BRD = [0, 0, 57, 144, 3, 6];
 const ROLL_MAX = 20, COMPACT_AT = 18;
+// Context rot: the fuller the window, the less closely the model reads any one part of it, long before it is full.
+const FOCUS = [{ at:8, name:'Sharp', beam:.75 }, { at:13, name:'Good', beam:.55 }, { at:NS, name:'Slipping', beam:.3, slip:true }];
 const KM = { sys:{ l:'#8c8c8c', m:'#707070', d:'#474747' }, you:PALS.red, ai:{ l:'#ffffff', m:'#e1e4ef', d:'#b4bad0' }, file:matOf('#e9b949') };
 const KTXT = { you:['YOU', '#ffffff'], ai:['AI', INK], file:['FILE', INK] };
 const SCREEN = '#1d2a26', LCD = '#8af0ae', BEAM = '#ffd25a';
@@ -47,6 +49,7 @@ reply:{ n:2, t:'Done. Each day now lists the standard it covers.' } },
 reply:{ n:2, t:'Done. The day 3 lab now uses your pond reading.' } },
 ];
 const QUESTION = 'How many of my students need read-aloud?';
+const RECAP = 'Recap: 7th grade science, 28 students, 3 need read-aloud. The unit and quiz are done.';
 
 const CAP = {
 introRoll:'Rolling window. The tray is everything the AI can see at once, starting with its pinned instructions.',
@@ -67,17 +70,24 @@ cTrigger:'The window is past 90% full, so auto-compact runs before anything new 
 cPress:'The press squeezes the whole conversation into one short summary.',
 cKept:'Only the summary is left. It keeps the gist, but the exact words and details are gone.',
 ask:'You ask about a detail from your very first message.',
+crowded:"The window isn't full, but it's crowded. The fuller it gets, the less closely the AI reads each part.",
+newChat:'New chat. The long conversation is set aside, and the window starts nearly empty.',
+recap:'You paste in a short recap of what matters. A small window keeps the focus sharp.',
 };
 const ANSWERS = {
 exact:{ t:'3 of your students need read-aloud.', cap:'The first message is still in the window, so the AI reads off the exact answer.' },
+blur:{ t:'About 2 of your students need read-aloud.', cap:"Your first message is still in the window, but it's crowded now. The AI skims past the detail and gets it wrong." },
+recap:{ t:'3 of your students need read-aloud.', cap:'The recap sits in a small, uncrowded window, so the AI reads off the exact answer.' },
 gist:{ t:"Some of your students need read-aloud. I don't have the exact number.", cap:'Only the summary is left. It says some students need read-aloud, not how many.' },
 guess:{ t:'2 of your students need read-aloud.', cap:"That message fell out of the window. The AI doesn't say so: it guesses, and sounds sure." },
 none:{ t:"You haven't told me about your class yet.", cap:'Nothing in the window says how many, so the AI asks.' },
 };
 
 const fresh = mode => ({ mode, blocks:[{ k:'sys', n:1, u:0 }], bin:[], mi:0, fi:0, phase:'idle', act:'', capText:'',
-scr:{ who:'', t:'Ready.' }, head:U_PARK, scanU:-1, padU:null, padZ:PAD_UP, padA:0, att:null, drops:0, keySent:false });
+scr:{ who:'', t:'Ready.' }, head:U_PARK, scanU:-1, padU:null, padZ:PAD_UP, padA:0, att:null, drops:0, keySent:false,
+crowdSaid:false, wipe:0 });
 const used = st => st.blocks.reduce((s, b) => s + b.n, 0);
+const focusOf = st => FOCUS.find(b => used(st) <= b.at) || FOCUS[FOCUS.length - 1];
 const busy = st => st.phase !== 'idle';
 const targets = st => { let u = 0; return st.blocks.map(b => { const t = u; u += b.n; return t; }); };
 const ySpan = (u, n) => [YL - (u + n) * SLOT + .3, YL - u * SLOT - .3];
@@ -149,8 +159,12 @@ end: st => { st.padU = null; st.head = U_PARK; st.padA = 0; } },
 st => rollRoom(st, n),
 ];
 }
+// Said once each time the window first gets crowded; a compact or a new chat that clears it lets it be said again.
+const crowdStep = st => { if (!focusOf(st).slip){ st.crowdSaid = false; return null; }
+return st.crowdSaid ? null : { cap:CAP.crowded, tm:.4, start: st => { st.crowdSaid = true; } }; };
 function answerOf(st){
-if (st.blocks.some(b => b.key)) return ANSWERS.exact;
+const key = st.blocks.find(b => b.key);
+if (key) return focusOf(st).slip ? ANSWERS.blur : key.recap ? ANSWERS.recap : ANSWERS.exact;
 if (st.blocks.some(b => b.gist)) return ANSWERS.gist;
 return st.keySent ? ANSWERS.guess : ANSWERS.none;
 }
@@ -168,13 +182,21 @@ fs.start = st => { st.att = null; s0(st); };
 out = [makeRoom(f.n + 1), fs, feed({ k:'you', n:1, t:f.msg }, CAP.msgFile, { who:'YOU', t:f.msg })]; r = f.reply; }
 else { const i = st.mi < MSGS.length ? st.mi : 4 + (st.mi - 4) % 2, m = MSGS[i]; st.mi++;
 out = [makeRoom(1), feed({ k:'you', n:1, t:m.t, key:!!m.key }, m.key ? CAP.msgKey : CAP.msg, { who:'YOU', t:m.t })]; r = REPLIES[i]; }
-return [...out, makeRoom(r.n), scanStep(), feed({ k:'ai', n:r.n, t:r.t }, CAP.reply, { who:'AI', t:r.t })];
+return [...out, makeRoom(r.n), scanStep(), feed({ k:'ai', n:r.n, t:r.t }, CAP.reply, { who:'AI', t:r.t }), crowdStep];
 }
 function buildAsk(st){
 if (!st.keySent) return 'Send your first message before you ask about it';
 if (st.att != null) return 'Send the attached file first';
 return [makeRoom(1), feed({ k:'you', n:1, t:QUESTION, q:true }, CAP.ask, { who:'YOU', t:QUESTION }),
 makeRoom(1), scanStep(), st => { const a = answerOf(st); return feed({ k:'ai', n:1, t:a.t }, a.cap, { who:'AI', t:a.t }); }];
+}
+function buildNew(st){
+if (st.att != null) return 'Send the attached file first';
+if (st.blocks.length < 2) return 'This chat is already empty';
+const wipe = { cap:CAP.newChat, tm:1.6, act:'wipe', start: st => { st.scr = { who:'', t:'New chat.' }; },
+go: (st, k) => { st.wipe = ease(k); },
+end: st => { st.blocks = st.blocks.slice(0, 1); st.bin = []; st.wipe = 0; st.drops = 0; st.crowdSaid = false; } };
+return st.keySent ? [wipe, feed({ k:'you', n:1, t:RECAP, key:true, recap:true }, CAP.recap, { who:'YOU', t:RECAP })] : [wipe];
 }
 
 function run(st, ui, list){
@@ -216,7 +238,7 @@ b.bands.forEach((k, i) => { s += box(x0, y0 + (y1 - y0) * i / nb, z0, x1, y0 + (
 s += hullInk(boxPts(x0, y0, z0, x1, y1, z0 + h), 1.2);
 } else s += box(x0, y0, z0, x1, y1, z0 + h, KM[b.k], tone, .9);
 if (st.scanU >= b.u && st.scanU < b.u + b.n && !o.dx)
-s += fill(pd([[x0, y0, z0 + h], [x1, y0, z0 + h], [x1, y1, z0 + h], [x0, y1, z0 + h]]), BEAM, 'opacity=".75"');
+s += fill(pd([[x0, y0, z0 + h], [x1, y0, z0 + h], [x1, y1, z0 + h], [x0, y1, z0 + h]]), BEAM, `opacity="${focusOf(st).beam}"`);
 const lab = KTXT[b.k];
 if (lab && h > 4 && y1 - y0 > 4.5) s += tx(x1 + .05, (y0 + y1) / 2, z0 + h / 2 - .8, lab[0], 2.2, lab[1], 700);
 if (b.k === 'sys'){ const c = [(x0 + x1) / 2, (y0 + y1) / 2, z0 + h];
@@ -236,7 +258,7 @@ s += box(18, y - 2.5, RAIL_Z - 5, 24, y + 2.5, RAIL_Z + 1.5, DARK, tone, 1);
 const on_ = st.scanU >= 0;
 s += shape(on(PX(24.05), ellUV(y, RAIL_Z - 1.8, 1.5, 1.5, 14)), on_ ? '#ffd27a' : DARK.d, .7);
 if (on_) s += fill(sp(hull([[18, y - 2.5, RAIL_Z - 5], [24, y - 2.5, RAIL_Z - 5], [24, y + 2.5, RAIL_Z - 5], [18, y + 2.5, RAIL_Z - 5],
-[BX0, y - 3, zt], [BX1, y - 3, zt], [BX1, y + 3, zt], [BX0, y + 3, zt]].map(p => P(...p)))), BEAM, 'opacity=".6" pointer-events="none"');
+[BX0, y - 3, zt], [BX1, y - 3, zt], [BX1, y + 3, zt], [BX0, y + 3, zt]].map(p => P(...p)))), BEAM, `opacity="${f(focusOf(st).beam * .8)}" pointer-events="none"`);
 return s;
 }
 
@@ -298,7 +320,8 @@ s += rod([RAIL_X, hy1, RAIL_Z], [RAIL_X, 140, RAIL_Z], .9, METAL, toneI, .8);
 if (st.att != null) s += drawBlock(st, { k:'file', n:FILES[st.att].n, u:19.65 });
 const onTray = st.blocks.filter(b => !b.drop).slice().sort((a, b) => b.u - a.u), pu = padU(st);
 let padDone = !(st.padA > 0);
-for (const b of onTray){ if (!padDone && b.u < pu){ s += paddle(st); padDone = true; } s += drawBlock(st, b); }
+const fadeOut = svg => st.wipe ? `<g opacity="${f(1 - st.wipe)}">${svg}</g>` : svg;
+for (const b of onTray){ if (!padDone && b.u < pu){ s += paddle(st); padDone = true; } s += b.k === 'sys' ? drawBlock(st, b) : fadeOut(drawBlock(st, b)); }
 if (!padDone) s += paddle(st);
 
 s += reader(st, m);
@@ -306,7 +329,7 @@ s += reader(st, m);
 s += monitor(st);
 
 s += binBack();
-for (const b of st.bin) s += drawBlock(st, { ...b, u:b.u }, { dx:BIN[0] + 1.2 - BX0, z:1 + b.lv * 1.2 });
+for (const b of st.bin) s += fadeOut(drawBlock(st, { ...b, u:b.u }, { dx:BIN[0] + 1.2 - BX0, z:1 + b.lv * 1.2 }));
 for (const b of st.blocks.filter(b => b.drop)){ const k = b.drop, dx = (BIN[0] + 1.2 - BX0) * ease(clamp01(k / .5));
 const z = k < .5 ? BZ : lerp(BZ, 1 + Math.min(3, st.bin.length) * 1.2, ((k - .5) / .5) ** 2);
 s += drawBlock(st, b, { dx, z }); }
@@ -322,15 +345,16 @@ if (sum && !sum.wv) s += tag([BX1, ySpan(sum.u, 1)[0] + 3, BZ + BH], -112, 6, 'S
 return s;
 }
 
-const BTN = { attach:action(buildAttach), send:action(buildSend), ask:action(buildAsk) };
+const BTN = { attach:action(buildAttach), send:action(buildSend), ask:action(buildAsk), fresh:action(buildNew) };
 const setMode = mode => (st, ui) => { Object.assign(st, fresh(mode)); };
 mountFigure({
-fig:'07', title:'Context window', hint:'pick a mode, attach a file, send messages, ask about the start',
+fig:'07', title:'Context window', hint:'pick a mode, send messages, ask about the start, start a new chat',
 size:[57, 144, 46],
 state:fresh('roll'),
 scene,
 caption: st => st.capText || (st.mode === 'roll' ? CAP.introRoll : CAP.introCompact),
 stats: st => [ { label:'Tokens', value:`${used(st) * 10}k / 200k` },
+{ label:'Focus', value:focusOf(st).name, small:true },
 { label:'Mode', value:st.mode === 'roll' ? 'Rolling' : 'Auto-compact', small:true } ],
 buttonsLabel:'Conversation',
 buttons:[
@@ -342,12 +366,13 @@ buttons:[
 : 'A file is much bigger than a message. When you send it, how much of the window will it take?' },
 { label:'Send message', onClick:BTN.send, predict:'The model keeps no memory between turns. How will it know what you said earlier?' },
 { label:'Ask about the start', onClick:BTN.ask, predict:'Your first message said 3 students need read-aloud. Will the AI still know that?' },
+{ label:'New chat', onClick:BTN.fresh, predict:'A new chat sets the long conversation aside. Will the AI get better or worse at your next question?' },
 ],
-walk:['Send', 'Send', 'Send', 'Send', 'Attach', 'Send', 'Ask',
-'Mode>Auto', 'Send', 'Send', 'Send', 'Send', 'Attach', 'Send', 'Ask'],
+walk:['Send', 'Ask', 'Send', 'Send', 'Send', 'Ask', 'Attach', 'Send', 'Ask',
+'Mode>Auto', 'Send', 'Send', 'Send', 'Send', 'Attach', 'Send', 'Ask', 'New chat', 'Ask'],
 params:(st, q) => {
 if (q.get('mode') === 'compact') Object.assign(st, fresh('compact'));
-const B = { send:buildSend, attach:buildAttach, ask:buildAsk };
+const B = { send:buildSend, attach:buildAttach, ask:buildAsk, new:buildNew };
 if (q.has('pre')) for (const name of q.get('pre').split('.')){ const r = B[name] && B[name](st); if (Array.isArray(r)) runNow(st, r); }
 },
 });
