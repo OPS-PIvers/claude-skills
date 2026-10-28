@@ -1,6 +1,6 @@
 ---
 name: spartboard
-description: "Make and edit classroom materials in a teacher's SpartBoard library through the SpartBoard connector: quizzes, question banks, video activities, flashcard sets, rubrics, Activity Walls and mini-apps, read class-level quiz, video and mini-app results, and (for admins) make live tours of SpartBoard for the Help Center. Use whenever a teacher asks to create, build, write, generate, revise or fix a quiz, test, assessment, exit ticket, flashcards, vocab set, video questions, rubric, discussion wall, or classroom app for SpartBoard, asks to align to or tag Minnesota state standards or learning targets, or asks how a class did on a SpartBoard quiz, video activity or mini-app, or an admin asks for a live tour, walkthrough or Help Center guide of SpartBoard."
+description: "Make and edit classroom materials in a teacher's SpartBoard library through the SpartBoard connector: quizzes, question banks, video activities, flashcard sets, rubrics, Activity Walls, mini-apps and classroom boards, read class-level quiz, video and mini-app results, and (for admins) make live tours of SpartBoard for the Help Center. Use whenever a teacher asks to create, build, write, generate, revise or fix a quiz, test, assessment, exit ticket, flashcards, vocab set, video questions, rubric, discussion wall, classroom app, or board for SpartBoard, asks to lay out, tidy or change a board, asks to align to or tag Minnesota state standards or learning targets, or asks how a class did on a SpartBoard quiz, video activity or mini-app, or an admin asks for a live tour, walkthrough or Help Center guide of SpartBoard."
 ---
 
 # SpartBoard
@@ -41,11 +41,11 @@ Help a teacher make materials that are accurate, grounded in their own content, 
 
 ## Limits you can't change (say so plainly if asked)
 
-- **No delete, assign or share.** The teacher does those in SpartBoard.
+- **No delete, assign or share.** The teacher does those in SpartBoard. That includes boards: Claude never deletes one.
 - **PLC-shared quizzes, banks and video activities are read-only here.** Edit them in SpartBoard.
 - **Results are class-level only.** They're hidden under 5 finishers, and there are no student names or answers.
 - **Plain text only** in questions and cards, with no images.
-- **300 changes a day** per teacher.
+- **300 changes a day** per teacher (boards have their own 500).
 - **Quizzes, banks and video activities save to the teacher's Google Drive.** If a tool says Drive isn't connected, send them to the SpartBoard connect page to reconnect.
 
 ## Best practice that applies to everything
@@ -68,4 +68,5 @@ Help a teacher make materials that are accurate, grounded in their own content, 
 | Mini-app (HTML) | `references/mini-apps.md` |
 | "How did my class do?" | `references/results.md` |
 | Standards and learning targets | `references/standards.md` |
+| Board (build, change or tidy; one-line plan) | `references/boards.md` |
 | Live tour of SpartBoard (admins only, no plan step) | `references/live-tours.md` |
