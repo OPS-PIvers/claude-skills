@@ -1,6 +1,6 @@
 # "How did my class do?"
 
-Tools: `get_quiz_results_summary(quiz_id)`, `get_video_activity_results_summary(activity_id)` and `get_mini_app_results_summary(app_id)`. Find the id with `list_quizzes`, `list_video_activities` or `list_mini_apps` and `search`. Results cover the teacher's own newest 5 assignments, or one assignment by `assignment_id`.
+Tools: `get_quiz_results_summary(quiz_id)`, `get_video_activity_results_summary(activity_id)` and `get_mini_app_results_summary(app_id)` (listed only when mini-app results are on for the teacher; without it, say mini-app results aren't available for them yet). Find the id with `list_quizzes`, `list_video_activities` or `list_mini_apps` and `search`. Results cover the teacher's own newest 5 assignments, or one assignment by `assignment_id`.
 
 ## What you get
 

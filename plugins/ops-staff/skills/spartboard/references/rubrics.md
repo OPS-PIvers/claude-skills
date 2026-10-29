@@ -8,6 +8,10 @@ Tools: `list_rubrics`, `get_rubric`, `create_rubric`, `update_rubric`. Teachers 
 - **2–6 levels per criterion.** Four levels is common: Beginning, Developing, Proficient and Advanced, worth 1–4 points. Each level in a criterion needs different whole-number points.
 - **Levels are stored lowest first.**
 
+## Scoring guides
+
+A criterion with `examples` becomes a scoring-guide row instead of a level row: its `description` is the scoring guidelines, its levels run from 0 to its points, and `examples` are sample responses that earn the points. Use it for short constructed responses graded like a state test ("2 points: names the cause and supports it with a detail"). It's a preview: if the save says scoring-guide rubrics aren't turned on, leave out `examples` and make ordinary rows.
+
 ## Writing good criteria (analytic rubric practice)
 
 - **Observable.** Describe what's on the page: "Cites two relevant details from the text". Avoid "Understands the text."

@@ -8,12 +8,12 @@ Tools: `list_quizzes`, `get_quiz`, `create_quiz`, `update_quiz`, and the same fo
 |---|---|---|
 | `multiple_choice` | one best answer | `correct_answer`, 2–4 `incorrect_answers` (3 is best) |
 | `choose_all` | several correct answers | `correct_answers`, `incorrect_answers`, `partial_credit` |
-| `fill_in_blank` | recalling one exact term | `correct_answer`, `accepted_alternates` (spellings, plurals, synonyms) |
+| `fill_in_blank` | recalling one exact term | `correct_answer`, `accepted_alternates` (spellings, plurals, synonyms); with two or more `___` in the text, `blanks` instead: one `{answer, accepted_alternates}` per blank, in order, and `partial_credit` |
 | `matching` | term to definition, cause to effect | 2–12 `pairs` of `{term, match}`, optional `extra_matches` |
 | `ordering` | sequences, steps, timelines | 2–12 `items_in_order` |
 | `free_response` | explanation or argument | `placeholder`, `min_words`, `max_words`, with no key |
 
-Every type also takes `standards` and `learning_targets`, which fill the question's Learning Targets field (`references/standards.md`). Other fields: `points` defaults to 1, and `time_limit_seconds` of 0 means no limit. Choices can't contain `|`, and matching terms can't contain `:`.
+Every type also takes `standards` and `learning_targets`, which fill the question's Learning Targets field (`references/standards.md`). Other fields: `points` defaults to 1, and `time_limit_seconds` of 0 means no limit. A quiz in another language takes `language` (BCP 47, e.g. `es-MX`), and `folder_id` files it. Choices can't contain `|`, and matching terms can't contain `:`.
 
 ## Writing good items (research-based item-writing rules)
 
@@ -24,7 +24,7 @@ Every type also takes `standards` and `learning_targets`, which fill the questio
 - **No "all of the above", "none of the above" or "A and B".** Use `choose_all` instead.
 - **Avoid negatives.** If you must use NOT or EXCEPT, capitalize it.
 - **No clues** from grammar ("an ___"), from words repeated between the stem and the key, or from absolute words like always or never.
-- **Fill in the blank:** blank only the key term, near the end of the sentence, with one defensible answer. Add every reasonable spelling to `accepted_alternates`.
+- **Fill in the blank:** write each blank as `___` in the text. Blank only the key term, near the end of the sentence, with one defensible answer. Add every reasonable spelling to `accepted_alternates`.
 - **Free response:** say what a full answer includes, e.g. "Use two details from the text." Offer to make a rubric (`references/rubrics.md`).
 - **Order:** go from easier to harder. Group questions by topic when the quiz covers several.
 
