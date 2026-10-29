@@ -10,6 +10,13 @@ This file covers only what the guide leaves out.
 
 Only admins see the live tour tools. If `get_live_tour_guide` and the other live tour tools are missing, the person isn't a SpartBoard admin. Say live tours are made by admins and stop.
 
+## Help Center and materials
+
+- **Help Center:** pass `help_center: { category_id }` (from `list_help_center_categories`) to file the tour; add `widget_types` so that widget's **?** button offers it. It stays hidden until an admin test-runs it, publishes it and shows the item in Admin Settings > Help Center.
+- **Materials:** a tour that opens, makes or assigns a library item lists it in `materials` (`created`, `sample` from one of the admin's items by `from_id`, or `teacher` to let the teacher pick one of theirs). The tour then runs in a sandbox, so nothing it saves, assigns or starts lands in the teacher's real library unless they keep it.
+- **Anchors:** `list_tour_anchors` finds each control's anchor and the path to reach it; the guide explains how to read it.
+- **Web tours** recorded with the Chrome extension are a different tool set: `references/web-tours.md`.
+
 ## Building library, not personal
 
 Tours run only from the building library or the Help Center, which is where `create_live_tour` saves them. A tour in someone's personal library can't run live. If an admin has one there, tell them to use "Copy to building to run live" from its menu in the Guided Learning library.
@@ -32,4 +39,4 @@ A draft saves straight away. A published tour keeps playing its old steps until 
 
 ## claude.ai vs Claude Code
 
-The guide's browser run needs Claude Code inside a SpartBoard checkout, because it runs that repo's dev server and script. In claude.ai, or in Claude Code outside that repo, skip it and say the tour was dry-run only. End with the guide's claude.ai hand-back line, so the admin plays it once in the editor, leaves a **Note for Claude** on any step that's wrong, and comes back for the finish pass above.
+The guide's browser run needs Claude Code inside a SpartBoard checkout, because it runs that repo's dev server and `scripts/run-live-tour.mjs` (`get_live_tour` with `for_browser_run`, then `start_live_tour_picture_upload` for the thumbnail upload ticket). In claude.ai, or in Claude Code outside that repo, skip it and say the tour was dry-run only. End with the guide's claude.ai hand-back line, so the admin plays it once in the editor, leaves a **Note for Claude** on any step that's wrong, and comes back for the finish pass above.

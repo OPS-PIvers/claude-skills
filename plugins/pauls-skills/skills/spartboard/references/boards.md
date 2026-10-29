@@ -1,12 +1,14 @@
-# Boards
+# Boards (AI boards)
 
 A board is the teacher's classroom screen: widgets such as a timer, text, QR code, embedded slides or a quiz, arranged on snap zones. You can build new boards and change any board the teacher owns. The teacher watches it happen on the board open in SpartBoard.
 
-If the board tools (`list_boards`, `get_board`, `get_board_guide`, `create_board`, `edit_board`, `tidy_board`) aren't in your tool list, or a tool says boards through Claude aren't turned on for this account, tell the teacher plainly that this isn't available for them yet and stop.
+Building boards through Claude is the **AI boards** feature (it used to be called Magic Board). If the board tools (`list_boards`, `get_board`, `get_board_guide`, `create_board`, `edit_board`, `tidy_board`) aren't in your tool list, or a tool says boards through Claude aren't turned on for this account, tell the teacher plainly that AI boards isn't available for them yet and stop.
+
+The **Magic Layout** button in SpartBoard's Dock is the in-app version: the teacher describes a lesson and SpartBoard's own AI lays the board out (on the same templates once AI boards is on for them). Point a teacher there if they'd rather do it themselves.
 
 ## The flow
 
-1. **Read `get_board_guide` first**, every conversation, before building or changing a board. It lists the steps, the activity templates and their zones, snap layouts, backgrounds, the widgets this teacher can use and the settings each one takes. Pass `widget_types` (up to 8) to get the full settings for the widgets you plan to use.
+1. **Read `get_board_guide` first**, every conversation, before building or changing a board. It lists the steps, the activity templates and their zones, snap layouts, backgrounds, the widgets this teacher can use and the settings each one takes. Pass `widget_types` (up to 8) to get the full settings for the widgets you plan to use. Only use widgets it lists: the teacher can't use the others.
 2. **Ask only what you can't infer**, in one short message: grade and subject; the activity and which part of the lesson; a new board or an existing one (and which); content you shouldn't invent (links, quiz topic, timer lengths, group or station names); and the screen, only if it isn't the one SpartBoard recorded (for example a 4:3 projector).
 3. **State a short plan in a sentence or two** (template, each widget and what it holds) and build. This is lighter than the plan step for quizzes: one line, not a bulleted proposal.
 
@@ -28,10 +30,11 @@ If the board tools (`list_boards`, `get_board`, `get_board_guide`, `create_board
 
 ## Chaining library items
 
-Library items go on a board by id with `library_item_id`: a quiz, video activity, flashcard set, Activity Wall, Guided Learning activity or mini-app. Make the item first with its own `create_*` tool (following that type's reference file and plan step), then add the widget with the id the create call returned (the key varies: `quiz_id`, `activity_id`, `wall_id`, `app_id` and so on). Putting a quiz or video activity on a board doesn't assign it; the teacher does that from their library.
+Library items go on a board by id with `library_item_id`: a quiz, video activity, flashcard set, Activity Wall, Guided Learning activity or mini-app. `get_board_guide` marks the widgets that take one with `library_item`; use the matching widget (`quiz`, `video-activity`, `flashcards`, `activity-wall`, `guided-learning`, `miniApp`). Make the item first with its own `create_*` tool (following that type's reference file and plan step), then add the widget with the id the create call returned (the key varies: `quiz_id`, `activity_id`, `wall_id`, `app_id` and so on). Putting a quiz or video activity on a board doesn't assign it; the teacher does that from their library.
 
 - **Quiz board:** `create_quiz`, then `edit_board` adding a Quiz widget with that quiz and a timer. A QR code only gets a link the teacher gives you; the join code exists once they start the quiz in SpartBoard, so never make one up.
 - **Discussion:** a Text widget with the question, a name picker, and an Activity Wall made with `create_activity_wall` for responses.
+- **Review game:** the Review game template with a Quiz or Flashcards widget (`create_flashcard_set` first) and a Scores widget for teams.
 - **Lesson slides:** an Embed widget with the Google Slides link (an edit link works) and a Text widget for key points beside it. Tell the teacher that students only see a Google file if it's shared with view access.
 
 ## Things to check with the teacher

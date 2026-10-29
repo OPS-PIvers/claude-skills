@@ -1,6 +1,6 @@
 ---
 name: spartboard
-description: "Make and edit classroom materials in a teacher's SpartBoard library through the SpartBoard connector: quizzes, question banks, video activities, flashcard sets, rubrics, Activity Walls, mini-apps and classroom boards, read class-level quiz, video and mini-app results, and (for admins) make live tours of SpartBoard for the Help Center. Use whenever a teacher asks to create, build, write, generate, revise or fix a quiz, test, assessment, exit ticket, flashcards, vocab set, video questions, rubric, discussion wall, classroom app, or board for SpartBoard, asks to lay out, tidy or change a board, asks to align to or tag Minnesota state standards or learning targets, or asks how a class did on a SpartBoard quiz, video activity or mini-app, or an admin asks for a live tour, walkthrough or Help Center guide of SpartBoard."
+description: "Make and edit classroom materials in a teacher's SpartBoard library through the SpartBoard connector: quizzes, question banks, video activities, flashcard sets, rubrics, Activity Walls, mini-apps, Guided Learning hotspot activities and library folders; build, change and tidy classroom boards (AI boards); read class-level quiz, video and mini-app results; draft PLC meeting notes from a recorded meeting; and (for admins) write live tours of SpartBoard and polish web tours for the Help Center. Use whenever a teacher asks to create, build, write, generate, revise or fix a quiz, test, assessment, exit ticket, flashcards, vocab set, video questions, rubric, discussion wall, classroom app, hotspot or guided learning activity, or board for SpartBoard, asks to lay out, tidy or change a board, asks to organize their library into folders, asks to align to or tag Minnesota state standards or learning targets, asks how a class did on a SpartBoard quiz, video activity or mini-app, asks for notes or action items from a PLC meeting, or an admin asks for a live tour, web tour, walkthrough or Help Center guide."
 ---
 
 # SpartBoard
@@ -31,22 +31,43 @@ Help a teacher make materials that are accurate, grounded in their own content, 
 
 **Edits:** a specific fix the teacher asked for ("make question 4 easier") needs no plan; just do it and report it in one line. A broad rewrite gets the plan step first.
 
+**Lighter plans:** boards get a one-line plan and then build (`references/boards.md`). Live tours skip the plan (`references/live-tours.md`). Meeting notes are already a draft an editor reviews, so they skip it too (`references/meeting-notes.md`).
+
 ## Tokens: keep chats light
 
 - Call `get_*` only right before an `update_*`, never right after a create or an update. The save result already says what happened.
 - Never paste a full quiz or card list back into chat. Name what changed instead. A mini-app's HTML goes in the chat only as the artifact the teacher tries before it is saved.
-- Put every change to an item into one `update_*` call. `update_*` replaces whole lists, so send every question, card or criterion you want to keep, each with its `id`.
+- Put every change to an item into one `update_*` call. `update_*` replaces whole lists, so send every question, card, criterion or step you want to keep, each with its `id`.
 - Use `list_*` with `search` to find an item. Don't page through the whole library.
 - Read only the reference file for the type you're making.
+
+## What this teacher can use
+
+Some tools appear only when they're turned on for the account, so the tool list differs from teacher to teacher:
+
+| Tools | Shown when |
+|---|---|
+| Boards (`list_boards`, `get_board_guide`, `create_board`, `edit_board`, `tidy_board`, …) | the AI boards preview is on for them |
+| Guided Learning (`*_guided_learning*`) | Guided Learning through Claude is on for them |
+| Meeting notes (`list_group_meetings`, `get_meeting_transcript`, `write_meeting_notes_draft`) | PLC meeting notes are on for them |
+| `get_mini_app_results_summary` (and, on older connectors, `get_mini_app_spec`) | mini-app results are on for them |
+| Live tours and web tours | they're a SpartBoard admin |
+
+If the tools for a request aren't in your list, or a tool says "not turned on for this account yet", tell the teacher plainly that this isn't available for them yet and stop. Don't work around it with another tool.
 
 ## Limits you can't change (say so plainly if asked)
 
 - **No delete, assign or share.** The teacher does those in SpartBoard. That includes boards: Claude never deletes one.
 - **PLC-shared quizzes, banks and video activities are read-only here.** Edit them in SpartBoard.
 - **Results are class-level only.** They're hidden under 5 finishers, and there are no student names or answers.
-- **Plain text only** in questions and cards, with no images.
-- **300 changes a day** per teacher (boards have their own 500).
+- **Plain text only** in quiz, bank, video and flashcard questions and cards, with no images. Guided Learning takes slide images by public link; nothing else uploads files.
+- **300 library changes a day** per teacher. Boards have their own 500.
 - **Quizzes, banks and video activities save to the teacher's Google Drive.** If a tool says Drive isn't connected, send them to the SpartBoard connect page to reconnect.
+
+## Folders and undo
+
+- **Folders:** every create tool for quizzes, banks, video activities, flashcards, mini-apps and Guided Learning takes `folder_id`, and their `update_*` tools (all but Guided Learning) move an item with `folder_id` (`null` for the top level). Find ids with `list_folders(content_type)`. When the teacher names a folder that doesn't exist, `create_folder` makes it; `parent_path` (`["Unit 3", "Week 2"]`) builds nested folders, reusing ones that exist. Put the folder in the plan's "Saves to" line.
+- **Undo:** every Claude edit keeps the previous version for 30 days, for every type including boards, Guided Learning and tours. `list_revisions` (pass `item_id`), then `restore_revision`. Restoring saves the current version first, so a restore can itself be undone.
 
 ## Best practice that applies to everything
 
@@ -66,7 +87,10 @@ Help a teacher make materials that are accurate, grounded in their own content, 
 | Rubric | `references/rubrics.md` |
 | Activity Wall | `references/activity-walls.md` |
 | Mini-app (HTML) | `references/mini-apps.md` |
+| Guided Learning (hotspots on slide images) | `references/guided-learning.md` |
 | "How did my class do?" | `references/results.md` |
 | Standards and learning targets | `references/standards.md` |
-| Board (build, change or tidy; one-line plan) | `references/boards.md` |
+| Board, AI boards (build, change or tidy; one-line plan) | `references/boards.md` |
+| PLC meeting notes from a recording (no plan step) | `references/meeting-notes.md` |
 | Live tour of SpartBoard (admins only, no plan step) | `references/live-tours.md` |
+| Web tour recorded with the Chrome extension (admins only) | `references/web-tours.md` |

@@ -43,7 +43,7 @@ Run it by hand on every skill with `sh scripts/check-skill-descriptions.sh`.
 
 ## `spartboard` skill
 
-`plugins/ops-staff/skills/spartboard` teaches Claude how to use the SpartBoard connector: plan first, save once, and hand back for review. It also covers research-based item writing and MN standards alignment through Learning Commons. Teachers get it through the `ops-staff` plugin, so there is no separate zip upload.
+`plugins/ops-staff/skills/spartboard` teaches Claude how to use the SpartBoard connector: plan first, save once, and hand back for review. It covers every connector surface: library items (quizzes, banks, video activities, flashcards, rubrics, Activity Walls, mini-apps, Guided Learning, folders), AI boards, class results, PLC meeting notes, and admin live and web tours, plus research-based item writing and MN standards alignment. `plugins/pauls-skills/skills/spartboard` is an identical copy; change both. Teachers get it through the `ops-staff` plugin, so there is no separate zip upload.
 
 **Check it:** in a teacher chat with the SpartBoard connector on, "make a 5 question quiz on the water cycle" should reply with a plan and wait for your OK.
 
