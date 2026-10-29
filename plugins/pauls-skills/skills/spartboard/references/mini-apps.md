@@ -2,7 +2,7 @@
 
 Tools: `get_mini_app_spec`, `list_mini_apps`, `get_mini_app`, `create_mini_app`, `update_mini_app`, `get_mini_app_results_summary`. A mini-app is one self-contained HTML file of up to 120k characters, shown on the classroom board and on student devices in a sandboxed frame.
 
-**Call `get_mini_app_spec` before writing or changing an app's HTML** when you have it. It's only listed when mini-app results are on for the teacher; without it, build an app that sends nothing (no Submit button, no `collects_results`, `manifest` or `answer_key`) and follow the rules below. The spec is the source of truth for this teacher: how the Submit button works, the result shape, and, when `results_scoring` is true, the questions (`manifest`) and `answer_key` SpartBoard grades with. Follow it over anything here.
+**Call `get_mini_app_spec` before writing or changing an app's HTML** Older connectors list it only when mini-app results are on for the teacher; if it's missing, build an app that sends nothing (no Submit button, no `collects_results`, `manifest` or `answer_key`) and follow the rules below. The spec is the source of truth for this teacher: how the Submit button works, the result shape, and, when `results_scoring` is true, the questions (`manifest`) and `answer_key` SpartBoard grades with. Follow it over anything here.
 
 ## Build it in the chat, then save it
 

@@ -50,7 +50,7 @@ Some tools appear only when they're turned on for the account, so the tool list 
 | Boards (`list_boards`, `get_board_guide`, `create_board`, `edit_board`, `tidy_board`, …) | the AI boards preview is on for them |
 | Guided Learning (`*_guided_learning*`) | Guided Learning through Claude is on for them |
 | Meeting notes (`list_group_meetings`, `get_meeting_transcript`, `write_meeting_notes_draft`) | PLC meeting notes are on for them |
-| `get_mini_app_spec`, `get_mini_app_results_summary` | mini-app results are on for them |
+| `get_mini_app_results_summary` (and, on older connectors, `get_mini_app_spec`) | mini-app results are on for them |
 | Live tours and web tours | they're a SpartBoard admin |
 
 If the tools for a request aren't in your list, or a tool says "not turned on for this account yet", tell the teacher plainly that this isn't available for them yet and stop. Don't work around it with another tool.
