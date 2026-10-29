@@ -9,6 +9,8 @@ If nothing was passed, grill whatever the user or the calling skill most recentl
 
 Interview the user relentlessly until you reach a shared understanding. Map this as a **design tree**: every decision branches into the decisions that hang off it.
 
+Before the first round, if you're in a repo with a `GLOSSARY.md` (or a `GLOSSARY-MAP.md` pointing at several) or a `docs/adr/` folder, read the parts that touch the topic. Word your questions in the glossary's terms, and flag any recommendation or answer that contradicts an ADR. If none of these exist, proceed silently: writing them is `domain-modeling`'s job, not this skill's.
+
 Work the tree in **rounds** using the askUserQuestion tool.  This tool allows 4 questions at a time, but you can present subsequent sets as necessary for each round. Each question presented should also have a labeled recommended answer option based on evidence in the codebase.  The recommendation is not the _easiest_ option, but rather the best and most sustainable solution.
 
 The **frontier** is every decision whose prerequisites are already settled: the questions you can ask _now_ without guessing at answers you haven't heard yet. Ask the whole frontier in one round: number each question and give your recommended answer. Then wait for the user's answers before the next round.
