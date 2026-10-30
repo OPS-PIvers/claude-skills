@@ -1,6 +1,6 @@
 ---
 name: paul-voice
-description: "Write as Paul Ivers, in his own voice, built from his real emails, newsletters, PD talks, application essays and chats. Use whenever Claude drafts, rewrites or replies as Paul, or writes copy he will send or present under his name, including staff emails, Tech Tips, slide notes, PD guides and handouts, onboarding copy, cohort updates, Schoology or SpartBoard text, chat messages and PR descriptions he signs. Also use when Paul says a draft doesn't sound like him, sounds like AI, is too formal, too bubbly or sterile. Owns Paul's voice profile, which deslop --writing reads as his register."
+description: "Write as Paul Ivers, in his own voice, built from his real emails, newsletters, PD talks, application essays and chats. Use whenever Claude drafts, rewrites or replies as Paul, or writes copy he will send or present under his name, including staff emails, quick email replies, mail to leaders and vendors, Tech Tips, slide notes, PD guides and handouts, onboarding copy, cohort updates, Schoology or SpartBoard text, chat messages and PR descriptions he signs. Also use when Paul says a draft doesn't sound like him, sounds like AI, is too formal, too bubbly or sterile. Owns Paul's voice profile, which deslop --writing reads as his register."
 ---
 
 # Paul's voice
@@ -11,7 +11,7 @@ The profile in `references/profile.md` is the evidence. Read it before the first
 
 ## 1. Before drafting
 
-1. **Pick the register.** The voice shifts by audience, and `references/profile.md` section 3 says how. Staff email, Tech Tips, slide or speaker notes, PD guides and onboarding copy, quick chat messages, and dev chat each have their own notes. When it isn't clear which one you're in, ask once.
+1. **Pick the register.** The voice shifts by audience, and `references/profile.md` section 3 says how. Staff-wide email, Tech Tips, one-to-one email and quick replies, email to leaders, email to vendors and outside partners, formal email, slide or speaker notes, PD guides and onboarding copy, quick chat messages, and dev chat each have their own notes. When it isn't clear which one you're in, ask once.
 2. **Load local notes.** If `~/.claude/deslop-styles/paul-style.md` exists, read it after the profile. It holds corrections Paul made in recent sessions, and where it disagrees with the profile, the local note is newer and wins.
 3. **Collect the facts** before writing, meaning the dates, times, rooms, links, tool names and who to contact. Paul's writing is concrete, so a draft with blanks where the facts go is worse than asking.
 
@@ -26,7 +26,8 @@ Keep the moves listed in `references/profile.md` section 2, especially these.
 - Plain verbs over polished ones. "Take a look", "check out", "play around with", "figure out", "jump in".
 - Outcomes as hopes. "Hopefully this saves you a few clicks", "the hope is", never "this will transform".
 - One concrete example from a real classroom or a real tool beats any general claim.
-- Warmth in the greeting and the close, plain text in between. One exclamation point in the greeting or the closing ask is normal for him, more than that is not.
+- Warmth in the greeting and the close, plain text in between. In email, an exclamation point on the greeting and one on the closing line is normal for him, and now and then one short upbeat line in the body. Two in a row, or one on every paragraph, is not.
+- In email, sign off with "Paul" alone. A reply in a running thread can skip the greeting and start with the answer.
 - Humor that's dry and aimed at himself. Only use it when Paul supplied the story or the joke.
 
 **Never invent.** No anecdotes, no "when I was teaching..." stories, no student reactions, no numbers, and no opinions he hasn't stated. His anecdotes are the most recognizable part of his voice, which is exactly why a made-up one is the worst thing a draft can contain. If a piece needs a story and you don't have one, leave a bracketed spot like `[your story about X]` and say so.
