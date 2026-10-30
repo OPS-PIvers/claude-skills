@@ -61,6 +61,8 @@ Anything ungated, default-on, or leaking work when off is a finding. Fix it with
 
 The range is too big for Claude Code Review, so review it here.
 
+Read the newest comment on the `PR sweep log` issue first, if there is one. It doesn't shrink this review; it aims it. Commits in the range after its head SHA were never swept, so give them their own slice. Each of its **Gaps** (a check that couldn't run, a UI nobody drove) goes in the brief of the slice it covers. Its **Reverted** and **Left open** items must not be in the range. A sweep whose verdict is "not ready" is a finding in itself: resolve its reason before asking for the go.
+
 1. **Slice** `origin/main..origin/dev-paul` into groups of related commits by area (a widget, rules plus functions, admin settings, shared infra), each small enough to read whole: roughly 1,500 changed lines or fewer. Rules and functions changes always get their own slice.
 2. **Slice reviewers.** One `Agent` per slice, `model: sonnet`, `effort: high`, all in one message so they run in parallel. Give each its commit list and diff command, `CLAUDE.md`, and the bar: correctness bugs, security and data access (rules, functions auth, student data), regressions to existing behavior, flag leaks (section 3), performance on the hot path, and compatibility with a teacher's already-open tab on the previous client. Each finding names a `file:line`, a concrete failure path, and a severity: blocking or minor.
 3. **Adversarial reviewer.** One more `Agent` (`model: sonnet`, `effort: high`) on the whole range, told to assume something here breaks prod and find it, especially across slices: two features touching the same widget, settings row, listener or rules match.

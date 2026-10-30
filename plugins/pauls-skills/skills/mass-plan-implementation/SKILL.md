@@ -73,7 +73,7 @@ For CONFLICTING PRs: one agent per PR merges origin/main into the branch and res
 The last few stragglers re-conflict faster than parallel agents can push. Switch to ONE agent at a time owning a PR end-to-end: resolve → fix CI → re-review if the resolution was nontrivial → merge → next.
 
 ### 10. Close the loop
-After everything lands: run one integration-review agent over the merged whole (sibling features can each be correct but interact badly — shared widgets, double-registered listeners, colliding settings rows); ship the accumulated protected-file follow-ups from `concerns`; update the plan doc to mark shipped items; report the final scoreboard (shipped / skipped-with-reason / still-blocked) to the user.
+After everything lands: run the `pr-sweep` skill's integration gate (its section 6: full CI on the merged head, one integration-review agent over the merged whole, the dev deploy and smoke test, bisect-and-revert if the head is red) and post its sweep record (section 7). Sibling features can each be correct but interact badly — shared widgets, double-registered listeners, colliding settings rows. Then ship the accumulated protected-file follow-ups from `concerns`; update the plan doc to mark shipped items; report the final scoreboard (shipped / skipped-with-reason / still-blocked) to the user.
 
 ## Checkpoint cadence & active monitoring — REQUIRED
 

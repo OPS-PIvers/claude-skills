@@ -12,7 +12,7 @@ Paul is asleep until morning. Your job: deliver the best production build you ca
 2. Promote `dev-paul` to `main` with the `promote` skill and see the deploy and smoke test through.
 3. Clean up, and leave one report in this thread.
 
-Arguments (`$ARGUMENTS`) may name PRs or sessions to include or skip, a cutoff for step 1 (default 3 hours), or notes. They override this file.
+Arguments (`$ARGUMENTS`) may name PRs or sessions to include or skip, a cutoff for step 2 (default 3 hours), or notes. They override this file.
 
 ## Ground rules
 
@@ -37,7 +37,7 @@ Arguments (`$ARGUMENTS`) may name PRs or sessions to include or skip, a cutoff f
 
 Write `<scratchpad>/goodnight-ledger.md` before anything else and update it at every step. It's how you pick up after compaction or a watchdog wake-up, and it becomes the report. Keep:
 
-- Start time, step 1 cutoff time.
+- Start time, step 2 cutoff time.
 - Every work item: PR number or session, branch, status (`ready`, `fixing`, `waiting on session`, `merged`, `held back`), who's on it (agent id or session id), when it last showed progress.
 - Every background thing running: agents, monitors, CI runs, the watchdog, with ids.
 - Judgment calls and open questions, as they happen.
@@ -69,35 +69,17 @@ Agents and sessions hang. A completion ping that never arrives looks exactly lik
 - Subagents run lint and targeted tests only, with timeouts; full suites hang under load. CI is the full gate.
 - Give every brief a "CRITICAL FINAL STEP: report back" line; agents finish the work and die without reporting about one time in ten. A finished-but-silent agent shows up as a pushed branch with no report.
 
-## 1. Inventory
+## 1. Set up
 
-Repo: `OPS-PIvers/SpartBoard`. If it isn't in this session, add it with `add_repo` (push access) and clone it. Check you're acting as `OPS-PIvers`; if not, stop. Read `CLAUDE.md` and `docs/DEV_WORKFLOW.md`; they set how PRs merge into `dev-paul` (the `/ship` flow).
-
-Gather:
-
-- Open PRs into `dev-paul`, drafts included, with CI state, conflicts, and unresolved review threads.
-- Paul's recent sessions (`list_sessions` with `mine: true`): what each was doing, whether it's working or idle, and its branch and PR. A session with work pushed but no PR gets one: open it from the pushed branch yourself.
-- An open `dev-paul` into `main` release PR, if one exists. `promote` reuses it.
-
-Sort each item:
-
-- **Ready:** CI green, no merge conflict, no unresolved blocking review comment, work complete.
-- **Fixable:** red CI, conflict, or review comments to address.
-- **In progress:** a session is still actively working on it.
-- **Leave out:** only for a named reason. A product decision only Paul can make, a draft its own description calls exploratory or not for shipping, an unresolved disagreement on the PR, or a PR by someone other than Paul or Claude (dependabot included). "Big" or "risky" is not a reason; the review in step 2 handles risk.
-
-Write all of it into the ledger.
+Repo: `OPS-PIvers/SpartBoard`. If it isn't in this session, add it with `add_repo` (push access) and clone it. Check you're acting as `OPS-PIvers`; if not, stop. Read `CLAUDE.md` and `docs/DEV_WORKFLOW.md`; they set how PRs merge into `dev-paul` (the `/ship` flow). Note any open `dev-paul` into `main` release PR in the ledger; `promote` reuses it.
 
 ## 2. Land the PRs in dev-paul
 
-Run until every item is merged or left out with a reason, or the cutoff passes.
+Invoke the `pr-sweep` skill with the Skill tool, `--unattended`, target `dev-paul`, with the cutoff and any PRs or sessions named in the arguments, and follow it. It does the inventory (Paul's other sessions included), the per-PR review and fixes, the merge train and the integration gate on `dev-paul`, and posts the sweep record. Its ledger is part of yours: keep both in the scratchpad, and read both after compaction.
 
-- **In-progress sessions:** `send_message` each one: "Paul has gone to sleep and a release is being cut. Finish what you're on, get CI green, push, and reply with your PR number by <cutoff time>. Don't merge it; the coordinator merges." Then watch them like any other in-flight item.
-- **Fixable PRs:** one background `Agent` per PR, `isolation: 'worktree'`, `model: sonnet`, briefed with the PR number, exactly what's failing, and the repo's lint and test commands. Resolve conflicts additively (sibling PRs usually both added imports, fields or rows; keep both). Fix the cause of a failing test, never the test's expectations unless they are what's wrong. Never three agents on the same hot file at once.
-- **Unreviewed PRs:** a PR no one has reviewed gets one background reviewer `Agent` (`model: sonnet`, effort `high`) told to find how it breaks: correctness, rules and data access, a teacher's already-open tab, the canvas hot path. Fix confirmed blocking findings before merging. `promote` reviews the whole range again, so this pass stays short.
-- **Merge** ready PRs into `dev-paul` one at a time with the repo's own flow. After each merge, recheck the rest for new conflicts.
+At the cutoff, anything not merged stays open, goes in open questions with where it stands, and its sessions get one line: "Release cut without this PR; leave it open for Paul."
 
-At the cutoff, stop starting new work. Anything not merged stays open, goes in open questions with where it stands, and its sessions get one line: "Release cut without this PR; leave it open for Paul." Then go on to step 3.
+If the sweep's verdict is **not ready**, fix what it names while time allows, then run its section 6 again. If it's still not ready, hold back the change it names (see "Holding a change back") rather than promoting a branch that failed its own gate. Its gaps go in the report. Then go on to step 3.
 
 ## 3. Promote
 
