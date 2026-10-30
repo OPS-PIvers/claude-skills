@@ -1,10 +1,10 @@
 ---
-name: sleep
+name: goodnight
 description: Paul is going to bed. Wrap up all open work without him, unattended. Drive every finished PR into dev-paul (including work from other sessions), then promote dev-paul to main through the promote skill and see the prod deploy through. Makes judgment calls instead of asking, keeps agents and sessions from hanging, cleans up, and ends with one report of what shipped and the open questions for the morning. Paul only.
 disable-model-invocation: true
 ---
 
-# Sleep
+# Goodnight
 
 Paul is asleep until morning. Your job: deliver the best production build you can from everything that is pending, tonight, with no input from him. In order:
 
@@ -16,7 +16,7 @@ Arguments (`$ARGUMENTS`) may name PRs or sessions to include or skip, a cutoff f
 
 ## Ground rules
 
-**Invoking `/sleep` is Paul's go.** It is the go `promote` waits for in its section 6, for this promotion, and it authorizes merging finished PRs into `dev-paul`. It does not carry over to a later `/sleep` or any other conversation.
+**Invoking `/goodnight` is Paul's go.** It is the go `promote` waits for in its section 6, for this promotion, and it authorizes merging finished PRs into `dev-paul`. It does not carry over to a later `/goodnight` or any other conversation.
 
 **Never ask.** Paul can't answer. Don't call `AskUserQuestion`, don't open plan mode, don't end a turn waiting for a reply or approval card. When you'd have liked his input, make the call that ships the safest good build, log it as a judgment call (what you chose, why, how to undo it), and keep going.
 
@@ -35,7 +35,7 @@ Arguments (`$ARGUMENTS`) may name PRs or sessions to include or skip, a cutoff f
 
 ## The ledger
 
-Write `<scratchpad>/sleep-ledger.md` before anything else and update it at every step. It's how you pick up after compaction or a watchdog wake-up, and it becomes the report. Keep:
+Write `<scratchpad>/goodnight-ledger.md` before anything else and update it at every step. It's how you pick up after compaction or a watchdog wake-up, and it becomes the report. Keep:
 
 - Start time, step 1 cutoff time.
 - Every work item: PR number or session, branch, status (`ready`, `fixing`, `waiting on session`, `merged`, `held back`), who's on it (agent id or session id), when it last showed progress.
@@ -48,7 +48,7 @@ After compaction or a wake-up, read the ledger first.
 
 Agents and sessions hang. A completion ping that never arrives looks exactly like work still in progress, so don't trust silence. You own liveness.
 
-**The watchdog.** Before launching any background work, schedule a recurring check-in into this session every 20 minutes (`send_later` in a cloud session, rescheduled each time it fires; `CronCreate` locally). Message: `sleep watchdog: read the ledger, check every in-flight item for progress, unstick anything stalled, continue.` Never end a turn with work in flight unless a check-in is scheduled. Delete it at the end.
+**The watchdog.** Before launching any background work, schedule a recurring check-in into this session every 20 minutes (`send_later` in a cloud session, rescheduled each time it fires; `CronCreate` locally). Message: `goodnight watchdog: read the ledger, check every in-flight item for progress, unstick anything stalled, continue.` Never end a turn with work in flight unless a check-in is scheduled. Delete it at the end.
 
 **At every check-in**, check each in-flight item for evidence of progress, not status text:
 

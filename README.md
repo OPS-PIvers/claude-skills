@@ -3,7 +3,7 @@
 Claude skills marketplace with two plugins:
 
 - `ops-staff`: the subset of my skills I choose to share with Orono staff (currently `spartboard`, `grill-me`). Enable this one for the org.
-- `pauls-skills`: everything I use, a superset of `ops-staff`: engineering, planning, design and animation, `spartboard`, `grill-me` (a shortcut to the model-invokable `grilling`), `grill-with-docs` (`grilling` plus `domain-modeling`, which keeps a repo's `GLOSSARY.md` and ADRs), `aim-higher`, `promote` and `sleep` (unattended overnight wrap-up that ends in a promotion), `ops-brand-guidelines`, `ops-figures`, `figure-to-3d`, `deslop`, `to-questionnaire` and more. Install it on your own machines only.
+- `pauls-skills`: everything I use, a superset of `ops-staff`: engineering, planning, design and animation, `spartboard`, `grill-me` (a shortcut to the model-invokable `grilling`), `grill-with-docs` (`grilling` plus `domain-modeling`, which keeps a repo's `GLOSSARY.md` and ADRs), `aim-higher`, `promote` and `goodnight` (unattended overnight wrap-up that ends in a promotion), `ops-brand-guidelines`, `ops-figures`, `figure-to-3d`, `deslop`, `to-questionnaire` and more. Install it on your own machines only.
 
 Skills live in `plugins/<plugin>/skills/<name>/SKILL.md`.
 
