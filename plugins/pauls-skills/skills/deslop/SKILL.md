@@ -60,7 +60,7 @@ Two things are protected. **Specificity** survives absolutely, meaning every con
 ## W1. Intake
 
 1. **Identify the document owner**, meaning whoever will present or send this. That is whose register the text must match, even when someone else is running the skill.
-2. **Load the profile** from `~/.claude/deslop-styles/<slug>-style.md`, falling back to `resources/styles/<slug>-style.md` in this repo.
+2. **Load the profile** from `~/.claude/deslop-styles/<slug>-style.md`, falling back to `resources/styles/<slug>-style.md` in this repo. **When the owner is Paul**, his profile is owned by the `paul-voice` skill. Read `../paul-voice/references/profile.md` first, then `~/.claude/deslop-styles/paul-style.md` as local notes on top of it, and skip the interview.
    - Profile exists. Show its one-line summary so it can be overridden, then proceed.
    - No profile and the owner is the user. Run the interview in W2.
    - No profile and the owner is someone else. Generate the questionnaire described in `references/register.md`, hand the user the file path, and stop until answers come back.
@@ -137,7 +137,7 @@ Run W4 and W5 again on what you produced. Rewrites routinely introduce new banne
 
 Revise the profile from substantive prose the owner wrote during the session. Count real sentences only. Exclude commands and instructions, pasted content, quoted material, one-word answers, and file paths, since imperatives would teach the profile a clipped rhythm that is not how the person writes.
 
-Save it without asking, and name the change in one line in the report.
+Save it without asking, and name the change in one line in the report. For Paul, save to `~/.claude/deslop-styles/paul-style.md` as dated notes and leave `paul-voice/references/profile.md` alone, because it is published with the plugin and folding notes into it is a repo change he makes on purpose.
 
 **The sample sets register only**, meaning formality, vocabulary, rhythm, and contraction habits. It never unbans anything. An em dash in someone's chat message does not make em dashes legal.
 

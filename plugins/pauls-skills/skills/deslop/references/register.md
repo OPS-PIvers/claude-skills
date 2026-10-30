@@ -12,6 +12,8 @@ This directory is private to the machine. It is deliberately outside the plugin 
 
 At intake, check the private directory first and the repo `resources/styles/` second.
 
+**Paul's profile is the exception.** He promoted it to its own skill, so it lives at `skills/paul-voice/references/profile.md` and carries more than this schema (registers, what he cuts, typing habits to ignore). Read it from there, treat `~/.claude/deslop-styles/paul-style.md` as newer local notes on top of it, and never duplicate it here. The schema example below is only an illustration.
+
 ## Schema
 
 ```markdown
