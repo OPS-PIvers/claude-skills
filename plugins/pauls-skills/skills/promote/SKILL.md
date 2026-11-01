@@ -1,6 +1,6 @@
 ---
 name: promote
-description: Promote SpartBoard's dev-paul to production. Opens the dev-paul into main release PR, holds other dev-paul merges, builds the change list and teacher release notes, checks every change is behind an admin flag or Beta list, reviews the range in slices with an adversarial pass, runs the pre-merge checks, and after Paul says go merges, watches the prod deploy and smoke test, and records follow-ups. Paul only. Use for "open the promotion", "promote dev-paul", "cut a release", "start the release PR", "ship dev-paul to prod".
+description: Promote SpartBoard's dev-paul to production. Opens the dev-paul into main release PR, holds other dev-paul merges, builds the change list and teacher release notes, checks every change is behind an admin flag or Beta list, reviews the range in slices with an adversarial pass, runs the pre-merge checks, and after Paul says go merges, watches the prod deploy and smoke test, and records follow-ups in PAUL_TODO.md. Paul only. Use for "open the promotion", "promote dev-paul", "cut a release", "start the release PR", "ship dev-paul to prod".
 ---
 
 # Promote
@@ -42,7 +42,7 @@ The body starts as the change list (section 2) and gains the flag table (section
 - A feature still behind an admin or beta flag gets **no `entries` item** yet; its What's New entry ships when the flag opens to everyone. It can get a widget note with `feature: '<flag id>'`, which waits until the teacher can use the flag.
 - A feature whose flag is already Public, or that this release graduates, gets its `entries` item now.
 - Run `pnpm changelog:draft` for placeholders, rewrite every line, then `/deslop --writing public/changelog.json`.
-- Ship the notes as a `release fix:` PR into `dev-paul`. Every new note goes on the follow-ups list for Paul's wording OK (section 7).
+- Ship the notes as a `release fix:` PR into `dev-paul`. Every new note goes on `PAUL_TODO.md` for Paul's wording OK (section 7).
 
 ## 3. Flag audit
 
@@ -108,13 +108,14 @@ If none started within a few minutes (or it was skipped), dispatch it: `gh workf
 
 ## 7. Afterwards
 
-Add to `/mnt/project-files/FOLLOW-UPS.md` under a dated `Release YYYY.MM.DD (#<PR>)` heading, as checkboxes, only the human-only steps:
+Record only the human steps in SpartBoard's root `PAUL_TODO.md`, as `PT-n` items with the next free IDs, in a docs-only PR into `dev-paul` titled `docs: release YYYY.MM.DD follow-ups (#<PR>)`. Follow that file's sections:
 
-- **Previews rows to save once on prod**: each new `stage: 'preview'` flag or rollout switch, by its label, with the path Admin Settings > Access > Previews.
-- **Wording OKs**: each new release note or widget note, quoted.
-- **Other human steps**: secrets to create, backfills Paul approved but hasn't run, flags to open once he's tested on prod.
+- **Previews rows to save once on prod**: add each new `stage: 'preview'` flag or rollout switch, by its label, to the row list in "Save these Previews rows once on prod".
+- **Wording OKs**: each new release note or widget note, quoted, as a "You" item under "Wording to OK".
+- **Flags to open once Paul has tested on prod**: a row in the flags table: what to test, then the prompt an agent runs once it's Public (retire or graduate the gate, add the changelog entry).
+- **Prod steps Paul approved but hasn't run** (backfills, scripts): a "🤖 With an agent" item with the exact paste-ready prompt, saying when it needs the PC with the prod key. Secrets to create and console clicks are "You" items.
 
-If that file isn't reachable from this session, put the same list in the report.
+Agent-only leftovers the release surfaced go in `AGENT_BACKLOG.md` as `AB-n` briefs in the same PR. If the repo isn't writable from this session, put the same list in the report.
 
 **Branches.** Delete the `release fix:` branches this promotion merged, if `/ship` didn't already. Never delete `dev-paul` or `main`. If deletion is blocked, give Paul one line: `git push origin --delete <branch> [<branch> ...]`.
 
@@ -124,6 +125,6 @@ One short message:
 
 - PR number and link.
 - Deploy: passed or failed (with re-runs, if any). Smoke test: passed or failed.
-- What Paul needs to do: the new FOLLOW-UPS items, in a line each, and the branch-delete command if needed.
+- What Paul needs to do: the new `PAUL_TODO.md` items by ID, in a line each, the follow-ups PR link, and the branch-delete command if needed.
 
 The hold on `dev-paul` merges is lifted.
