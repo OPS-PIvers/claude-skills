@@ -10,14 +10,18 @@ This directory is private to the machine. It is deliberately outside the plugin 
 
 **Promoting a profile to the team** is an explicit, per-person decision the user makes out loud. When they ask, copy the file to `skills/deslop/resources/styles/<slug>-style.md` in this repo and tell them it will be published and synced to everyone on the next marketplace update. Never promote a profile without being asked.
 
-At intake, check the private directory first and the repo `resources/styles/` second.
+At intake, check for an installed voice skill first, then the private directory, then the repo `resources/styles/`.
+
+**A voice skill beats a profile.** Some people keep their voice as a skill of its own, installed privately on their account rather than published in this repo, usually with a name like `<name>-voice` or a description that says it writes as that person. When one is installed for the document owner, read its profile instead of this directory, skip the interview, and send session updates where that skill says, never into this repo. When none is installed, everything below applies unchanged.
 
 ## Schema
 
+The example below is illustrative, with an invented person.
+
 ```markdown
 ---
-name: Paul
-slug: paul
+name: Sam
+slug: sam
 updated: 2026-08-13
 sources: interview 2026-08-13, 9 session turns
 ---
@@ -35,13 +39,13 @@ sources: interview 2026-08-13, 9 session turns
 
 ## Exemplars
 
-> I'm going to be using this skill on things that people on my team use and that I use.
+> We moved the rollout to January because two buildings still need new chargers.
 
-> It likely won't have a clear voice, so we need to rely on removing the slop instead of trying to identify a voice.
+> If you hit a login error, send me a screenshot and I'll sort it out with the vendor.
 
 ## Notes
 
-Slide copy runs tighter than his chat register. Keep the plainness, drop the conversational connectives.
+Slide copy runs tighter than their chat register. Keep the plainness, drop the conversational connectives.
 ```
 
 ## Inferring dimensions from a small sample
