@@ -1,0 +1,39 @@
+# The org's claude.ai marketplace syncs from Orono-Public-Schools/claude-skills.
+# Fast-forward its main to ours on every push, so staff get each release.
+name: Mirror main to org repo
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: mirror-to-org
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    # Only the fork pushes; a copy of this file in the org repo does nothing.
+    if: github.repository == 'OPS-PIvers/claude-skills'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Fast-forward org main
+        env:
+          ORG_REPO_TOKEN: ${{ secrets.ORG_REPO_TOKEN }}
+        run: |
+          if [ -z "$ORG_REPO_TOKEN" ]; then
+            echo "::error::ORG_REPO_TOKEN secret is not set."
+            exit 1
+          fi
+          git remote add org "https://x-access-token:${ORG_REPO_TOKEN}@github.com/Orono-Public-Schools/claude-skills.git"
+          git fetch org main
+          if ! git merge-base --is-ancestor org/main HEAD; then
+            echo "::error::org/main has commits that aren't on the fork's main. Not force-pushing; reconcile by hand."
+            exit 1
+          fi
+          git push org HEAD:refs/heads/main
