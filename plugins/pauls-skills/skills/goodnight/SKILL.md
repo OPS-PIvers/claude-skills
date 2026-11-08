@@ -31,7 +31,7 @@ Arguments (`$ARGUMENTS`) may name PRs or sessions to include or skip, a cutoff f
 - Never ship a teacher-visible change ungated. `promote` section 3 finds these; gate it or hold it back.
 - Never delete `main`, `dev-paul`, or an unmerged branch.
 
-**Holding a change back.** A PR not merged into `dev-paul` simply stays open. A change already in `dev-paul` that can't ship (needs a prod backfill before it works, needs a missing secret, can't be gated) comes out with a `release fix: hold back <feature>` PR that reverts it, so the rest of the release ships. Prefer gating over reverting: a feature that is off behind its flag usually doesn't need its backfill or secret until the flag opens, so it can ship off and go on the follow-ups list.
+**Holding a change back.** A PR not merged into `dev-paul` simply stays open. A change already in `dev-paul` that can't ship (needs a prod backfill before it works, needs a missing secret, can't be gated) comes out with a `release fix: hold back <feature>` PR that reverts it, so the rest of the release ships. Prefer gating over reverting: a feature that is off behind its flag usually doesn't need its backfill or secret until the flag opens, so it can ship off and go on `PAUL_TODO.md`.
 
 ## The ledger
 
@@ -86,8 +86,8 @@ If the sweep's verdict is **not ready**, fix what it names while time allows, th
 Invoke the `promote` skill with the Skill tool and follow it, with these changes:
 
 - **Section 1 hold:** from here on only `release fix:` PRs merge into `dev-paul`. Sessions still pushing to open PRs keep their PRs open.
-- **Section 2 release notes:** write them in your best teacher wording and ship them. Each one goes on the follow-ups list for Paul's wording OK, as `promote` already says.
-- **Section 5 backfills and secrets:** never run or create them (ground rules). Decide per change: off behind a flag and not needed until it opens, ship it and add it to follow-ups. Needed for the deploy to work, hold that change back.
+- **Section 2 release notes:** write them in your best teacher wording and ship them. Each one goes on `PAUL_TODO.md` for Paul's wording OK, as `promote` already says.
+- **Section 5 backfills and secrets:** never run or create them (ground rules). Decide per change: off behind a flag and not needed until it opens, ship it and add it to `PAUL_TODO.md`. Needed for the deploy to work, hold that change back.
 - **Section 6 go:** you have it. When sections 3 to 5 pass and the review rounds have converged, merge. Don't send the "say go" message.
 - **A deploy that fails for a real reason** (not a CPU quota retry): diagnose it from the logs. If the fix is clear and small, ship it as a `release fix:` PR into `dev-paul` and run one more `promote` pass on that range under the same go. Do this once. Hosting rolls back by itself on a failed smoke test, so prod stays on the previous build; if the second try fails too, stop and report.
 
@@ -109,7 +109,7 @@ End with one message in this thread. It's the only thing Paul reads in the morni
 3. **Didn't ship:** each PR or change left open or held back, with the reason and where it stands.
 4. **Judgment calls:** each call you made in Paul's place, with why and how to undo it.
 5. **Open questions for the morning:** the decisions that need him, most important first.
-6. **Paul's to-do list:** the FOLLOW-UPS items `promote` recorded (Previews rows to save, wording OKs, secrets, backfills), plus any branch-delete command.
+6. **Paul's to-do list:** the `PAUL_TODO.md` items `promote` added, by ID (Previews rows to save, wording OKs, flags to open, prod steps), plus any branch-delete command.
 7. **Loose ends:** sessions left running, PRs left open, anything still in flight.
 
 Short lines, no file dumps. Keep the scratchpad ledger path in the report in case he wants the detail.

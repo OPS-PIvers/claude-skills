@@ -5,7 +5,7 @@ description: Use when a repo has accumulated ephemeral planning docs (plans/, ad
 
 # Consolidate Planning Docs
 
-Verify the completion status of every ephemeral planning doc against the actual code + git history (never trusting a doc's own "DONE" line), extract genuinely-unshipped work into one consolidated backlog (e.g. `TODO.md`), and recommend keep/delete/archive per doc. Based on the LifeBalance run that verified ~50 docs with a 51-agent sweep and collapsed four plan trees into one TODO.md.
+Verify the completion status of every ephemeral planning doc against the actual code + git history (never trusting a doc's own "DONE" line), extract genuinely-unshipped work into the repo's backlog (one `TODO.md`, or where the repo splits agent work from human work, like SpartBoard's `AGENT_BACKLOG.md` and `PAUL_TODO.md`, into each by who can act), and recommend keep/delete/archive per doc. Based on the LifeBalance run that verified ~50 docs with a 51-agent sweep and collapsed four plan trees into one TODO.md.
 
 ## Model tiering — REQUIRED
 
