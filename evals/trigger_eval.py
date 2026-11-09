@@ -11,7 +11,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 skill_dir, evals_path = sys.argv[1], sys.argv[2]
 runs = int(sys.argv[3]) if len(sys.argv) > 3 else 2
-model = sys.argv[4] if len(sys.argv) > 4 else "sonnet"
+model = sys.argv[4] if len(sys.argv) > 4 else "claude-sonnet-5-5"
 name = os.path.basename(os.path.normpath(skill_dir))
 
 proj = tempfile.mkdtemp(prefix="trig-")
@@ -40,8 +40,11 @@ def run(query):
                         result["hit"] = (c["name"] == "Skill" and name in inp) or (name in inp and "SKILL.md" in inp)
                         return result
             if ev.get("type") == "result":
-                if "Failed to authenticate" in str(ev.get("result")):
+                text = str(ev.get("result"))
+                if "Failed to authenticate" in text:
                     raise SystemExit("claude CLI is signed out; run `claude auth login` and retry")
+                if "issue with the selected model" in text or ev.get("is_error"):
+                    raise SystemExit(f"claude -p failed, not scoring: {text[:200]}")
                 return result
     finally:
         timer.cancel()
