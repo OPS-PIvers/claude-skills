@@ -8,7 +8,7 @@
     {
       "name": "ops-staff",
       "source": "./plugins/ops-staff",
-      "description": "Skills for Orono staff: SpartBoard classroom materials and sharpening a plan or decision."
+      "description": "Skills for Orono staff: SpartBoard classroom materials, sharpening a plan or decision, and keeping personal data out of Claude."
     },
     {
       "name": "pauls-skills",

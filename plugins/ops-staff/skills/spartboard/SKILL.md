@@ -76,6 +76,7 @@ If the tools for a request aren't in your list, or a tool says "not turned on fo
 - **Mix depth** (Webb's DOK). Aim for roughly 40% recall (DOK 1), 40% apply or infer (DOK 2) and 20% analyze or justify (DOK 3), unless the teacher wants otherwise.
 - **Be fair.** Use names and contexts from many backgrounds, avoid idioms and culture-bound references that aren't being taught, and don't use trick wording.
 - **Be accessible.** Keep one idea per item, write short stems, and don't make students depend on color or position.
+- **Keep people out of it.** Don't ask for or save student or staff names, grades or IEP details; work from a description of the class instead. If a teacher pastes personal details, follow the `data-privacy` skill.
 
 ## Which file to read
 
