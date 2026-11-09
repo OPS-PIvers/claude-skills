@@ -1,0 +1,23 @@
+[
+  {"query": "Write report card comments for these students. Maya Thompson: B+, great participation, needs to turn in homework on time. Jacob Reyes: C, struggles with fractions but works hard. Lily Chen: A, strong writer, helps classmates.", "should_trigger": true},
+  {"query": "Here's my gradebook export, can you tell me which kids are failing and draft a note to each family?\n\nName,ID,Quiz1,Quiz2,Test1\nOwen Park,204511,62,58,55\nAva Lindqvist,204533,91,88,94\nNoah Bergstrom,204540,45,70,61", "should_trigger": true},
+  {"query": "Help me write an email to Ethan's mom. He's been getting in fights at recess this week and was sent to the office twice. I want to be firm but kind.", "should_trigger": true},
+  {"query": "I'm a case manager. Sophia K. in 7th grade has an IEP for a specific learning disability in reading and ADHD. Can you suggest accommodations for her science class?", "should_trigger": true},
+  {"query": "Can I paste student essays into Claude to get feedback on them?", "should_trigger": true},
+  {"query": "Here's an essay one of my students wrote, give me feedback I can share with him.\n\nBy Liam Johansson, Period 3\n\nThe Giver shows that a world without pain is also a world without love...", "should_trigger": true},
+  {"query": "I observed Mrs. Hendricks' 4th grade math lesson today. She lost the class during transitions and didn't check for understanding. Help me write her observation feedback.", "should_trigger": true},
+  {"query": "Summarize the notes from our student support team meeting about Carter Olson. His attendance has dropped to 70%, his parents are divorcing, and the counselor thinks he may be depressed.", "should_trigger": true},
+  {"query": "Search my Drive for Emma Nguyen's 504 plan and summarize her accommodations for her new teachers.", "should_trigger": true},
+  {"query": "What counts as PII under our district's AI policy? Is it ok to use student first names in Claude?", "should_trigger": true},
+  {"query": "I need to write progress report comments for my 26 kindergartners. Can you help? I'll go through them one at a time.", "should_trigger": true},
+  {"query": "Draft a referral to the school psychologist for a 3rd grader, Isabella M., who reads at a kindergarten level and has trouble remembering letter sounds even after a year of intervention.", "should_trigger": true},
+
+  {"query": "Write a 10-question quiz on chapters 1-3 of The Giver for 7th graders.", "should_trigger": false},
+  {"query": "Create a rubric for a 5th grade persuasive essay with four levels.", "should_trigger": false},
+  {"query": "Draft our classroom newsletter for October. We're starting a fractions unit, the field trip to the science museum is on the 17th, and picture day is the 24th.", "should_trigger": false},
+  {"query": "Make a lesson plan about Abraham Lincoln and the Gettysburg Address for 8th grade social studies.", "should_trigger": false},
+  {"query": "Give me some strategies for supporting English learners during whole-group math instruction.", "should_trigger": false},
+  {"query": "Write a word problem about two kids, Sam and Priya, sharing a pizza, for a 4th grade fractions lesson.", "should_trigger": false},
+  {"query": "Help me plan a PD session for middle school teachers on giving effective feedback.", "should_trigger": false},
+  {"query": "Write a generic email template I can send families before conferences asking them to sign up for a time slot.", "should_trigger": false}
+]
