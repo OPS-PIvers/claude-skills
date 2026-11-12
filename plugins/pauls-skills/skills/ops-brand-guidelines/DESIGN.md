@@ -108,6 +108,7 @@ colors:
   on-surface-disabled: "{colors.gray-500}"
   on-surface-inverted: "{colors.white}"
   on-surface-inverted-muted: "{colors.blue-100}"
+  on-surface-inverted-subtle: "#8da0c7"   # captions and source lines on blue-900 (5.2:1)
   accent-on-inverted: "{colors.red-400}"   # large text only (24pt+). red-600 fails on blue-900.
 
   # Borders
