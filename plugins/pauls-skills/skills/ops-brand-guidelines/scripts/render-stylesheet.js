@@ -1,6 +1,8 @@
 // Builds Resources/stylesheet.html from the tokens in DESIGN.md, then prints
 // it to Resources/OPS Tech Stylesheet.pdf.
 // Usage: node scripts/render-stylesheet.js   (needs Playwright with Chromium)
+// Preview a proposal without touching the real files:
+//   node scripts/render-stylesheet.js path/to/proposed-DESIGN.md path/to/preview.pdf
 //
 // Colors, type, spacing, radius and component styles are read from DESIGN.md.
 // Slide, document and logo sizes come from SKILL.md and are set in the
@@ -37,7 +39,11 @@ function parseFrontMatter(text) {
   return tree;
 }
 
-const design = parseFrontMatter(fs.readFileSync(path.join(root, 'DESIGN.md'), 'utf8'));
+const [designArg, pdfArg] = process.argv.slice(2);
+const design = parseFrontMatter(fs.readFileSync(designArg || path.join(root, 'DESIGN.md'), 'utf8'));
+const BODY = design.typography['body-md'].fontFamily;
+const htmlFile = path.join(resources, pdfArg ? 'stylesheet-preview.html' : 'stylesheet.html');
+const pdfFile = pdfArg || path.join(resources, 'OPS Tech Stylesheet.pdf');
 
 function lookup(ref) {
   const value = ref.split('.').reduce((node, key) => node && node[key], design);
@@ -425,7 +431,7 @@ function logoPage() {
           <tr class="c-table-row" style="font-size:11pt"><td>Orono High School</td><td>March 11</td></tr>
         </tbody>
       </table>
-      <div style="position:absolute;bottom:0.5in;left:1in;right:1in;font:400 9pt Roboto;color:${gray};text-align:center">1</div>
+      <div style="position:absolute;bottom:0.5in;left:1in;right:1in;font:400 9pt ${BODY};color:${gray};text-align:center">1</div>
     </div></div>`;
   const docSpecs = [
     ['Header logo', 'Primary Logo.png · 2.5in wide'],
@@ -433,10 +439,10 @@ function logoPage() {
     ['H1', 'Lexend 700 · 22pt · blue-dark'],
     ['H2', 'Lexend 700 · 18pt · red-light'],
     ['H3', 'Lexend 700 · 14pt · gray'],
-    ['Body', 'Roboto 400 · 11pt · gray-dark'],
+    ['Body', `${BODY} 400 · 11pt · gray-dark`],
     ['Callout', 'callout-info'],
     ['Table', 'table-header · table-row'],
-    ['Footer', 'Roboto 400 · 9pt · gray'],
+    ['Footer', `${BODY} 400 · 9pt · gray`],
   ]
     .map(([a, b]) => `<div class="docspec">${label(a, b)}</div>`)
     .join('');
@@ -454,13 +460,13 @@ function slidePage() {
   const muted = color('on-surface-inverted-muted'), subtle = color('on-surface-inverted-subtle');
   const accent = color('accent-on-inverted'), line = color('divider-inverted');
   const title = (t, size = 32) => `<div style="font:700 ${size}pt/1.15 Lexend;position:absolute;left:0.6in;top:0.5in;right:0.6in">${t}</div>`;
-  const source = (t, c = subtle) => `<div style="position:absolute;left:0.6in;bottom:0.35in;font:400 10pt Roboto;color:${c}">${t}</div>`;
-  const bullets = (items) => `<ul style="margin:0;padding-left:0.3in;font:400 20pt/1.5 Roboto">${items.map((i) => `<li>${i}</li>`).join('')}</ul>`;
+  const source = (t, c = subtle) => `<div style="position:absolute;left:0.6in;bottom:0.35in;font:400 10pt ${BODY};color:${c}">${t}</div>`;
+  const bullets = (items) => `<ul style="margin:0;padding-left:0.3in;font:400 20pt/1.5 ${BODY}">${items.map((i) => `<li>${i}</li>`).join('')}</ul>`;
   const cover = (heading) => `<div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
       ${logo('Secondary Logo.png', 'width:1.75in')}
       <div style="font:700 48pt/1.1 Lexend;margin-top:0.4in">${heading}</div>
-      <div style="font:400 24pt Roboto;color:${muted};margin-top:0.15in">OMS staff PD</div>
-      <div style="font:400 18pt Roboto;color:${muted};margin-top:0.1in">March 4, 2027</div>
+      <div style="font:400 24pt ${BODY};color:${muted};margin-top:0.15in">OMS staff PD</div>
+      <div style="font:400 18pt ${BODY};color:${muted};margin-top:0.1in">March 4, 2027</div>
     </div>`;
 
   const slides = [
@@ -472,7 +478,7 @@ function slidePage() {
       bg,
       '#fff',
       title('Agenda') +
-        `<div style="position:absolute;left:0.6in;right:0.6in;top:1.8in;font:400 20pt Roboto">${[
+        `<div style="position:absolute;left:0.6in;right:0.6in;top:1.8in;font:400 20pt ${BODY}">${[
           ['Results from the fall pilot', '3:10'],
           ['Three sample questions', '3:20'],
           ['Write your own', '3:35'],
@@ -498,7 +504,7 @@ function slidePage() {
       '#fff',
       title('Most students answered every day') +
         `<div style="position:absolute;left:0.6in;top:2.1in;font:700 96pt/1 Lexend;color:${accent}">84%</div>
-         <div style="position:absolute;left:0.6in;top:3.9in;font:400 20pt Roboto;color:${muted}">of 212 students answered every day for five weeks</div>` +
+         <div style="position:absolute;left:0.6in;top:3.9in;font:400 20pt ${BODY};color:${muted}">of 212 students answered every day for five weeks</div>` +
         source('Source: OMS exit ticket pilot, fall 2026'),
     ],
     [
@@ -507,10 +513,10 @@ function slidePage() {
       bg,
       '#fff',
       title('Chromebook repairs dropped 40% after the case swap') +
-        `<div style="position:absolute;left:0.6in;top:1.9in;width:5.2in;font:400 20pt/1.5 Roboto">New cases went on every student device in August 2026.</div>
+        `<div style="position:absolute;left:0.6in;top:1.9in;width:5.2in;font:400 20pt/1.5 ${BODY}">New cases went on every student device in August 2026.</div>
          <div style="position:absolute;left:6.6in;top:1.9in;width:6.1in;height:4.5in;background:${raised};border-radius:12px;padding:0.4in;display:flex;gap:0.6in;align-items:flex-end">
            ${[['2025', 310], ['2026', 186]]
-             .map(([y, n]) => `<div style="flex:1;text-align:center;font:400 18pt Roboto"><div style="font:700 28pt Lexend">${n}</div><div style="height:${(n / 310) * 2.4}in;background:#fff;margin:0.1in 0"></div><div style="color:${muted}">${y}</div></div>`)
+             .map(([y, n]) => `<div style="flex:1;text-align:center;font:400 18pt ${BODY}"><div style="font:700 28pt Lexend">${n}</div><div style="height:${(n / 310) * 2.4}in;background:#fff;margin:0.1in 0"></div><div style="color:${muted}">${y}</div></div>`)
              .join('')}
          </div>` +
         source('Source: OMS help desk tickets, 2025 and 2026'),
@@ -557,6 +563,9 @@ const pages = [
 ];
 
 const g = (n) => color(n);
+const fontQuery = [...new Set(Object.values(design.typography).map((t) => t.fontFamily))]
+  .map((f) => `family=${f.replace(/ /g, '+')}:wght@400;500;600;700`)
+  .join('&');
 const html = `<!doctype html>
 <html lang="en">
 <head>
@@ -564,12 +573,12 @@ const html = `<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>OPS Tech stylesheet</title>
 <!-- Generated from ../DESIGN.md by scripts/render-stylesheet.js. Edit the script or DESIGN.md, then re-run it. -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?${fontQuery}&display=swap">
 <style>
 @page { size: letter; margin: 0; }
 * { box-sizing: border-box; }
 html, body { margin: 0; background: #fff; }
-body { font: 400 9pt/1.4 Roboto, Arial, sans-serif; color: ${g('on-surface')}; }
+body { font: 400 9pt/1.4 ${BODY}, Arial, sans-serif; color: ${g('on-surface')}; }
 .page { width: 8.5in; height: 11in; padding: 0.4in 0.5in 0.33in; display: flex; flex-direction: column; overflow: hidden; break-after: page; }
 .page > header, .page > footer { display: flex; justify-content: space-between; font-size: 8pt; color: ${g('on-surface-muted')}; }
 .page > footer { margin-top: auto; padding-top: 8px; }
@@ -632,7 +641,7 @@ td { padding: inherit; padding-left: 12px; padding-right: 12px; }
 .logos:not(.three) .lbox { box-shadow: inset 0 0 0 1px ${g('divider')}; }
 .docrow { display: flex; gap: 0.35in; align-items: flex-start; }
 .docwrap { width: 5.525in; height: 7.15in; flex: none; box-shadow: inset 0 0 0 1px ${g('border')}; }
-.doc { width: 8.5in; height: 11in; padding: 0.8in 1in; zoom: 0.65; position: relative; font: 400 11pt/1.5 Roboto; }
+.doc { width: 8.5in; height: 11in; padding: 0.8in 1in; zoom: 0.65; position: relative; font: 400 11pt/1.5 ${BODY}; }
 .doc p { margin: 8px 0 0; }
 .docspec { padding: 3px 0 6px; border-bottom: 1px solid ${g('divider')}; }
 
@@ -656,7 +665,7 @@ ${body}
 </html>
 `;
 
-fs.writeFileSync(path.join(resources, 'stylesheet.html'), html);
+fs.writeFileSync(htmlFile, html);
 
 // ---------- Print ----------
 
@@ -664,7 +673,7 @@ fs.writeFileSync(path.join(resources, 'stylesheet.html'), html);
   const { chromium } = require('playwright');
   const browser = await chromium.launch();
   const page = await browser.newPage();
-  await page.goto('file://' + path.join(resources, 'stylesheet.html'), { waitUntil: 'networkidle' });
+  await page.goto('file://' + htmlFile, { waitUntil: 'networkidle' });
   await page.evaluate(() => document.fonts.ready);
   const overflow = await page.evaluate(() =>
     [...document.querySelectorAll('.page')]
@@ -673,10 +682,11 @@ fs.writeFileSync(path.join(resources, 'stylesheet.html'), html);
   );
   if (overflow.length) console.warn(overflow.join('\n'));
   await page.pdf({
-    path: path.join(resources, 'OPS Tech Stylesheet.pdf'),
+    path: pdfFile,
     format: 'Letter',
     printBackground: true,
     preferCSSPageSize: true,
   });
   await browser.close();
+  if (pdfArg) fs.unlinkSync(htmlFile);
 })();
