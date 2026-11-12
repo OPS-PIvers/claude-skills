@@ -23,13 +23,13 @@ table { border-collapse: collapse; width: 100%; }
 #tool { min-width: 1180px; min-height: 100vh; background: #f3f5f9; font-size: 13px; line-height: 1.45; color: #2b2f3a; --hair: #dde1ea; --soft: #5d6475; }
 #tool ::selection { background: #c0c7e0; }
 .top { display: flex; align-items: center; height: 52px; padding: 0 24px; background: var(--ink); color: #fff; }
-.top .app { font: 600 14px Lexend; letter-spacing: -0.01em; margin-right: 36px; }
+.top .app { font: 600 15px Lexend; letter-spacing: -0.01em; margin-right: 36px; }
 .top nav { display: flex; gap: 26px; }
-.top nav span { color: #a9b2d3; }
+.top nav span { color: #c0c7e0; }
 .top nav .on { color: #fff; font-weight: 500; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 7px; }
-.top .find { margin-left: auto; display: flex; align-items: center; gap: 8px; width: 260px; height: 32px; padding: 0 10px; border-radius: 6px; background: #2a3870; color: #a9b2d3; }
-.top .find kbd { margin-left: auto; font: 500 11px Lexend; color: #a9b2d3; border: 1px solid #4356a0; border-radius: 4px; padding: 0 5px; }
-.top .me { margin-left: 16px; width: 28px; height: 28px; border-radius: 50%; background: #eaecf5; color: var(--ink); font: 600 11px/28px Lexend; text-align: center; }
+.top .find { margin-left: auto; display: flex; align-items: center; gap: 8px; width: 260px; height: 32px; padding: 0 10px; border-radius: 6px; background: #253473; color: #c0c7e0; }
+.top .find kbd { margin-left: auto; font: 500 12px Lexend; color: #c0c7e0; border: 1px solid #4356a0; border-radius: 4px; padding: 0 5px; }
+.top .me { margin-left: 16px; width: 28px; height: 28px; border-radius: 50%; background: #eaecf5; color: var(--ink); font: 500 12px/28px Lexend; text-align: center; }
 .wrap { display: grid; grid-template-columns: 1fr 340px; gap: 24px; padding: 28px 24px 24px; }
 .head { display: flex; align-items: flex-end; justify-content: space-between; }
 .head h1 { font: 600 22px/1.2 Lexend; letter-spacing: -0.02em; color: var(--ink); }
@@ -44,15 +44,15 @@ table { border-collapse: collapse; width: 100%; }
 .sum { display: grid; grid-template-columns: 1fr auto; gap: 6px 24px; align-items: baseline; padding: 18px 20px 20px; border-bottom: 1px solid var(--hair); }
 .sum strong { font: 600 15px Lexend; letter-spacing: -0.01em; color: var(--ink); }
 .sum span { color: var(--soft); }
-.track { grid-column: 1 / -1; display: flex; height: 8px; margin-top: 6px; border-radius: 4px; overflow: hidden; background: #e6e9f0; gap: 2px; }
+.track { grid-column: 1 / -1; display: flex; height: 8px; margin-top: 6px; border-radius: 4px; overflow: hidden; background: #dde1ea; gap: 2px; }
 .track i { display: block; background: var(--ink); }
 .track i.r { background: var(--red); }
 .bar2 { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; }
 .seg { display: flex; gap: 2px; color: var(--soft); }
-.seg span { padding: 5px 10px; border-radius: 5px; }
+.seg span { padding: 5px 10px; border-radius: 4px; }
 .seg .on { background: var(--blue-tint); color: var(--ink); font-weight: 500; }
 .seg i { font-style: normal; margin-left: 6px; color: var(--soft); font-weight: 400; }
-.filter { display: flex; align-items: center; gap: 8px; width: 220px; height: 32px; padding: 0 10px; border: 1px solid #c3c9d6; border-radius: 6px; color: #5d6475; }
+.filter { display: flex; align-items: center; gap: 8px; width: 220px; height: 32px; padding: 0 10px; border: 1px solid #8b91a3; border-radius: 6px; background: #fff; color: #5d6475; }
 .grid { font-size: 13px; }
 .grid th { font: 500 12px Lexend; color: var(--soft); text-align: left; padding: 9px 12px; border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); white-space: nowrap; }
 .grid td { padding: 0 12px; height: 44px; border-bottom: 1px solid #eceef3; white-space: nowrap; }
@@ -61,16 +61,16 @@ table { border-collapse: collapse; width: 100%; }
 .grid th:last-child, .grid td:last-child { padding-right: 20px; }
 .grid .n { text-align: right; }
 .grid .name { display: flex; align-items: center; gap: 8px; font-weight: 500; color: var(--ink); }
-.grid .sub td { background: #fafbfc; color: #2b2f3a; }
+.grid .sub td { background: #fafbfc; color: #2b2f3a; } /* sub-rows: regular text, not navy */
 .grid .sub .name { font-weight: 400; color: #2b2f3a; padding-left: 22px; }
 .grid .soft { color: var(--soft); }
 .prog { display: flex; align-items: center; gap: 10px; }
-.prog div { width: 96px; height: 4px; border-radius: 2px; background: #e6e9f0; overflow: hidden; }
+.prog div { width: 96px; height: 4px; border-radius: 2px; background: #dde1ea; overflow: hidden; }
 .prog i { display: block; height: 100%; background: var(--ink); }
 .prog.r i { background: var(--red); }
 .prog span { width: 34px; text-align: right; color: var(--soft); }
 .st { display: flex; align-items: center; gap: 7px; }
-.st::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #a9b2d3; }
+.st::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #97a1cb; }
 .st.done::before { background: var(--ink); }
 .st.act { color: var(--red); font-weight: 500; }
 .st.act::before { background: var(--red); }
@@ -80,7 +80,7 @@ table { border-collapse: collapse; width: 100%; }
 .rail .hint { margin-top: 4px; color: var(--soft); }
 .f { margin-top: 16px; }
 .f label { display: block; font: 500 12px Lexend; margin-bottom: 5px; }
-.in { display: flex; align-items: center; justify-content: space-between; min-height: 34px; padding: 6px 10px; border: 1px solid #8b91a3; border-radius: 6px; background: #fff; }
+.in { display: flex; align-items: center; justify-content: space-between; min-height: 32px; padding: 5px 10px; border: 1px solid #8b91a3; border-radius: 6px; background: #fff; }
 .in.focus { border-color: var(--ink); outline: 2px solid var(--blue); outline-offset: 1px; }
 .in.area { align-items: flex-start; min-height: 96px; line-height: 1.5; }
 .f small { display: block; margin-top: 5px; font-size: 12px; color: var(--soft); }
@@ -90,7 +90,7 @@ table { border-collapse: collapse; width: 100%; }
 .log div { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--hair); }
 .log div span:last-child { color: var(--soft); }
 .tf { display: flex; justify-content: space-between; align-items: center; padding: 14px 24px 18px; font-size: 12px; color: var(--soft); }
-.tf img { height: 18px; }
+.tf img { height: 19px; }
 
 </style>
 </head>
@@ -129,7 +129,7 @@ table { border-collapse: collapse; width: 100%; }
       <p class="hint">Staff get an email with the steps.</p>
       <div class="f"><label>To</label><div class="in">Orono Middle School staff<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l4 4 4-4"/></svg></div></div>
       <div class="f"><label>Due date</label><div class="in focus">March 1</div><small>Staff see this date in the email.</small></div>
-      <div class="f"><label>Note</label><div class="in area">Re-enroll your cart before Friday. The steps are in the help center.</div></div>
+      <div class="f"><label>Note</label><div class="in area">Re-enroll your cart before March 1. The steps are in the help center.</div></div>
       <div class="acts"><span class="b pri"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2L7 9M14 2l-4.5 12L7 9 2 6.5 14 2z"/></svg>Send reminder</span><span class="b">Cancel</span></div>
       <div class="log">
         <h3>Sent reminders</h3>
@@ -138,7 +138,7 @@ table { border-collapse: collapse; width: 100%; }
       </div>
     </aside>
   </div>
-  <div class="tf"><img src="../Resources/Primary%20Logo.png" alt="Orono Technology"><span>Source: Google Admin console</span></div>
+  <div class="tf"><img src="Primary%20Logo.png" alt="Orono Technology"><span>Source: Google Admin console</span></div>
 </div>
 </body>
 </html>

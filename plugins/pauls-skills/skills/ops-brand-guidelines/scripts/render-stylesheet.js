@@ -84,6 +84,7 @@ const PROPS = {
   minHeight: (v) => [`min-height:${v}`],
   paddingX: (v) => [`padding-left:${v}`, `padding-right:${v}`],
   paddingY: (v) => [`padding-top:${v}`, `padding-bottom:${v}`],
+  edgePaddingX: () => [],
   fontWeight: (v) => [`font-weight:${v}`],
   typography: (v) => typeCss(v),
   underlineWidth: (v) => ['text-decoration:underline', `text-decoration-thickness:${v}`],
@@ -114,7 +115,7 @@ function componentCss() {
 const SHORT = {
   backgroundColor: 'bg', textColor: 'text', borderColor: 'border', borderWidth: 'border',
   borderBottomColor: 'rule', borderBottomWidth: 'rule', rounded: 'radius', height: 'height', minHeight: 'min-height',
-  paddingX: 'pad-x', paddingY: 'pad-y', fontWeight: 'weight', typography: 'type',
+  paddingX: 'pad-x', paddingY: 'pad-y', edgePaddingX: 'edge-pad-x', fontWeight: 'weight', typography: 'type',
   underlineWidth: 'underline', underlineOffset: 'underline', outlineColor: 'outline', outlineWidth: 'outline', outlineOffset: 'outline',
   color: 'fill', trackColor: 'track', dotColor: 'dot', dotStyle: 'dot',
 };
@@ -242,12 +243,12 @@ function typePage() {
 // ---------- Pages 3 and 4: components ----------
 
 function chart(width, height) {
-  const series = [1, 2, 3, 4, 5, 6].map((i) => comp(`chart-series-${i}`, 'color'));
-  const values = [82, 64, 51, 40, 28, 19];
+  const series = [...[1, 2, 3, 4].map((i) => comp(`chart-series-${i}`, 'color')), comp('chart-highlight', 'color')];
+  const values = [82, 64, 51, 40, 28];
   const axis = comp('chart-axis', 'color'), grid = comp('chart-grid', 'color');
   const left = 30, bottom = height - 22, top = 8, plot = bottom - top;
   const step = (width - left - 8) / series.length;
-  let svg = `<svg viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="img" aria-label="Bar chart in the six series colors" font-family="${FONT}">`;
+  let svg = `<svg viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="img" aria-label="Bar chart in the series colors" font-family="${FONT}">`;
   for (const tick of [0, 25, 50, 75, 100]) {
     const y = bottom - (plot * tick) / 100;
     if (tick) svg += `<line x1="${left}" x2="${width - 8}" y1="${y}" y2="${y}" stroke="${grid}"/>`;
@@ -321,9 +322,11 @@ function componentPages() {
         ${row('Grade 7', 172, 0, 172, 0, 'not-started', 'Not started', 'Yesterday', { sub: true })}
         ${row('Orono High School', 760, 669, 91, 88, '', 'In progress', '7:41 AM')}
       </tbody></table></div>
-    <div class="minor">${['panel', 'table-header', 'table-row', 'table-row-name', 'table-row-sub'].map((n) => label(n, specLine(n))).join('')}</div>`;
+    <div class="minor">${['panel', 'summary-bar', 'table-header', 'table-row', 'table-row-name', 'table-row-sub'].map((n) => label(n, specLine(n))).join('')}</div>`;
 
-  const series = [1, 2, 3, 4, 5, 6].map((i) => `<div class="sw"><div class="chip" style="background:${comp('chart-series-' + i, 'color')};height:18px"></div>${label('chart-series-' + i, refName(design.components['chart-series-' + i].color))}</div>`).join('');
+  const series = ['chart-series-1', 'chart-series-2', 'chart-series-3', 'chart-series-4', 'chart-highlight', 'chart-series-on-inverted']
+    .map((n) => `<div class="sw"><div class="chip" style="background:${comp(n, 'color')};height:18px"></div>${label(n, refName(design.components[n].color))}</div>`)
+    .join('');
   const g0 = design.components['chart-gradient-start'].color, g1 = design.components['chart-gradient-end'].color;
   const charts = `<div class="swrow six">${series}</div>
     <div class="chip" style="height:18px;margin-top:10px;background:linear-gradient(90deg,${resolve(g0)},${resolve(g1)})"></div>
@@ -435,9 +438,9 @@ function slidePage() {
     ['Section divider', 'bg surface-loud · title 72pt 500 · label 20pt 300 on-loud-muted', color('surface-loud'),
       `<div style="position:absolute;left:0.8in;top:0.66in;font:300 20pt ${FONT};color:${color('on-loud-muted')}">Part 2</div>
        <div style="position:absolute;left:0.75in;bottom:1in;font:500 72pt/0.98 ${FONT};letter-spacing:-0.04em">Write your own</div>`],
-    ['Chart slide', 'highlight series on-inverted · other series blue-600', bg,
+    ['Chart slide', 'chart-highlight-on-inverted · chart-series-on-inverted', bg,
       h('Chromebook repairs dropped 40% after the case swap') +
-      `<div style="position:absolute;left:0.75in;right:0.75in;top:2.8in">${[['Fall 2025', 310, line], ['Fall 2026', 186, '#fff']]
+      `<div style="position:absolute;left:0.75in;right:0.75in;top:2.8in">${[['Fall 2025', 310, comp('chart-series-on-inverted', 'color')], ['Fall 2026', 186, comp('chart-highlight-on-inverted', 'color')]]
         .map(([y, n, c]) => `<div style="display:grid;grid-template-columns:1.6in 1fr;align-items:center;margin-bottom:0.35in;font:300 18pt ${FONT};color:${muted}"><span>${y}</span><div style="display:flex;align-items:center;gap:0.2in"><i style="display:block;height:1.05in;width:${(n / 310) * 8.4}in;background:${c}"></i><b style="font:500 32pt ${FONT};color:#fff">${n}</b></div></div>`)
         .join('')}</div>` + src('Source: OMS help desk tickets, fall 2025 and fall 2026')],
     ['Closing slide', 'bg primary · Secondary Logo 0.8in · title 78pt 500 · details 16pt', bg,
@@ -532,7 +535,7 @@ a { text-underline-offset: 3px; }
 .prog span { width: 34px; text-align: right; color: ${g('on-surface-muted')}; font-size: 13px; }
 .lrow { display: flex; justify-content: space-between; }
 .sum { display: grid; grid-template-columns: 1fr auto; gap: 6px 24px; align-items: baseline; padding: 16px 20px 18px; border-bottom: 1px solid ${g('border')}; font-size: 13px; color: ${g('on-surface-muted')}; }
-.track { grid-column: 1 / -1; display: flex; gap: 2px; height: 8px; margin-top: 6px; border-radius: 4px; overflow: hidden; background: ${g('track')}; }
+.track { grid-column: 1 / -1; display: flex; gap: 2px; height: ${comp('summary-bar', 'height')}; margin-top: 6px; border-radius: ${comp('summary-bar', 'rounded')}; overflow: hidden; background: ${g('track')}; }
 .track i { display: block; }
 .grid td { padding: 0 12px; height: inherit; white-space: nowrap; }
 .grid th { white-space: nowrap; }

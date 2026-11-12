@@ -1,7 +1,7 @@
 ---
 version: beta
 name: OPS Technology Style
-description: The Orono Technology (OPS Tech) design system for slide decks, newsletters, handouts, reports, websites, and web tools. Navy ink, red for anything that needs action, Lexend throughout, layered flat surfaces.
+description: The Orono Technology (OPS Tech) design system for web tools, newsletters, documents, and slides. It uses navy ink, red for anything that needs action, Lexend throughout, and layered flat surfaces.
 
 colors:
   # ========================================================================
@@ -53,8 +53,7 @@ colors:
   red-900: "#7a1718"        # canonical red-dark
   red-950: "#3d0c0c"
 
-  # Slate: the working neutrals. Gray with a little brand blue in it, so
-  # text, borders and page backgrounds sit comfortably beside the navy.
+  # Slate is the working neutral ramp. Each step is gray tinted with brand blue.
   slate-50:  "#fafbfc"
   slate-100: "#f3f5f9"
   slate-200: "#eceef3"
@@ -94,7 +93,7 @@ colors:
   on-surface-disabled: "{colors.slate-500}"
   on-inverted: "{colors.white}"
   on-inverted-muted: "{colors.blue-200}"
-  on-inverted-subtle: "#8da0c7"           # source lines on navy
+  on-inverted-subtle: "#8da0c7"           # source lines on navy (between blue-300 and blue-400)
   on-loud-muted: "{colors.red-50}"
 
   # Lines
@@ -252,7 +251,7 @@ components:
     borderWidth: 1px
     typography: "{typography.ui}"
     rounded: "{rounded.md}"
-    minHeight: 34px
+    minHeight: "{spacing.control-height}"
     paddingX: 10px
     paddingY: 6px
   input-focus:
@@ -277,7 +276,7 @@ components:
     textColor: "{colors.danger}"
 
   # === Alerts ===
-  # A tinted block with no border. It opens with a bold lead word.
+  # An alert is a tinted block with no border. It opens with a bold lead word.
   alert-danger:
     backgroundColor: "{colors.danger-bg}"
     textColor: "{colors.danger-text}"
@@ -294,7 +293,7 @@ components:
     paddingY: 10px
 
   # === Panel ===
-  # The one white container on a canvas page. Never nested.
+  # A panel is the one white container on a canvas page. Don't nest panels.
   panel:
     backgroundColor: "{colors.surface}"
     borderColor: "{colors.border}"
@@ -309,6 +308,7 @@ components:
     borderBottomWidth: 1px
     paddingX: 12px
     paddingY: 9px
+    edgePaddingX: 20px
   table-row:
     textColor: "{colors.on-surface}"
     typography: "{typography.ui}"
@@ -323,7 +323,7 @@ components:
     backgroundColor: "{colors.surface-sunken}"
 
   # === Status ===
-  # A 7px dot and a word. The word carries the meaning.
+  # Status is a 7px dot and a word. The word alone must give the status.
   status:
     typography: "{typography.ui}"
     textColor: "{colors.on-surface}"
@@ -346,6 +346,11 @@ components:
     rounded: 2px
   progress-danger:
     color: "{colors.danger}"
+  summary-bar:
+    color: "{colors.primary}"
+    trackColor: "{colors.track}"
+    height: 8px
+    rounded: "{rounded.sm}"
 
   # === Filter row ===
   segment:
@@ -362,7 +367,7 @@ components:
   # === Lists ===
   list-row:
     typography: "{typography.ui}"
-    borderBottomColor: "{colors.border}"
+    borderBottomColor: "{colors.divider}"
     borderBottomWidth: 1px
     paddingY: 8px
 
@@ -376,15 +381,17 @@ components:
   chart-series-1:
     color: "{colors.blue-900}"
   chart-series-2:
-    color: "{colors.red-700}"
-  chart-series-3:
     color: "{colors.blue-600}"
+  chart-series-3:
+    color: "{colors.blue-400}"
   chart-series-4:
-    color: "{colors.blue-300}"
-  chart-series-5:
     color: "{colors.slate-500}"
-  chart-series-6:
-    color: "{colors.red-300}"
+  chart-highlight:
+    color: "{colors.red-700}"
+  chart-series-on-inverted:
+    color: "{colors.blue-400}"
+  chart-highlight-on-inverted:
+    color: "{colors.white}"
   chart-gradient-start:
     color: "{colors.blue-100}"
   chart-gradient-end:
@@ -401,38 +408,38 @@ components:
 
 This is the design system for Orono Technology. It covers web tools, newsletters, documents, and slides.
 
-The system uses the district's red, white, and blue with one typeface, Lexend. Navy is the ink. Red marks anything that needs someone to act. Surfaces are flat and layered. A piece built with it should look like it came from a well-run product team.
+The system uses the district's red, white, and blue with one typeface, Lexend. Navy is the ink on flat, layered surfaces. Red marks anything that needs someone to act. A piece built with it should look like it came from a well-run product team.
 
 `references/example-tool.html` is a finished staff tool built to this spec. Open it before building a web tool.
 
-Two modes:
+### Modes
 
 - **Official** (staff and parent communications, PD decks, reports, tools). Everything in this file applies.
-- **Playful** (classroom games, student interactives, holiday pieces). The palette may change to suit the topic. Every other rule in this file still applies.
+- **Playful** (classroom games, student interactives, holiday pieces). The palette may change to suit the topic. The palette keeps OPS colors as accents, and the logos stay as issued. Every other rule in this file still applies.
 
 ## Colors
 
-The brand colors are fixed. The ramps are tints and shades of them. Build with the roles.
+The ramps are tints and shades of the fixed brand colors. Build with the roles.
 
 - **Navy (`primary`, `blue-900`)** is the ink. Headings, primary buttons, progress bars, top bars, mastheads, and slide backgrounds use it.
 - **Blue (`accent`, `blue-700`)** is for links and focus outlines.
-- **Red (`danger`, `red-700`)** means "this needs you." Everything tied to the thing that needs action is red, including its status, its number, its progress bar, and the alert about it. Red is never used for an ordinary heading, button, or link.
+- **Red (`danger`, `red-700`)** means "this needs you." Everything tied to the thing that needs action is red, including its status, its number, its progress bar, and the alert about it. A delete button is red too. Red is never used for an ordinary heading, button, or link.
 - **Slate** is the neutral ramp for text, borders, and page backgrounds.
 - **White** is the surface for panels, documents, and inputs.
 
 ### Red at large scale
 
-Red also appears as a full field in two places. A section-divider slide is solid `surface-loud`. A newsletter may set one headline figure in `danger`. Use it nowhere else as decoration.
+Red is decorative only on a section-divider slide, which is solid `surface-loud`, and on one newsletter headline figure set in `danger`.
 
 ### Charts
 
-Series run `blue-900`, `red-700`, `blue-600`, `blue-300`, `slate-500`, `red-300`. Sequential gradients run `blue-100` to `blue-900`. Use red for the series the reader should look at. On navy slides, use white for that series and `blue-600` for the rest.
+Series run `blue-900`, `blue-600`, `blue-400`, `slate-500`. Sequential gradients run `blue-100` to `blue-900`. `chart-highlight` (red) is for the one series the reader should look at. On navy slides, that series is white and the rest are `blue-400`.
 
 ## Typography
 
 Lexend is the only typeface. It was designed to improve reading fluency.
 
-- Large headings are weight 500 with tight letter-spacing. Size carries the hierarchy.
+- Large headings are weight 500 with tight letter-spacing. They rank by size, so don't make them bolder.
 - Small headings and titles are weight 600.
 - Body and interface text is weight 400. A lede is weight 300.
 - Numbers in tables use tabular figures and align right.
@@ -445,56 +452,75 @@ A section is marked by its heading and the space above it. Don't add an uppercas
 
 ## Layout
 
-Web tools are dense. Interface text is 13px, controls are 32px tall, and table rows are 44px tall.
+Web tools are dense, with 13px interface text, 32px controls, and 44px table rows.
 
-A tool page has three layers. The top bar is navy. The page is `canvas`. The main content sits on one white `panel`. A side rail for a form sits directly on the canvas.
-
-Documents and newsletters are white pages with a navy masthead band across the top. The Primary Logo goes in the footer.
+A tool page stacks a navy top bar, a `canvas` page, and one white `panel` for the main content. A side rail for a form sits directly on the canvas. The footer has the Primary Logo.
 
 Separate rows with a `divider` hairline and sections with space. Never put a panel inside a panel.
 
 ## Elevation
 
-There are no shadows. Depth comes from the three layers and from 1px borders.
+Depth comes from the three layers and from 1px borders. Don't add shadows.
 
 ## Shapes
 
-Controls and alerts use `md` (6px). A panel uses `lg` (8px). A filter highlight uses `sm` (4px). Status dots and avatars use `full`. Nothing is pill-shaped.
+The radius is `sm` (4px) on a filter highlight, `md` (6px) on controls and alerts, `lg` (8px) on a panel, and `full` on status dots and avatars. Nothing is pill-shaped.
 
 ## Components
 
 **Top bar.** Navy, 52px tall. It holds the tool's name, the navigation, a search field, and the user's initials. The selected navigation item is white with a 2px underline directly under the word. The others are `on-inverted-muted`.
 
-**Buttons.** The default button is white with a border. A screen has one primary button, filled navy. A delete button is filled red. A button may carry a 14px icon before its label. Labels name what happens, such as "Send reminder."
+**Buttons.** The default button is white with a border. A screen has one primary button, filled navy. A delete button is filled red. A button may have an icon before its label. Labels name what happens, such as "Send reminder."
 
 **Inputs.** A 1px `border-control` edge. Focus adds a 2px `accent` outline. The label sits above in `label`. Helper text sits below in `caption`. An error replaces the helper text and says how to fix the problem.
 
-**Alerts.** A tinted block with no border. It opens with a bold lead word, such as "Action required:" or "Due Friday:". A danger alert may carry a warning icon and one link. Use one alert per page.
+**Alerts.** A tinted block with no border. It opens with a bold lead word, such as "Action required:" or "Due Friday:". A danger alert may have a warning icon and one link. Use one alert per page.
 
 **Panel.** White, 1px border, 8px radius. A page has one main panel.
 
-**Tables.** Column headers are `label` in muted text over a hairline. Rows are 44px with hairlines between them. The first column is navy at weight 500. Expanded sub-rows sit on `surface-sunken`. There is no header fill and no striping.
+**Tables.** Column headers are `label` in muted text over a hairline. Rows are 44px with hairlines between them. The first and last cells have 20px of side padding. The first column of a top-level row is navy at weight 500. Expanded sub-rows sit on `surface-sunken` in regular text. Leave the header unfilled and the rows unstriped.
 
-**Status.** A 7px dot and a word. Done is a navy dot. In progress is a `blue-300` dot. Not started is an outlined dot. Action required is a red dot with red text.
+**Status.** A 7px dot and a word. The dot is navy for done, `blue-300` for in progress, outlined for not started, and red with red text for action required.
 
 **Progress.** A 4px bar with the percentage beside it. The bar is red on a row that needs action.
 
 **Filter row.** Plain words in muted text. The selected one sits on a `selected-bg` block in navy. Don't use an underline here, because it stacks against the table's rules.
 
-**Summary.** State a total as one sentence with a bar under it, such as "1,560 of 2,080 devices re-enrolled." Don't build a row of large numbers with small labels.
+**Summary.** State a total as one sentence with an 8px `summary-bar` under it, such as "1,560 of 2,080 devices re-enrolled." The part that needs action is a red segment. Don't build a row of large numbers with small labels.
 
-**Icons.** Draw icons as 16px outlines with a 1.5px stroke. Use them for actions, search, expanding rows, and warnings. Don't put an icon before a heading.
+**Icons.** Draw icons as outlines on a 16px grid with a 1.5px stroke, and show them at 12px to 16px. Use them for actions, search, expanding rows, and warnings. Don't put an icon before a heading.
 
 ## Slides
 
 Slides are navy by default.
 
-- **Title slide.** The Secondary Logo sits top left at 0.8in. The title is 78pt, weight 500, set low on the left. A hairline runs under it, with the audience on the left and the date on the right.
+- **Title slide.** The Secondary Logo sits top left at 0.8in. The title is 78pt, weight 500, set low on the left. A hairline runs under it, with the audience on the left and the date on the right at 16pt. A closing slide uses the same layout.
 - **Content slide.** The title is 30pt, weight 500, top left. It states the slide's point as a sentence. Body text is 20pt, weight 300, in `on-inverted-muted`. Emphasis is white and larger.
+- **One number.** The number is 180pt in white with a 20pt caption under it.
 - **Section divider.** Solid red with a white 72pt title set low on the left.
 - **Source line.** 10pt in `on-inverted-subtle`, bottom left.
 
-Groups on a slide are separated by `divider-inverted` hairlines. No red in the palette passes contrast as text on navy, so emphasis on navy is white.
+Groups on a slide are separated by `divider-inverted` hairlines. Brand red fails contrast as text on navy, so emphasis on navy is white. Use a white slide only for a dense table or a deck that will be printed.
+
+## Documents and newsletters
+
+A document is a white page. The first page has a navy masthead band with the publication name in white at 30pt. The Primary Logo goes in the footer at 19px tall, on white or on the canvas.
+
+| Element | Spec |
+|---|---|
+| Headline | 31pt, weight 500, navy |
+| Lede | 14pt, weight 300 |
+| Body | 10.5pt, `on-surface` |
+| Section label | 9.5pt, weight 500, `on-surface-muted` |
+| Story title | 12pt, weight 500, navy, under a navy hairline |
+| Figure | 46pt, `danger`, one per newsletter |
+| Footer text | 8.5pt, `on-surface-muted` |
+
+Notes use `alert-info`. Anything that needs action uses `alert-danger`.
+
+## Logos
+
+The minimum logo width is 80px on screen and 0.75in in print. Use the files as issued.
 
 ## Voice and copy
 
@@ -502,18 +528,19 @@ Copy follows the OPS voice in `references/voice-and-copy.md`. The essentials:
 
 - Give each sentence one thought.
 - Lead with the point.
-- Use sentence case, and don't write colon subtitles.
+- Use sentence case.
+- Don't write colon subtitles.
 - Give content slides a claim title that states the point.
 - Name the action on a button. Say how to fix the problem in an error.
 
 ## Rules
 
 - Use roles before raw ramp values.
-- Use red only for what needs action, for a section-divider slide, and for one newsletter figure.
+- Use red only for what needs action, a delete button, a chart's highlight series, a section-divider slide, and one newsletter figure.
 - State status in words, with a dot.
 - Don't add shadows, pills, side stripes, accent rules, or uppercase letter-spaced labels.
 - Don't nest panels or wrap a list in cards.
 - Don't fill a table header or stripe its rows.
 - Don't mark a selection with a line that touches another line or an edge.
-- Don't place the Primary Logo on navy. Its blue wordmark disappears there.
+- Don't place the Primary Logo or the Torch Icon on navy. Their blue parts disappear there.
 - Don't center body text.
