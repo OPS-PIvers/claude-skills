@@ -12,11 +12,13 @@ Banned **inside prose sentences**. See section 5 for the positions where these a
 
 | Mark | Why | What to do |
 |---|---|---|
-| Em dash | Unspeakable. The single most notorious surface tell, and the trailing appositive reveal is the worst use of it. | Rejoin the clause with a conjunction. |
-| Colon | Where a banned dash goes to hide. The setup colon is pure drama. | Rejoin, or delete the setup half entirely. |
-| Semicolon | Standing in for the conjunction the sentence should have used. | Use the conjunction. |
+| Em dash | Unspeakable. The single most notorious surface tell, and the trailing appositive reveal is the worst use of it. | Split when both halves are full sentences. Otherwise rejoin. |
+| Colon | Where a banned dash goes to hide. The setup colon is pure drama. | Split, rejoin, or delete the setup half entirely. |
+| Semicolon | Two sentences pretending to be one. | Split into two sentences. Use a conjunction only when it names a real relation. |
 
-**Never split at the mark.** Turning `A — B` into `A. B.` is the single most common failure of this pass. It removes the punctuation and produces two stubs nobody would say aloud.
+**Apply the split test.** Read each half by itself. When both have a subject, a verb, and a point a person would say on its own, make them two sentences. When either half is a fragment or a one-clause stinger, rejoin it instead. Splitting a fragment off produces stubs nobody would say aloud, and that is still the most common failure of this pass.
+
+**A conjunction is not a free fix.** Swapping `A — B` for `A, and B` or `A, so B` when both halves stand alone trades the dash for a clause chain. See section 2.
 
 **Never swap one banned mark for another.** A dash converted to a colon has moved the tell, not removed it.
 
@@ -24,10 +26,14 @@ Banned **inside prose sentences**. See section 5 for the positions where these a
 > **Right:** The actual evidence is more humble than the headlines.
 
 > **Wrong:** We pour everything into it: fears about work, anger at billionaires.
-> **Right:** We pour everything into it, from fears about work to anger at billionaires.
+> **Right:** We pour everything into it, including our fears about work and our anger at billionaires.
 
 > **Wrong:** The API supports batching; in practice, no client uses it.
-> **Right:** The API supports batching, but no client uses it.
+> **Right:** The API supports batching. No client uses it.
+
+> **Wrong:** The new form saves teachers four minutes — the district wants every building on it by March.
+> **Also wrong:** The new form saves teachers four minutes, and the district wants every building on it by March.
+> **Right:** The new form saves teachers four minutes. The district wants every building on it by March.
 
 ## 2. Constructions
 
@@ -45,6 +51,7 @@ Every form of it.
 - "Not a detail. A design decision."
 - "Not just X, but also Y."
 - "Not only X, but Y."
+- "It's more than an X, it's a Y." "More than a tool, it's a partner."
 
 > **Before:** This isn't just faster, it's cheaper.
 > **After:** It's faster and cheaper.
@@ -106,7 +113,7 @@ Announce a topic, then append a clause advertising why the topic deserves attent
 Banned in headings and lead-ins too, where it does the most damage, because the reader has to keep going to find out what was claimed. Deliver the payoff, or cut the second clause and let the content land on its own.
 
 > **Before:** What I changed, and why the first one was likely dead:
-> **After:** I changed three things, and the first was already dead because nothing calls that handler.
+> **After:** I changed three things. The first was already dead because nothing calls that handler.
 
 An ordinary compound sentence is fine. "We cut the retry loop, and latency dropped by half" adds a second fact instead of advertising the first.
 
@@ -264,11 +271,62 @@ The register belongs to a counselling session and imports its authority into wri
 
 Skips: "real estate", "real time", "naming names", and any literal instruction to sit.
 
-### "That's why X mattered"
+### "That's why X mattered" and "this matters"
 
 "That's why being able to open the environment mattered." "This is why preserving every conversation mattered."
 
 Significance assigned to an earlier passage retroactively, which is the whole-point closer wearing a past tense. Make the argument where the thing appears, or cut the sentence.
+
+The present tense is the same move and is now more common. "This matters." "Here's why this matters." "Why attendance data matters." "That matters because." A 2026 study of model output found "this matters" at over a hundred times the human rate. Say what happens because of the thing. "When attendance is wrong, the state funding count is wrong."
+
+### Corrective framing
+
+"Not simply X." "Rather than relying on X." "Instead of just X." "Does not by itself establish." "This isn't about X."
+
+The sentence corrects a position nobody in the room held, so the reader has to picture the wrong idea before getting the right one. It is a softer cousin of antithesis. State the claim alone.
+
+> **Before:** Rather than relying on teacher memory, the form records every pickup.
+> **After:** The form records every pickup.
+
+### Counting before the list
+
+"Two constraints shape the design." "Three things stand out." "There are a few reasons for this."
+
+The count is a drum roll. Name the items in the sentence that counted them, or set them as a list with no announcement.
+
+> **Before:** Two constraints shape the schedule. Buses leave at 2:50, and the gym is booked Tuesdays.
+> **After:** Buses leave at 2:50 and the gym is booked Tuesdays, so the schedule has to fit around both.
+
+### Invented concept labels
+
+"The supervision paradox." "The adoption gap." "The clarity tax." A coined, capitalizable name for an ordinary observation, usually introduced as if the reader should already know it.
+
+The label makes a passing point sound like a finding. Describe the thing in plain words. Keep a label only when the piece goes on to use it many times and defines it first.
+
+### Tie-back and self-echo
+
+The closing sentence returns to the opening question to announce it has been answered. "So, is the new form worth it? For most buildings, yes." Or it reuses one of the text's own earlier phrases as a payoff. "Which brings us back to the four minutes."
+
+The answer was already given, and the echo is staging. End on the last new fact.
+
+### Clause chaining
+
+Two or more full sentences glued together with ", and", ", so", or ", but" when each could stand on its own. The result is one long compound sentence that reads strangely aloud, because the conjunction carries no relation. It is only glue. It shows up most often right after a pass removed a dash or a semicolon.
+
+- "The district rolled out the new portal in August, and most teachers logged in the first week, but the gradebook sync didn't work until October, so many of them went back to paper."
+- "We moved the training to Wednesdays, so more staff can come, and the sessions are shorter now."
+
+> **Before:** The district rolled out the new portal in August, and most teachers logged in the first week, but the gradebook sync didn't work until October, so many of them went back to paper.
+> **After:** The district rolled out the new portal in August. Most teachers logged in the first week. The gradebook sync didn't work until October, so many of them went back to paper.
+
+The fix keeps the "so" in the last sentence because it names a real cause. The test for every conjunction is the same. Does it say how the two halves relate, or does it only stop the sentence from ending?
+
+Two forms of the same habit:
+
+- **The never-ending conclusion.** The last sentence of a piece or section stacks clause on clause to sum everything up. Land one point and stop.
+- **The comma-clipped tail.** A short extra clause added after a comma to squeeze in one more step. "Pick a date above the calendar, and save." Make it its own sentence, or cut it.
+
+A short compound sentence with a real relation is fine. "We cut the retry loop, and latency dropped by half" is one event and its result.
 
 ### Stranded auxiliary contrast
 
@@ -345,6 +403,18 @@ The most common shape machine prose uses to sound concrete, and the colon is alr
 > **Before:** Each tenant gets the same three things: a port, a process, and local state.
 > **After:** Each tenant gets its own port, process, and local state.
 
+### Synonym cycling
+
+One thing called by a new name in each sentence. "The dashboard... the portal... the hub... the platform." Machine prose rotates nouns to avoid repetition, and the reader starts wondering whether these are four different tools.
+
+Pick one name and repeat it. Repetition of a noun is clarity, not a style flaw.
+
+### Headings in Title Case or as questions
+
+"Understanding The Impact Of Late Start." "Where the schedule is stuck today." "What this means for teachers."
+
+Title Case reads as a press release, and the Wh-heading is a teaser clause in heading form. Use sentence case and name the topic. "Late start and bus routes."
+
 ## 4. Phrases
 
 Delete or collapse to the plain claim underneath.
@@ -377,12 +447,32 @@ The phrase announces that something is about to be said, then says it.
 
 "full stop", "period" as a closer, "and that's fine", "quite simply", and the intensifiers "genuinely", "truly", "remarkably", "incredibly", "actually".
 
+The magic adverbs belong here too. "Quietly", "deeply", "arguably", "fundamentally", "notably". "The update quietly fixed the sync." Each one adds a mood the sentence did not earn. Delete it, or replace it with the fact behind it.
+
 > **Before:** This is wrong, full stop.
 > **After:** This is wrong.
 
 ### Register inflation
 
 leverage → use. utilize → use. facilitate → run or host. delve into → examine. showcase → show. in order to → to. a myriad of → many, or the number. robust and seamless → say the specific thing, such as tested, fault-tolerant, or no login step.
+
+### Avoiding "is" and "has"
+
+"The app features a gradebook." "The room serves as a makerspace." "The policy boasts three tiers." "Attendance is associated with grades."
+
+Machine prose avoids the plain verbs. Features becomes has. Serves as becomes is. Associated with becomes the actual relationship, named. "Students who miss more than ten days fail twice as often."
+
+### Hedged benefits
+
+"May help improve." "Can provide support for." "Has the potential to." "Could potentially."
+
+A benefit hedged so it can't be wrong also can't be checked. Say what it does, or say what you don't know yet. "The form cuts check-in from four minutes to one."
+
+### False ranges
+
+"From innovation to implementation." "From the classroom to the boardroom." "Everything from rosters to report cards."
+
+The two ends aren't on a real scale, so the range covers nothing. List the actual items, or name the one that matters.
 
 ### Transformation verbs
 
@@ -398,7 +488,7 @@ The verb asserts that something big happened without saying what. Name the chang
 
 ### Openers and closers
 
-"In today's fast-paced world", "in an era where", "let's dive in", "in conclusion", "ultimately" as a final-paragraph opener, "it's a reminder that", and any closing paragraph that restates the piece.
+"In today's fast-paced world", "in an era where", "let's dive in", "in conclusion", "ultimately" as a final-paragraph opener, "it's a reminder that", "imagine a world where", "imagine if", "picture this", and any closing paragraph that restates the piece.
 
 ### AI vocabulary
 
@@ -485,6 +575,10 @@ Cutting these is worse than leaving the slop.
 
 **Systematic bolding.** A defined term, a bullet's lead-in label, or a UI element the reader has to locate. The ban is on bolding with no rule behind it.
 
+**Short compound sentences with a real relation.** "We cut the retry loop, and latency dropped by half" is one event and its result. The ban in section 2 is on chains where the conjunction is only glue.
+
+**Repeating a noun.** Calling the gradebook "the gradebook" every time is correct. Synonym cycling is the defect.
+
 **Conjunction openers that carry a full thought.** "But the vendor never shipped it" is a sentence. The ban is on the one-clause stinger.
 
 **Literal and domain uses of the tic bans.** "Real estate" and "real time". "Naming names". A dead process, a dead battery, or a dead link. "Interplay" in physics and "garner" inside a quotation. An instruction to actually sit somewhere.
@@ -540,7 +634,19 @@ The rhetorical tics and the Wikipedia tells. Chains, echoes, and repeated opener
 rg -in -e "that'?s the whole" -e "is the (whole|entire) (point|game|thing|trick|pitch|idea|story|business model)" -e "the (whole|entire) (point|game|pitch) is" -e "here'?s the whole" -e "sit with (that|this|it|the)" -e "you already know" -e "worth naming" -e "is real,? (and|but|not)" -e "not nothing" -e "the punchline" -e "here'?s the (twist|catch|kicker|rub|first)" -e "turns out" -e "that'?s the part" -e "favou?rite part" -e "the only .{1,20} (i trust|that matters|it needs)" -e "take my word for" -e "why .{1,30} mattered" -e "fit(s)? in your head" -e "hold in your head" -e "batteries included" -e "it just works" -e "zero.config" -e "sane defaults" -e "blazing fast" -e "is dead" -e "long live" -e "meticulous" -e "pivotal" -e "intricate" -e "interplay" -e "garner" -e "bolster" -e "vibrant" -e "bustling" -e "multifaceted" -e "ever.(evolving|changing|shifting)" -e "stands as a" -e "serves as a (testament|reminder)" -e "plays a (crucial|pivotal|vital|key|significant) role" -e "despite these challenges" -e "challenges remain" -e "faces several challenges" -e "remains to be seen" -e "time will tell" -e "continues to evolve" -e "nestled in" -e "in the heart of" -e "rich (tapestry|heritage)" -e "hidden gem" -e "boasts a" -e "breathtaking" -e "stunning views" -e "must.see" -e "as an ai (language )?model" -e "as of my last update" -e "knowledge cutoff" -e "i hope this helps" -e "oaicite" -e "contentReference" -e "turn0search" -e "utm_source=" -e ", (highlighting|underscoring|showcasing|reflecting|demonstrating|illustrating|emphasi[sz]ing)" -e "\b(don'?t|do not|never) (call|treat|think of) it\b" -e "^(no [a-z]+, ){1,}no " -e "(didn'?t|did not) [a-z]+,? (and )?(didn'?t|did not)" .
 ```
 
-Negation chains, echoing runs, repeated openers, stacked questions, and colon triples need reading rather than grepping, since all five are shapes across sentences.
+The 2026 additions: present-tense "matters", corrective framing, counting before the list, magic adverbs, hedged benefits, false ranges, avoided "is" and "has", and imagine openers.
+
+```bash
+rg -in -e "\bthis matters\b" -e "why .{1,30} matters" -e "that matters because" -e "more than an? [a-z]+, it'?s" -e "not simply" -e "rather than (relying|just)" -e "instead of just" -e "does not by itself" -e "^(two|three|four|a few) [a-z]+ (shape|stand out|matter|drive)" -e "\b(quietly|deeply|arguably|fundamentally|notably)\b" -e "(may|can|could) (help )?(provide|improve|support|enhance)" -e "has the potential to" -e "could potentially" -e "\bfrom [a-z]+ to [a-z]+\b" -e "\bfeatures an?\b" -e "serves as an?\b" -e "is associated with" -e "imagine (a world|if)" -e "picture this" .
+```
+
+Clause chains are a shape, but a long sentence with two or more ", and / , so / , but" joins is a cheap first filter. Read each hit with the split test.
+
+```bash
+rg -n "[^.!?]{25,}, (and|so|but) [^.!?]{10,}, (and|so|but) " .
+```
+
+Negation chains, echoing runs, repeated openers, stacked questions, colon triples, synonym cycling, and clause chains need reading rather than grepping, since all of them are shapes across sentences.
 
 ```bash
 rg -n -e ": [^,\n]+, [^,\n]+, (and )?[^,\n]+" -e "\? [A-Z][^.?!]{0,60}\?" .

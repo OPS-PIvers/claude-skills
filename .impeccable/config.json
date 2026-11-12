@@ -8,6 +8,15 @@
         "value": "roboto",
         "createdAt": "2026-10-23T16:01:45.503Z",
         "reason": "OPS brand identity mandates Lexend headings + Roboto body (ops-brand-guidelines skill); ops-figures is on-brand by design"
+      },
+      {
+        "rule": "low-contrast",
+        "value": "*",
+        "files": [
+          "plugins/pauls-skills/skills/ops-brand-guidelines/Resources/stylesheet.html"
+        ],
+        "createdAt": "2026-11-12T15:54:35.143Z",
+        "reason": "Claude: only hit is the 96pt slide stat in #d06f70 on #1d2a5d (4.0:1), which passes WCAG AA large-text 3:1; DESIGN.md limits accent-on-inverted to large text"
       }
     ]
   }

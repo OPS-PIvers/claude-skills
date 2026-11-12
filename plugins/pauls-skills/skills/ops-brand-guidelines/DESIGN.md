@@ -1,622 +1,546 @@
 ---
-version: alpha
-name: OPS Technology Style — Instructional
-description: The instructional half of the OPS Technology Style system — a red, white, and blue district palette paired with Lexend headings and Roboto body, tuned for materials that need to be read across a room, understood at a glance, or printed. Use for slide decks, PD presentations, newsletters, landing pages, instructional websites, parent-facing reports, and printed handouts. For dense web-app UI (forms, dashboards, admin tools), see the companion Technical style.
+version: beta
+name: OPS Technology Style
+description: The Orono Technology (OPS Tech) design system for web tools, newsletters, documents, and slides. It uses navy ink, red for anything that needs action, Lexend throughout, and layered flat surfaces.
 
 colors:
   # ========================================================================
-  # BRAND COLORS — these are the canonical OPS Tech values.
-  # Do not alter. Every other color token below is derived from these.
+  # BRAND COLORS: the canonical OPS Tech values. Do not alter.
   # ========================================================================
+  blue-lighter: "#eaecf5"
+  blue-light: "#4356a0"
+  blue: "#2d3f89"
+  blue-dark: "#1d2a5d"
 
-  # Canonical blues (from the official OPS Tech stylesheet)
-  blue-lighter: "#eaecf5"   # canonical — maps to blue-100 in the ramp
-  blue-light: "#4356a9"     # canonical — maps to blue-600 in the ramp
-  blue: "#2d3f89"           # canonical — maps to blue-700 (the brand blue)
-  blue-dark: "#1d2a5d"      # canonical — maps to blue-900
+  red-lighter: "#e5c7c7"
+  red-light: "#c13435"
+  red: "#ad2122"
+  red-dark: "#7a1718"
 
-  # Canonical reds
-  red-lighter: "#e5c7c7"    # canonical — maps to red-100
-  red-light: "#c13435"      # canonical — maps to red-600
-  red: "#ad2122"            # canonical — maps to red-700 (the brand red)
-  red-dark: "#7a1718"       # canonical — maps to red-900
+  gray-lightest: "#f3f3f3"
+  gray-lighter: "#cccccc"
+  gray-light: "#999999"
+  gray: "#666666"
+  gray-dark: "#333333"
+  gray-darkest: "#1a1a1a"
 
-  # Canonical grays
-  gray-lightest: "#f3f3f3"  # canonical — maps to gray-100
-  gray-lighter: "#cccccc"   # canonical — maps to gray-300
-  gray-light: "#999999"     # canonical — maps to gray-500
-  gray: "#666666"           # canonical — maps to gray-700
-  gray-dark: "#333333"      # canonical — maps to gray-900
-  gray-darkest: "#1a1a1a"   # canonical — maps to gray-950
-
-  # Base neutrals
   white: "#ffffff"
-  black: "#000000"
 
   # ========================================================================
-  # TINT RAMPS — computed from canonical values for UI utility.
-  # Use these for hover states, borders, disabled states, subtle backgrounds.
-  # The canonical values above remain the brand-identity values.
+  # RAMPS: tints and shades of the brand colors.
   # ========================================================================
+  blue-50:  "#f4f6fa"
+  blue-100: "#eaecf5"       # canonical blue-lighter
+  blue-200: "#c0c7e0"
+  blue-300: "#97a1cb"
+  blue-400: "#6d7cb5"
+  blue-500: "#5869aa"
+  blue-600: "#4356a0"       # canonical blue-light
+  blue-700: "#2d3f89"       # canonical blue
+  blue-800: "#253473"
+  blue-900: "#1d2a5d"       # canonical blue-dark
+  blue-950: "#0e152f"
 
-  # Blue ramp (11 steps)
-  blue-50:  "#f4f6fa"       # computed — subtlest tint, barely-there surface
-  blue-100: "#eaecf5"       # CANONICAL (blue-lighter)
-  blue-200: "#c0c7e0"       # computed — disabled bg, subtle borders
-  blue-300: "#97a1cb"       # computed — muted text on light, 3rd-tier elements
-  blue-400: "#6d7cb5"       # computed — icons, muted actions
-  blue-500: "#5869aa"       # computed — supporting elements
-  blue-600: "#4356a9"       # CANONICAL (blue-light)
-  blue-700: "#2d3f89"       # CANONICAL (blue — the brand blue)
-  blue-800: "#253473"       # computed — active/pressed primary button
-  blue-900: "#1d2a5d"       # CANONICAL (blue-dark)
-  blue-950: "#0e152f"       # computed — deepest emphasis, near-black blue
+  red-50:  "#f5e3e3"
+  red-100: "#e5c7c7"        # canonical red-lighter
+  red-200: "#deaaaa"
+  red-300: "#d78c8d"
+  red-400: "#d06f70"
+  red-500: "#c85252"
+  red-600: "#c13435"        # canonical red-light
+  red-700: "#ad2122"        # canonical red
+  red-800: "#941c1d"
+  red-900: "#7a1718"        # canonical red-dark
+  red-950: "#3d0c0c"
 
-  # Red ramp (11 steps)
-  red-50:  "#f5e3e3"        # computed — subtlest pink tint
-  red-100: "#e5c7c7"        # CANONICAL (red-lighter)
-  red-200: "#deaaaa"        # computed — soft pink surface
-  red-300: "#d78c8d"        # computed — muted warning text
-  red-400: "#d06f70"        # computed — softer accent
-  red-500: "#c85252"        # computed — mid red
-  red-600: "#c13435"        # CANONICAL (red-light)
-  red-700: "#ad2122"        # CANONICAL (red — the brand red)
-  red-800: "#941c1d"        # computed — active/pressed destructive button
-  red-900: "#7a1718"        # CANONICAL (red-dark)
-  red-950: "#3d0c0c"        # computed — deepest red, near-black red
-
-  # Gray ramp (11 steps)
-  gray-50:  "#fafafa"       # computed — off-white, page background
-  gray-100: "#f3f3f3"       # CANONICAL (gray-lightest)
-  gray-200: "#e0e0e0"       # computed — light border, disabled surface
-  gray-300: "#cccccc"       # CANONICAL (gray-lighter)
-  gray-400: "#b3b3b3"       # computed — medium-light divider
-  gray-500: "#999999"       # CANONICAL (gray-light)
-  gray-600: "#808080"       # computed — placeholder text, muted label
-  gray-700: "#666666"       # CANONICAL (gray)
-  gray-800: "#4d4d4d"       # computed — strong secondary text
-  gray-900: "#333333"       # CANONICAL (gray-dark — default body text)
-  gray-950: "#1a1a1a"       # CANONICAL (gray-darkest)
+  # Slate is the working neutral ramp. Each step is gray tinted with brand blue.
+  slate-50:  "#fafbfc"
+  slate-100: "#f3f5f9"
+  slate-200: "#eceef3"
+  slate-300: "#dde1ea"
+  slate-400: "#c3c9d6"
+  slate-500: "#8b91a3"
+  slate-600: "#5d6475"
+  slate-700: "#444a5a"
+  slate-900: "#2b2f3a"
 
   # ========================================================================
-  # SEMANTIC ROLES — the agent-facing vocabulary.
-  # Prefer these over raw ramp values when building.
+  # ROLES: use these when building.
   # ========================================================================
 
-  # Brand identity
-  primary: "{colors.blue-700}"
-  primary-strong: "{colors.blue-900}"
-  primary-muted: "{colors.blue-600}"
-  primary-subtle: "{colors.blue-100}"
-
-  secondary: "{colors.red-700}"
-  secondary-strong: "{colors.red-900}"
-  secondary-muted: "{colors.red-600}"
-  secondary-subtle: "{colors.red-100}"
+  # Ink and brand
+  primary: "{colors.blue-900}"            # headings, primary buttons, bars, rules
+  primary-hover: "{colors.blue-950}"
+  accent: "{colors.blue-700}"             # links, focus
+  selected-bg: "{colors.blue-100}"        # the selected item in a filter row
+  danger: "{colors.red-700}"              # anything that needs action
+  danger-hover: "{colors.red-800}"
+  danger-bg: "{colors.red-50}"
+  danger-text: "{colors.red-900}"         # text on danger-bg
+  info-bg: "{colors.blue-100}"
 
   # Surfaces
-  surface: "{colors.white}"
-  surface-subtle: "{colors.gray-50}"
-  surface-alt: "{colors.gray-100}"
-  surface-inverted: "{colors.blue-900}"
-  surface-raised: "{colors.blue-700}"
+  canvas: "{colors.slate-100}"            # page background in web tools
+  surface: "{colors.white}"               # panels, documents, inputs
+  surface-sunken: "{colors.slate-50}"     # expanded sub-rows
+  surface-inverted: "{colors.blue-900}"   # top bars, mastheads, slides
+  surface-inverted-raised: "{colors.blue-800}"   # a field on a navy bar
+  surface-loud: "{colors.red-700}"        # section-divider slides only
 
-  # Text on surfaces
-  on-surface: "{colors.gray-900}"
-  on-surface-muted: "{colors.gray-700}"
-  on-surface-subtle: "{colors.gray-600}"
-  on-surface-disabled: "{colors.gray-500}"
-  on-surface-inverted: "{colors.white}"
-  on-surface-inverted-muted: "{colors.blue-100}"
+  # Text
+  on-surface: "{colors.slate-900}"
+  on-surface-muted: "{colors.slate-600}"
+  on-surface-disabled: "{colors.slate-500}"
+  on-inverted: "{colors.white}"
+  on-inverted-muted: "{colors.blue-200}"
+  on-inverted-subtle: "#8da0c7"           # source lines on navy (between blue-300 and blue-400)
+  on-loud-muted: "{colors.red-50}"
 
-  # Borders
-  border-subtle: "{colors.gray-200}"
-  border: "{colors.gray-300}"
-  border-strong: "{colors.gray-500}"
-  border-accent: "{colors.blue-700}"
-  border-focus: "{colors.blue-600}"
-
-  # Focus ring — adopted from the Technical companion system for
-  # accessibility. Applied as a 3px box-shadow on focused inputs.
-  focus-ring: "rgba(45,63,137,0.1)"   # blue-700 at 10% opacity
-
-  # States
-  info: "{colors.blue-700}"
-  info-bg: "{colors.blue-100}"
-  warning: "{colors.red-700}"
-  warning-bg: "{colors.red-100}"
-  error: "{colors.red-800}"
-  success: "{colors.blue-600}"
-
-  # Interactive state pairs
-  primary-hover: "{colors.blue-800}"
-  primary-active: "{colors.blue-900}"
-  secondary-hover: "{colors.red-800}"
-  secondary-active: "{colors.red-900}"
+  # Lines
+  divider: "{colors.slate-200}"           # between rows
+  border: "{colors.slate-300}"            # panel edges, section rules
+  border-strong: "{colors.slate-400}"     # secondary buttons
+  border-control: "{colors.slate-500}"    # inputs (3:1 on white)
+  divider-inverted: "{colors.blue-600}"   # hairlines on navy
+  track: "{colors.slate-300}"             # the empty part of a progress bar
 
 typography:
   display:
     fontFamily: Lexend
-    fontSize: 72px
-    fontWeight: 700
+    fontSize: 56px
+    fontWeight: 500
     lineHeight: 1.05
-    letterSpacing: -0.02em
+    letterSpacing: -0.03em
   headline-lg:
     fontFamily: Lexend
-    fontSize: 48px
-    fontWeight: 700
+    fontSize: 40px
+    fontWeight: 500
     lineHeight: 1.1
-    letterSpacing: -0.02em
+    letterSpacing: -0.028em
   headline-md:
     fontFamily: Lexend
-    fontSize: 36px
-    fontWeight: 700
-    lineHeight: 1.15
-    letterSpacing: -0.01em
-  headline-sm:
-    fontFamily: Lexend
     fontSize: 28px
-    fontWeight: 700
-    lineHeight: 1.2
-  title-lg:
+    fontWeight: 600
+    lineHeight: 1.15
+    letterSpacing: -0.02em
+  headline-sm:
     fontFamily: Lexend
     fontSize: 22px
     fontWeight: 600
+    lineHeight: 1.2
+    letterSpacing: -0.02em
+  title:
+    fontFamily: Lexend
+    fontSize: 15px
+    fontWeight: 600
     lineHeight: 1.3
-  title-md:
+    letterSpacing: -0.01em
+  lede:
     fontFamily: Lexend
     fontSize: 18px
-    fontWeight: 600
-    lineHeight: 1.35
-  title-sm:
-    fontFamily: Lexend
-    fontSize: 16px
-    fontWeight: 600
+    fontWeight: 300
     lineHeight: 1.4
-  body-lg:
-    fontFamily: Roboto
-    fontSize: 18px
-    fontWeight: 400
-    lineHeight: 1.6
-  body-md:
-    fontFamily: Roboto
-    fontSize: 16px
-    fontWeight: 400
-    lineHeight: 1.6
-  body-sm:
-    fontFamily: Roboto
+  body:
+    fontFamily: Lexend
     fontSize: 14px
     fontWeight: 400
-    lineHeight: 1.5
-  label-lg:
-    fontFamily: Roboto
-    fontSize: 14px
+    lineHeight: 1.55
+  ui:
+    fontFamily: Lexend
+    fontSize: 13px
+    fontWeight: 400
+    lineHeight: 1.45
+  ui-strong:
+    fontFamily: Lexend
+    fontSize: 13px
     fontWeight: 500
-    lineHeight: 1.4
-    letterSpacing: 0.01em
-  label-md:
-    fontFamily: Roboto
+    lineHeight: 1.45
+  label:
+    fontFamily: Lexend
     fontSize: 12px
     fontWeight: 500
-    lineHeight: 1.35
-    letterSpacing: 0.02em
-  label-sm:
-    fontFamily: Roboto
-    fontSize: 11px
-    fontWeight: 500
     lineHeight: 1.3
-    letterSpacing: 0.03em
-  overline:
-    fontFamily: Roboto
-    fontSize: 11px
-    fontWeight: 500
-    lineHeight: 1.3
-    letterSpacing: 0.1em
-    textTransform: uppercase
   caption:
-    fontFamily: Roboto
+    fontFamily: Lexend
     fontSize: 12px
     fontWeight: 400
     lineHeight: 1.4
 
 spacing:
-  base: 8px
   xs: 4px
   sm: 8px
-  md: 16px
-  lg: 24px
-  xl: 32px
-  2xl: 48px
-  3xl: 64px
-  4xl: 96px
-  gutter: 24px
-  margin: 32px
-  container-max: 1200px
+  md: 12px
+  lg: 16px
+  xl: 24px
+  2xl: 32px
+  3xl: 48px
+  4xl: 64px
+  control-height: 32px
+  row-height: 44px
+  container-max: 1440px
 
 rounded:
   none: 0px
   sm: 4px
-  md: 8px           # aligned with Technical companion (was 6px prior to 2026-04-24)
-  lg: 12px
-  xl: 16px
+  md: 6px
+  lg: 8px
   full: 9999px
 
-# Non-standard group — the DESIGN.md spec describes elevation in prose,
-# but tokenizing it here makes implementation consistent.
-shadow:
-  none: "none"
-  subtle: "0 1px 2px rgba(29, 42, 93, 0.08)"
-  soft: "0 2px 8px rgba(29, 42, 93, 0.10)"
-  medium: "0 4px 12px rgba(29, 42, 93, 0.12)"
-  strong: "0 8px 24px rgba(29, 42, 93, 0.16)"
-
 components:
+  # === Top bar ===
+  top-bar:
+    backgroundColor: "{colors.surface-inverted}"
+    textColor: "{colors.on-inverted}"
+    typography: "{typography.ui}"
+    height: 52px
+    paddingX: 24px
+  top-bar-title:
+    typography: "{typography.title}"
+    textColor: "{colors.on-inverted}"
+  nav-link:
+    textColor: "{colors.on-inverted-muted}"
+    typography: "{typography.ui}"
+  nav-link-active:
+    textColor: "{colors.on-inverted}"
+    fontWeight: 500
+    underlineWidth: 2px
+    underlineOffset: 7px
+  top-bar-search:
+    backgroundColor: "{colors.surface-inverted-raised}"
+    textColor: "{colors.on-inverted-muted}"
+    rounded: "{rounded.md}"
+    height: "{spacing.control-height}"
+    paddingX: 10px
+
   # === Buttons ===
+  button:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.primary}"
+    borderColor: "{colors.border-strong}"
+    borderWidth: 1px
+    typography: "{typography.ui-strong}"
+    rounded: "{rounded.md}"
+    height: "{spacing.control-height}"
+    paddingX: 12px
+  button-hover:
+    backgroundColor: "{colors.slate-50}"
   button-primary:
     backgroundColor: "{colors.primary}"
-    textColor: "{colors.white}"
-    typography: "{typography.label-lg}"
-    rounded: "{rounded.md}"
-    paddingX: 20px
-    paddingY: 10px
+    textColor: "{colors.on-inverted}"
+    borderColor: "{colors.primary}"
   button-primary-hover:
     backgroundColor: "{colors.primary-hover}"
-  button-primary-active:
-    backgroundColor: "{colors.primary-active}"
-  button-primary-disabled:
-    backgroundColor: "{colors.gray-300}"
-    textColor: "{colors.gray-600}"
-
-  button-secondary:
-    backgroundColor: "{colors.gray-700}"
-    textColor: "{colors.white}"
-    typography: "{typography.label-lg}"
-    rounded: "{rounded.md}"
-    paddingX: 20px
-    paddingY: 10px
-  button-secondary-hover:
-    backgroundColor: "{colors.gray-800}"
-
-  button-outlined:
-    backgroundColor: "{colors.white}"
-    textColor: "{colors.primary}"
-    borderColor: "{colors.primary}"
-    borderWidth: 1.5px
-    typography: "{typography.label-lg}"
-    rounded: "{rounded.md}"
-    paddingX: 20px
-    paddingY: 10px
-  button-outlined-hover:
-    backgroundColor: "{colors.blue-50}"
-
-  button-inverted:
-    backgroundColor: "{colors.white}"
-    textColor: "{colors.blue-900}"
-    typography: "{typography.label-lg}"
-    rounded: "{rounded.md}"
-    paddingX: 20px
-    paddingY: 10px
-
-  button-destructive:
-    backgroundColor: "{colors.secondary}"
-    textColor: "{colors.white}"
-    typography: "{typography.label-lg}"
-    rounded: "{rounded.md}"
-    paddingX: 20px
-    paddingY: 10px
-  button-destructive-hover:
-    backgroundColor: "{colors.secondary-hover}"
-
-  # Commit action — use for form submissions on web-based instructional
-  # materials (sign-up forms, RSVPs, contact forms). Red signals finality,
-  # not destruction. Distinct from button-destructive only in semantics;
-  # visually they share the same red treatment.
-  button-submit:
-    backgroundColor: "{colors.secondary}"
-    textColor: "{colors.white}"
-    typography: "{typography.label-lg}"
-    rounded: "{rounded.md}"
-    paddingX: 20px
-    paddingY: 10px
-  button-submit-hover:
-    backgroundColor: "{colors.secondary-hover}"
-
-  button-ghost:
-    backgroundColor: transparent
-    textColor: "{colors.primary}"
-    typography: "{typography.label-lg}"
-    rounded: "{rounded.md}"
-    paddingX: 12px
-    paddingY: 8px
-  button-ghost-hover:
-    backgroundColor: "{colors.blue-50}"
+    borderColor: "{colors.primary-hover}"
+  button-danger:
+    backgroundColor: "{colors.danger}"
+    textColor: "{colors.on-inverted}"
+    borderColor: "{colors.danger}"
+  button-danger-hover:
+    backgroundColor: "{colors.danger-hover}"
+    borderColor: "{colors.danger-hover}"
+  button-disabled:
+    backgroundColor: "{colors.slate-200}"
+    textColor: "{colors.on-surface-disabled}"
+    borderColor: "{colors.slate-200}"
 
   # === Inputs ===
   input:
-    backgroundColor: "{colors.white}"
+    backgroundColor: "{colors.surface}"
     textColor: "{colors.on-surface}"
-    borderColor: "{colors.border}"
-    borderWidth: 1.5px
-    typography: "{typography.body-md}"
+    borderColor: "{colors.border-control}"
+    borderWidth: 1px
+    typography: "{typography.ui}"
     rounded: "{rounded.md}"
-    paddingX: 12px
-    paddingY: 10px
-  input-hover:
-    borderColor: "{colors.border-strong}"
+    minHeight: "{spacing.control-height}"
+    paddingX: 10px
+    paddingY: 6px
   input-focus:
-    borderColor: "{colors.border-focus}"
-    boxShadow: "0 0 0 3px {colors.focus-ring}"   # accessibility ring
+    borderColor: "{colors.primary}"
+    outlineColor: "{colors.accent}"
+    outlineWidth: 2px
+    outlineOffset: 1px
   input-error:
-    borderColor: "{colors.secondary}"
+    borderColor: "{colors.danger}"
   input-disabled:
-    backgroundColor: "{colors.gray-100}"
+    backgroundColor: "{colors.slate-100}"
     textColor: "{colors.on-surface-disabled}"
+    borderColor: "{colors.border-strong}"
   input-label:
-    typography: "{typography.label-md}"
+    typography: "{typography.label}"
     textColor: "{colors.on-surface}"
   input-helper:
     typography: "{typography.caption}"
-    textColor: "{colors.on-surface-subtle}"
+    textColor: "{colors.on-surface-muted}"
   input-error-message:
     typography: "{typography.caption}"
-    textColor: "{colors.red-600}"
+    textColor: "{colors.danger}"
 
-  # === Callouts ===
-  callout-info:
+  # === Alerts ===
+  # An alert is a tinted block with no border. It opens with a bold lead word.
+  alert-danger:
+    backgroundColor: "{colors.danger-bg}"
+    textColor: "{colors.danger-text}"
+    typography: "{typography.ui}"
+    rounded: "{rounded.md}"
+    paddingX: 14px
+    paddingY: 10px
+  alert-info:
     backgroundColor: "{colors.info-bg}"
-    textColor: "{colors.on-surface}"
-    borderLeftColor: "{colors.info}"
-    borderLeftWidth: 3px
+    textColor: "{colors.primary}"
+    typography: "{typography.ui}"
     rounded: "{rounded.md}"
-    padding: 20px
-  callout-warning:
-    backgroundColor: "{colors.warning-bg}"
-    textColor: "{colors.red-900}"
-    borderLeftColor: "{colors.warning}"
-    borderLeftWidth: 3px
-    rounded: "{rounded.md}"
-    padding: 20px
-  callout-neutral:
-    backgroundColor: "{colors.gray-100}"
-    textColor: "{colors.on-surface}"
-    borderLeftColor: "{colors.gray-700}"
-    borderLeftWidth: 3px
-    rounded: "{rounded.md}"
-    padding: 20px
+    paddingX: 14px
+    paddingY: 10px
 
-  # === Cards ===
-  card:
+  # === Panel ===
+  # A panel is the one white container on a canvas page. Don't nest panels.
+  panel:
     backgroundColor: "{colors.surface}"
-    borderColor: "{colors.border-subtle}"
+    borderColor: "{colors.border}"
     borderWidth: 1px
     rounded: "{rounded.lg}"
-    padding: 24px
-    shadow: "{shadow.subtle}"
-  card-raised:
-    backgroundColor: "{colors.surface-raised}"
-    textColor: "{colors.white}"
-    rounded: "{rounded.lg}"
-    padding: 24px
-    shadow: "{shadow.soft}"
-  card-subtle:
-    backgroundColor: "{colors.surface-alt}"
-    rounded: "{rounded.lg}"
-    padding: 24px
 
   # === Tables ===
   table-header:
-    backgroundColor: "{colors.primary}"
-    textColor: "{colors.white}"
-    typography: "{typography.label-lg}"
-    paddingX: 16px
-    paddingY: 12px
+    textColor: "{colors.on-surface-muted}"
+    typography: "{typography.label}"
+    borderBottomColor: "{colors.border}"
+    borderBottomWidth: 1px
+    paddingX: 12px
+    paddingY: 9px
+    edgePaddingX: 20px
   table-row:
-    backgroundColor: "{colors.white}"
     textColor: "{colors.on-surface}"
-    typography: "{typography.body-md}"
-    borderBottomColor: "{colors.border-subtle}"
-    paddingX: 16px
-    paddingY: 12px
-  table-row-alt:
-    backgroundColor: "{colors.surface-alt}"
-  table-row-action-required:
-    backgroundColor: "{colors.red-100}"
-    textColor: "{colors.red-900}"
+    typography: "{typography.ui}"
+    borderBottomColor: "{colors.divider}"
+    borderBottomWidth: 1px
+    height: "{spacing.row-height}"
+    paddingX: 12px
+  table-row-name:
+    textColor: "{colors.primary}"
+    fontWeight: 500
+  table-row-sub:
+    backgroundColor: "{colors.surface-sunken}"
 
-  # === Navigation ===
-  nav-bar:
-    backgroundColor: "{colors.primary}"
-    textColor: "{colors.white}"
-    typography: "{typography.label-lg}"
-    paddingX: 24px
-    paddingY: 16px
-  nav-link:
-    textColor: "{colors.white}"
-    typography: "{typography.label-lg}"
-  nav-link-active:
-    textColor: "{colors.blue-100}"
-    borderBottomColor: "{colors.secondary}"
-    borderBottomWidth: 2px
+  # === Status ===
+  # Status is a 7px dot and a word. The word alone must give the status.
+  status:
+    typography: "{typography.ui}"
+    textColor: "{colors.on-surface}"
+    dotColor: "{colors.blue-300}"
+  status-done:
+    dotColor: "{colors.primary}"
+  status-action:
+    textColor: "{colors.danger}"
+    fontWeight: 500
+    dotColor: "{colors.danger}"
+  status-not-started:
+    dotColor: "{colors.slate-500}"
+    dotStyle: outline
 
-  # === Badge / chip ===
-  badge:
-    backgroundColor: "{colors.blue-100}"
-    textColor: "{colors.blue-900}"
-    typography: "{typography.label-sm}"
-    rounded: "{rounded.full}"
+  # === Progress ===
+  progress:
+    color: "{colors.primary}"
+    trackColor: "{colors.track}"
+    height: 4px
+    rounded: 2px
+  progress-danger:
+    color: "{colors.danger}"
+  summary-bar:
+    color: "{colors.primary}"
+    trackColor: "{colors.track}"
+    height: 8px
+    rounded: "{rounded.sm}"
+
+  # === Filter row ===
+  segment:
+    textColor: "{colors.on-surface-muted}"
+    typography: "{typography.ui}"
+    rounded: "{rounded.sm}"
     paddingX: 10px
-    paddingY: 4px
-  badge-accent:
-    backgroundColor: "{colors.red-100}"
-    textColor: "{colors.red-900}"
-  badge-neutral:
-    backgroundColor: "{colors.gray-200}"
-    textColor: "{colors.gray-900}"
+    paddingY: 5px
+  segment-selected:
+    backgroundColor: "{colors.selected-bg}"
+    textColor: "{colors.primary}"
+    fontWeight: 500
+
+  # === Lists ===
+  list-row:
+    typography: "{typography.ui}"
+    borderBottomColor: "{colors.divider}"
+    borderBottomWidth: 1px
+    paddingY: 8px
+
+  # === Links ===
+  link:
+    textColor: "{colors.accent}"
+    underlineWidth: 1px
+    underlineOffset: 3px
 
   # === Charts ===
   chart-series-1:
-    color: "{colors.blue-700}"
+    color: "{colors.blue-900}"
   chart-series-2:
-    color: "{colors.red-700}"
-  chart-series-3:
     color: "{colors.blue-600}"
-  chart-series-4:
-    color: "{colors.red-600}"
-  chart-series-5:
+  chart-series-3:
     color: "{colors.blue-400}"
-  chart-series-6:
-    color: "{colors.red-400}"
+  chart-series-4:
+    color: "{colors.slate-500}"
+  chart-highlight:
+    color: "{colors.red-700}"
+  chart-series-on-inverted:
+    color: "{colors.blue-400}"
+  chart-highlight-on-inverted:
+    color: "{colors.white}"
   chart-gradient-start:
     color: "{colors.blue-100}"
   chart-gradient-end:
     color: "{colors.blue-900}"
   chart-axis:
-    color: "{colors.gray-700}"
+    color: "{colors.slate-600}"
   chart-grid:
-    color: "{colors.gray-200}"
+    color: "{colors.slate-300}"
 ---
 
-# OPS Technology Style — Instructional
+# OPS Technology Style
 
 ## Overview
 
-Orono Technology's visual identity is built on the district's red, white, and blue tradition — grounded in civic trust, softened by warm neutrals and human typography. The system should feel **confident, trustworthy, and legible** across every medium: a parent reading a report on their phone, a teacher glancing at a PD slide from the back of the room, a student tapping through a web tool.
+This is the design system for Orono Technology. It covers web tools, newsletters, documents, and slides.
 
-This is the **instructional** half of the OPS Technology Style system. Use this file for materials that need to be read across a room, understood at a glance, or printed: slide decks, PD presentations, newsletters, landing pages, instructional websites, parent-facing reports, and printed handouts. The type scale is generous, the neutrals are warm true-gray, the shadow language is restrained, and the cards rest on borders rather than floating on shadows.
+The system uses the district's red, white, and blue with one typeface, Lexend. Navy is the ink on flat, layered surfaces. Red marks anything that needs someone to act. A piece built with it should look like it came from a well-run product team.
 
-The personality lands between *institutional* and *human*. Not corporate, not cold — but not playful or whimsical either. Lexend's slightly wide letterforms do the warming work; the brand blue does the trust work; the brand red does the emphasis work, sparingly.
+`references/example-tool.html` is a finished staff tool built to this spec. Open it before building a web tool.
 
-Two modes:
+### Modes
 
-- **Official / district-facing** (PD presentations, staff communications, parent-facing reports, dashboards, policy documents, newsletters): the full palette and typography system applies. Blue dominates, red accents, Lexend + Roboto strictly.
-- **Playful / student-facing** (classroom games, fun interactives, holiday pieces): agents may choose a topic-appropriate palette while keeping Orono colors present as accents and preserving the logo lockups. The tokens in this file define the *official* mode; playful mode is a deliberate departure.
-
-## The companion Technical system
-
-A sibling spec — **OPS Technology Style — Technical** — exists for dense web-application UI (workflow tools, admin dashboards, form-heavy interfaces). Both systems live under the same OPS Technology Style umbrella and share every canonical brand color, but diverge on typography, neutrals, and shadow philosophy because their use cases demand different optical tuning.
-
-Route decisions by medium:
-
-- **This file (Instructional):** slides, docs, newsletters, landing pages, instructional websites, printed materials. Anything where a reader is sitting still and consuming content.
-- **Companion file (Technical):** workflow apps, admin dashboards, forms, data entry, submission review. Anything where a user is completing a task.
-
-When an agent is uncertain which system applies, the question to ask is: *is this material being read, or is it being operated?* Read → Instructional. Operated → Technical.
-
-Shared across both systems: the canonical blue ramp (`blue-lighter`, `blue-light`, `blue`, `blue-dark`), the canonical brand red (`#ad2122`), the semantic-role vocabulary (`primary`, `surface`, `on-surface`, `border-focus`), the 12px card radius, the `focus-ring` accessibility pattern, and `button-submit` as a red commit action. Different between systems: type families (Lexend + Roboto here, Inter there), neutrals (true gray here, Tailwind slate there), canvas treatment (light surfaces or solid dark slides here, navy-gradient-with-white-cards there), and shadow philosophy (restrained + border-anchored here, two-layer shadow + borderless there).
-
-## How this file is organized
-
-Two parts:
-
-1. **Canonical brand colors** — the 14 hex values defined by the OPS Tech stylesheet (4 blues, 4 reds, 6 grays). These are the brand. Never alter them.
-2. **Computed tint ramps** — 11-step ramps (50 → 950) per color family, derived from the canonical values. These exist to make modern UI work fluent: hover states, disabled states, subtle borders, muted text, surface layers. Every canonical value appears in its ramp at a specific position (e.g., `blue-100` has the same hex as `blue-lighter`).
-
-Agents should **prefer the semantic role tokens** (`primary`, `surface`, `on-surface`, `border`, `info`, etc.) when building — they express intent and adapt cleanly to both modes. Use raw ramp tokens (`blue-300`, `gray-600`) only when a semantic role doesn't fit.
+- **Official** (staff and parent communications, PD decks, reports, tools). Everything in this file applies.
+- **Playful** (classroom games, student interactives, holiday pieces). The palette may change to suit the topic. The palette keeps OPS colors as accents, and the logos stay as issued. Every other rule in this file still applies.
 
 ## Colors
 
-The palette is anchored by canonical brand values — deepened and lightened within each family for UI utility. **No new hues are introduced.** The only additions are mathematical tints and shades derived from the official hex values.
+The ramps are tints and shades of the fixed brand colors. Build with the roles.
 
-- **Blue (primary)** — the trust voice. Brand blue is `#2d3f89` at `blue-700`. Goes darker toward `blue-900` (`#1d2a5d`) for headlines and full-bleed backgrounds, and lighter toward `blue-100` (`#eaecf5`) for subtle surfaces. The ramp fills in the middle for hover states, disabled states, muted icons, borders, and so on.
-- **Red (secondary)** — the emphasis voice. Brand red is `#ad2122` at `red-700`. Never dominant — used for accents, warnings, commit actions, and one key emphasis per view.
-- **Gray (neutral)** — the working voice. An 11-step ramp from near-white (`#fafafa`) to near-black (`#1a1a1a`). Body text defaults to `gray-900` (`#333333`), not pure black.
-- **White** — the resting surface. Primary canvas for documents, cards, and light-mode interfaces.
+- **Navy (`primary`, `blue-900`)** is the ink. Headings, primary buttons, progress bars, top bars, mastheads, and slide backgrounds use it.
+- **Blue (`accent`, `blue-700`)** is for links and focus outlines.
+- **Red (`danger`, `red-700`)** means "this needs you." Everything tied to the thing that needs action is red, including its status, its number, its progress bar, and the alert about it. A delete button is red too. Red is never used for an ordinary heading, button, or link.
+- **Slate** is the neutral ramp for text, borders, and page backgrounds.
+- **White** is the surface for panels, documents, and inputs.
 
-### How to think about the ramp positions
+### Red at large scale
 
-- **50** — barely-there tint. Page backgrounds that still feel white.
-- **100** — subtle tint. Callout backgrounds, disabled surfaces, tag backgrounds. (Canonical `-lighter` values live here.)
-- **200–400** — light-to-medium. Borders, dividers, muted icons, disabled text.
-- **500** — true midtone. (Canonical `gray-light` lives here.)
-- **600** — deep supporting. Icon colors on light surfaces, secondary hover states. (Canonical `blue-light` and `red-light` live here.)
-- **700** — the **brand values**. Primary actions, nav bars, headings. (Canonical `blue`, `red`, and `gray` live here.)
-- **800** — pressed/active state for brand-colored interactive elements.
-- **900** — deepest brand color. Full-bleed title backgrounds, high-contrast headings. (Canonical `-dark` values live here.)
-- **950** — near-black deepest shade. Rarely needed; use for maximum contrast moments.
+Red is decorative only on a section-divider slide, which is solid `surface-loud`, and on one newsletter headline figure set in `danger`.
 
-### Dominance
+### Charts
 
-Official pieces should land near **60% blue, 15% red, 25% neutral**. If red is reading as a co-lead, pull it back to accent-only.
-
-### Chart sequencing
-
-Multi-series charts order as: `blue-700` → `red-700` → `blue-600` → `red-600` → `blue-400` → `red-400`. Sequential gradients run `blue-100` → `blue-900`. Do not introduce off-palette hues unless the data semantically requires categorical meaning the brand palette cannot express.
+Series run `blue-900`, `blue-600`, `blue-400`, `slate-500`. Sequential gradients run `blue-100` to `blue-900`. `chart-highlight` (red) is for the one series the reader should look at. On navy slides, that series is white and the rest are `blue-400`.
 
 ## Typography
 
-Two families do all the work:
+Lexend is the only typeface. It was designed to improve reading fluency.
 
-- **Lexend** — all headings, all titles, all button and nav labels. Lexend's slightly wide, readability-focused construction keeps the voice confident without tipping into corporate. Weights used: 600 for titles, 700 for display and headlines.
-- **Roboto** — all body copy, all captions, all helper text, all table cells, all labels. Weights: 400 regular, 500 for labels.
+- Large headings are weight 500 with tight letter-spacing. They rank by size, so don't make them bolder.
+- Small headings and titles are weight 600.
+- Body and interface text is weight 400. A lede is weight 300.
+- Numbers in tables use tabular figures and align right.
 
-**Fallbacks** (PowerPoint without Lexend installed, offline contexts): Calibri, then Arial. Never Times New Roman. Never Comic Sans. Never a decorative display font for body.
+If Lexend is unavailable, use Calibri, then Arial.
 
-The typography scale spans 72px display down to 11px overline, across 15 levels. Headings (`display`, `headline-*`) use tight line-height (1.05–1.2) and slight negative letter-spacing for density. Body (`body-*`) runs at 1.5–1.6 line-height for long-form readability. Labels (`label-*`) use positive letter-spacing for the slight small-caps effect common in UI chrome. The `overline` token is for uppercase section markers.
+Write every heading, title, button, label, and column header in sentence case.
 
-**This type system does not cross over to the Technical system.** If you're working on a workflow app or admin UI, use Inter (via the Technical sibling). Mixing Lexend into a PaperPal-style form will make fields feel disproportionately loud; mixing Inter into a slide deck will make headings feel underweight from the back of a classroom. The two families serve distinct optical problems.
-
-### On adding a third font family
-
-Some modern design systems use a distinct font for UI labels and metadata — typically a geometric sans like Space Grotesk or a monospace like JetBrains Mono — to create a clear visual boundary between *content* and *UI chrome*. OPS Tech uses Roboto for both, which is the more common approach and works well.
-
-If OPS ever wanted to explore this, candidates that pair well with Lexend include **Space Grotesk** (geometric, slightly quirky), **IBM Plex Mono** (legible, serious), or **Lexend Deca** (same family, tighter letterforms). This would be a brand decision — not something agents should introduce on their own.
+A section is marked by its heading and the space above it. Don't add an uppercase label over it or a colored rule under it.
 
 ## Layout
 
-A **fluid grid** on small screens, **fixed max-width (1200px)** on desktop. Content breathes inside a consistent 8px spacing rhythm — micro-adjustments use `xs` (4px), related groups use `sm` (8px) or `md` (16px), section separation uses `lg` (24px) or `xl` (32px), major page regions use `2xl` (48px) or `3xl` (64px).
+Web tools are dense, with 13px interface text, 32px controls, and 44px table rows.
 
-Card internal padding defaults to 24px. Form inputs use 10px vertical / 12px horizontal padding. Buttons use 10px / 20px. These consistent rhythms are what make the composition read as a system rather than a collection.
+A tool page stacks a navy top bar, a `canvas` page, and one white `panel` for the main content. A side rail for a form sits directly on the canvas. The footer has the Primary Logo.
 
-## Elevation & Depth
+Separate rows with a `divider` hairline and sections with space. Never put a panel inside a panel.
 
-The system is **functionally flat** — hierarchy is conveyed through color contrast and thin borders rather than heavy shadows. Cards sit on surfaces via a 1px `border-subtle` at `gray-200`, often with a `shadow.subtle` for the slightest lift. Higher elevation levels (`shadow.soft`, `shadow.medium`, `shadow.strong`) exist but should be used sparingly — the system reads as "paper on paper," not floating UI.
+## Elevation
 
-In dark-mode contexts (`blue-900` backgrounds), hierarchy comes from **tonal layering**: content sits on a `blue-700` surface, which sits on a `blue-900` canvas. A thin `blue-600` border or red left-accent line defines edges.
+Depth comes from the three layers and from 1px borders. Don't add shadows.
 
 ## Shapes
 
-**Moderately rounded.** The default corner radius is `md: 8px` for buttons, inputs, badges, and small components. Cards and larger containers use `lg: 12px`. Pills and circular controls use `full`. Sharp 0px corners are avoided — the system reads as approachable, not rigid.
-
-Never mix radius scales within a single component cluster. A card with 12px corners should not contain buttons with 16px corners.
+The radius is `sm` (4px) on a filter highlight, `md` (6px) on controls and alerts, `lg` (8px) on a panel, and `full` on status dots and avatars. Nothing is pill-shaped.
 
 ## Components
 
-Component tokens cover the most common atoms: buttons (7 variants with hover/active/disabled states), inputs (with hover/focus/error/disabled states, labels, helper text, and error messages), callouts (info/warning/neutral), cards (default, raised, subtle), tables (header, row, alt row, action-required row), nav (bar, link, active link), badges (default, accent, neutral), and chart series colors (6 series plus gradient and axis colors).
+**Top bar.** Navy, 52px tall. It holds the tool's name, the navigation, a search field, and the user's initials. The selected navigation item is white with a 2px underline directly under the word. The others are `on-inverted-muted`.
 
-**Button hierarchy:**
-- **Primary** — one per screen, for the most important action.
-- **Secondary** — supporting actions. Gray, not red (red is for destructive and commit).
-- **Outlined** — alternative actions where visual weight should stay lighter than Primary.
-- **Inverted** — used on dark backgrounds.
-- **Destructive** — deletion, withdrawal, consequence. Never for routine actions.
-- **Submit** — commit action for form submissions (sign-ups, RSVPs, contact forms). Red signals finality rather than destruction. Visually identical to `button-destructive`; the distinction is semantic.
-- **Ghost** — tertiary actions, toolbar buttons.
+**Buttons.** The default button is white with a border. A screen has one primary button, filled navy. A delete button is filled red. A button may have an icon before its label. Labels name what happens, such as "Send reminder."
 
-**Input states** always preserve the 1.5px border width; only the color changes across default/hover/focus/error states. On focus, a 3px `focus-ring` box-shadow is added for accessibility — keyboard users and low-vision users depend on this. Helper text sits below the input in `caption` typography; error messages replace helper text in `red-600`.
+**Inputs.** A 1px `border-control` edge. Focus adds a 2px `accent` outline. The label sits above in `label`. Helper text sits below in `caption`. An error replaces the helper text and says how to fix the problem.
 
-**Callouts** use a subtle tinted background with a 3px colored left border. Info uses blue tones, warning uses red tones, neutral uses gray. The left-border pattern is intentional — it scans as "aside" more reliably than a full bordered box.
+**Alerts.** A tinted block with no border. It opens with a bold lead word, such as "Action required:" or "Due Friday:". A danger alert may have a warning icon and one link. Use one alert per page.
 
-**Tables** put a brand blue header row with white text on top of alternating white / `gray-100` body rows. Rows flagged as "action required" use `red-100` backgrounds with `red-900` text.
+**Panel.** White, 1px border, 8px radius. A page has one main panel.
 
-## Do's and Don'ts
+**Tables.** Column headers are `label` in muted text over a hairline. Rows are 44px with hairlines between them. The first and last cells have 20px of side padding. The first column of a top-level row is navy at weight 500. Expanded sub-rows sit on `surface-sunken` in regular text. Leave the header unfilled and the rows unstriped.
 
-- **Do** use the semantic role tokens (`primary`, `surface`, `on-surface`, `border`) over raw ramp values. They express intent and adapt cleanly.
-- **Do** use brand blue as the dominant color in official pieces — roughly 60% of the color weight.
-- **Do** use brand red as accents and for a single key emphasis per view, not as a co-lead.
-- **Do** use `gray-900` (`#333333`) for body text on light backgrounds, not pure black.
-- **Do** use white text on `blue-900` backgrounds, with `blue-100` for muted secondary text.
-- **Do** pair Lexend (headings) with Roboto (body, labels) — only these two families.
-- **Do** keep all callouts, cards, and inputs on the 8px / 12px radius scale consistently within a piece.
-- **Do** order chart series blue-700 → red-700 → blue-600 → red-600 → blue-400 → red-400.
-- **Do** route to the Technical companion system for workflow apps, admin dashboards, and form-heavy interfaces. Don't force this file's type scale into a dense admin UI.
+**Status.** A 7px dot and a word. The dot is navy for done, `blue-300` for in progress, outlined for not started, and red with red text for action required.
 
-- **Don't** invent new hues for UI needs — everything you need is in the computed ramps.
-- **Don't** use more than two font families. Lexend + Roboto, full stop.
-- **Don't** use brand red as a primary surface color or let it equal brand blue in visual weight.
-- **Don't** use pure black (`#000000`) for body text.
-- **Don't** use Times New Roman, Comic Sans, or decorative display fonts anywhere.
-- **Don't** place the Primary Logo directly on `blue-900` — the blue wordmark disappears. Use the Torch Icon, Secondary Logo, or a white plate.
-- **Don't** center body text — left-align. Center headlines and titles only.
-- **Don't** mix radius scales inside a single component cluster.
-- **Don't** use heavy drop shadows. Hierarchy comes from color and thin borders; `shadow.subtle` is the default lift.
-- **Don't** import Inter, Tailwind slate, or the two-layer card shadow from the Technical system — those belong to a different optical problem.
+**Progress.** A 4px bar with the percentage beside it. The bar is red on a row that needs action.
+
+**Filter row.** Plain words in muted text. The selected one sits on a `selected-bg` block in navy. Don't use an underline here, because it stacks against the table's rules.
+
+**Summary.** State a total as one sentence with an 8px `summary-bar` under it, such as "1,560 of 2,080 devices re-enrolled." The part that needs action is a red segment. Don't build a row of large numbers with small labels.
+
+**Icons.** Draw icons as outlines on a 16px grid with a 1.5px stroke, and show them at 12px to 16px. Use them for actions, search, expanding rows, and warnings. Don't put an icon before a heading.
+
+## Slides
+
+Slides are navy by default.
+
+- **Title slide.** The Secondary Logo sits top left at 0.8in. The title is 78pt, weight 500, set low on the left. A hairline runs under it, with the audience on the left and the date on the right at 16pt. A closing slide uses the same layout.
+- **Content slide.** The title is 30pt, weight 500, top left. It states the slide's point as a sentence. Body text is 20pt, weight 300, in `on-inverted-muted`. Emphasis is white and larger.
+- **One number.** The number is 180pt in white with a 20pt caption under it.
+- **Section divider.** Solid red with a white 72pt title set low on the left.
+- **Source line.** 10pt in `on-inverted-subtle`, bottom left.
+
+Groups on a slide are separated by `divider-inverted` hairlines. Brand red fails contrast as text on navy, so emphasis on navy is white. Use a white slide only for a dense table or a deck that will be printed.
+
+## Documents and newsletters
+
+A document is a white page. The first page has a navy masthead band with the publication name in white at 30pt. The Primary Logo goes in the footer at 19px tall, on white or on the canvas.
+
+| Element | Spec |
+|---|---|
+| Headline | 31pt, weight 500, navy |
+| Lede | 14pt, weight 300 |
+| Body | 10.5pt, `on-surface` |
+| Section label | 9.5pt, weight 500, `on-surface-muted` |
+| Story title | 12pt, weight 500, navy, under a navy hairline |
+| Figure | 46pt, `danger`, one per newsletter |
+| Footer text | 8.5pt, `on-surface-muted` |
+
+Notes use `alert-info`. Anything that needs action uses `alert-danger`.
+
+## Logos
+
+The minimum logo width is 80px on screen and 0.75in in print. Use the files as issued.
+
+## Voice and copy
+
+Copy follows the OPS voice in `references/voice-and-copy.md`. The essentials:
+
+- Give each sentence one thought.
+- Lead with the point.
+- Use sentence case.
+- Don't write colon subtitles.
+- Give content slides a claim title that states the point.
+- Name the action on a button. Say how to fix the problem in an error.
+
+## Rules
+
+- Use roles before raw ramp values.
+- Use red only for what needs action, a delete button, a chart's highlight series, a section-divider slide, and one newsletter figure.
+- State status in words, with a dot.
+- Don't add shadows, pills, side stripes, accent rules, or uppercase letter-spaced labels.
+- Don't nest panels or wrap a list in cards.
+- Don't fill a table header or stripe its rows.
+- Don't mark a selection with a line that touches another line or an edge.
+- Don't place the Primary Logo or the Torch Icon on navy. Their blue parts disappear there.
+- Don't center body text.

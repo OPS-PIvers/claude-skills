@@ -48,6 +48,9 @@ The fix is the project's palette, not a different pleasant palette. When the pro
 | Raw default Tailwind palette such as `blue-500`, `slate-800`, `gray-500`, on a project that has tokens | Swap to the token. |
 | A font stack nobody chose, meaning Inter or the system stack arriving by default | Report it as undecided rather than silently swapping it. |
 | A dark-mode toggle nobody asked for, particularly when only one theme is actually designed | Delete the toggle, or report the second theme as unfinished. |
+| Colored glows and colored box-shadows, such as `shadow-blue-500/50` or a brand-tinted halo under a button | Delete. If something needs lift, use a neutral shadow, or better, none. |
+| One italic serif word dropped into a sans headline, such as "Plan *smarter*" | Set the whole heading in the one heading face. |
+| An always-dark theme with mid-gray body text that barely passes contrast | Report it. Dark was chosen for mood, and the reading text paid for it. |
 
 > **Before:** `<h1 className="text-6xl font-bold bg-gradient-to-r from-purple-600 via-pink-500 to-indigo-600 bg-clip-text text-transparent">Attendance</h1>`
 > **After:** `<h1 className="text-2xl font-semibold text-blue-900">Attendance</h1>`
@@ -65,6 +68,9 @@ The gradient went, and so did the display size, because a working screen's title
 | A card wrapping content that needed no container | Delete the wrapper. |
 | `h-full` forcing uniform card heights when the content genuinely varies | Let them size to content. |
 | Every card opening with an icon in a colored rounded square | Keep the icons that disambiguate, delete the rest. |
+| **The ghost card**, meaning a 1px hairline border plus a wide soft shadow on the same box | Use the edge or the shadow, not both. Usually the edge. |
+| Very round containers, meaning 24px or more on cards and panels | Bring cards back to the project's card radius, usually 8 to 16px. Keep full rounding for pills and buttons. |
+| Lists, settings, and link groups boxed as cards when a hairline divider between rows would do | Replace the boxes with 1px dividers. A list is rows, not a stack of containers. |
 
 Nine cards of equal weight tell the user that all nine matter equally, which is almost never what the screen means. The accent stripe is the same failure wearing a color, because it decorates the card instead of ranking it.
 
@@ -86,6 +92,8 @@ The most expensive tell, because fixing it is structural and it makes daily-use 
 | A footer of link columns that go nowhere | Delete. |
 | Section headers on a screen that has one section | Delete. |
 | An onboarding or empty-state illustration on a screen the user opens every day | Delete. |
+| **The stat banner**, meaning one huge number with a small label and three supporting stats, on a marketing or info page | Keep the one number that supports the page's claim, sourced, inside a sentence or a plain table. |
+| **01 / 02 / 03 section numbers**, and "1, 2, 3" step rows | Number only a real sequence the reader follows in order. Otherwise use headings. |
 
 Ask what the user came here to do and how often they do it. A screen somebody opens forty times a day earns none of the above.
 
@@ -103,6 +111,24 @@ Ask what the user came here to do and how often they do it. A screen somebody op
 | A type scale so large throughout that nothing is emphasized | Drop the body and label sizes, keep one thing big. |
 | Uniform `gap-4` everywhere, producing no grouping | Vary the gap so related things sit closer than unrelated things. |
 | A decorative icon beside every label | Keep the ones that disambiguate. |
+| **A kicker label above every section heading**, meaning small uppercase letter-spaced text such as `FEATURES` or `HOW IT WORKS` | Delete. The heading already names the section. Keep at most one where it carries real information, such as a date or a unit name. |
+| A short accent rule under or before headings | Delete. Space and weight set off a heading. |
+| Unicode arrow chains in UI or copy, such as "Plan → Teach → Reflect" | Write the sentence, or draw a real diagram if the flow matters. |
+| Crude hand-drawn SVG mascots, scenes, or spot illustrations | Ship no illustration. A real photo, a real figure, or empty space beats a wobbly drawing. |
+
+### 1e. Slides
+
+Generated decks have their own tells. They look finished and say little.
+
+| Tell | What to do |
+|---|---|
+| **Topic-label titles on content slides**, such as "Budget Overview" | Write a claim title that states the slide's point in sentence case, such as "Busing costs rose 14%". Read the titles alone in order. They should tell the story. Title, section, agenda, and closing slides keep short labels. |
+| Near-duplicate slides that say the same thing in different words | Merge them. |
+| Bullets where a chart belongs, and statistics with no source | Chart the numbers. Put a source line on every data slide. |
+| An icon, stat block, or callout added to every slide so none is text-only | Delete the filler. A short text slide is fine. |
+| Three equal columns with the main point buried in the third | Lead with the main point, or make it visibly larger. |
+| Mixed icon styles across the deck | One icon set, and only icons that carry meaning. |
+| Stock-perfect generated imagery, such as handshakes and smiling office workers | A real photo, or nothing. |
 
 ## 2. Interaction defaults, banned unless earned
 
@@ -191,6 +217,12 @@ Card highlights, shape uniformity, and the centered container, worth counting ra
 
 ```bash
 rg -n -e "border-(l|t|r|b)-[248] border-" -e "ring-2" -e "rounded-2xl|rounded-3xl" -e "shadow-(lg|xl|2xl)" -e "grid-cols-3" -e "h-full" -e "max-w-[0-9]xl mx-auto" .
+```
+
+Kicker labels, ghost cards, colored shadows, section numbers, and arrow chains.
+
+```bash
+rg -n -e "uppercase[^\"']*tracking-(wide|wider|widest)" -e "tracking-(wider|widest)[^\"']*uppercase" -e "letter-spacing: ?0\.(08|1|12|15|2)em" -e "shadow-[a-z]+-[0-9]{3}/" -e "rounded-\[(2[4-9]|[3-9][0-9])px\]" -e ">0[1-9]<" -e "→ [A-Za-z]+ →" .
 ```
 
 Interaction defaults, each hit checked against its test in section 2.
