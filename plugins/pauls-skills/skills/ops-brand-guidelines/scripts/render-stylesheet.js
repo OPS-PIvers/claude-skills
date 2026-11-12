@@ -570,7 +570,7 @@ const html = `<!doctype html>
 * { box-sizing: border-box; }
 html, body { margin: 0; background: #fff; }
 body { font: 400 9pt/1.4 Roboto, Arial, sans-serif; color: ${g('on-surface')}; }
-.page { width: 8.5in; height: 11in; padding: 0.45in 0.5in 0.4in; display: flex; flex-direction: column; overflow: hidden; break-after: page; }
+.page { width: 8.5in; height: 11in; padding: 0.4in 0.5in 0.33in; display: flex; flex-direction: column; overflow: hidden; break-after: page; }
 .page > header, .page > footer { display: flex; justify-content: space-between; font-size: 8pt; color: ${g('on-surface-muted')}; }
 .page > footer { margin-top: auto; padding-top: 8px; }
 .page > header b { font: 600 8pt Lexend; color: ${g('primary-strong')}; }
