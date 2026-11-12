@@ -91,17 +91,20 @@ Mechanical, not a judgment call. Read `references/writing-ban-list.md` before th
 
 Go sentence by sentence and say each one in your head as if presenting it to the named audience. Flag anything you would instinctively rephrase before speaking.
 
-The staccato detector. If two consecutive sentences could be joined with a conjunction and would read better joined, they are stubs, and stubs are a defect regardless of how many other short sentences surround them.
+The staccato detector. A stub is a sentence that cannot stand alone, such as a fragment or a one-clause stinger. Stubs are a defect regardless of how many other short sentences surround them. Two full sentences that each carry their own idea are not stubs. Leave them as two.
+
+The chain detector. A sentence that glues two full clauses with ", and", ", so", or ", but" is a chain when a person would say it as two sentences. Flag it. Long chains read strangely aloud, and they are the most common side effect of removing a dash.
 
 ## W6. Rewrite
 
 **The only legal operations.**
 
 1. **Delete.** Empty preamble carries no information, so removing it costs nothing.
-2. **Rejoin.** Fold the pieces into one clause using a conjunction such as but, because, so, and, although, while.
-3. **Restate the thought from scratch** in one sentence when it will not rejoin cleanly.
+2. **Split.** When both sides of the mark are full sentences you would say aloud, make them two sentences. This is also the fix for a clause chain.
+3. **Rejoin.** When one side cannot stand alone, fold it into the other with a conjunction that names a real relation, such as because, although, while, or so.
+4. **Restate the thought from scratch** in one sentence when neither of these reads cleanly.
 
-**Splitting is not an operation.** Never break a sentence at a banned punctuation mark. That reflex is what produces staccato, it is always available, and it is always wrong here. Breaking up a genuinely overloaded 40-word sentence is a different job and is not part of this pass.
+**The split test.** Read each half by itself. If both have a subject, a verb, and a point a person would say on its own, split. If either half is a fragment or a stinger, do not split, because that produces stubs. A conjunction that only glues two full sentences together is not a fix. It trades the dash for a chain.
 
 **Never substitute one banned mark for another.** Converting an em dash into a colon has moved the tell, not removed it.
 
@@ -111,7 +114,13 @@ Worked examples, taken from real failures of an earlier version of this skill.
 > **Wrong:** What the evidence says so far. It's humbler than the headlines.
 > **Right:** The actual evidence is more humble than the headlines.
 
-The wrong version removed the dash by splitting, which produced two stubs nobody would say aloud. The right version rejoins the whole idea into one clause.
+The wrong version split the dash into two stubs nobody would say aloud. The first half is a fragment, so the split test fails. The right version rejoins the whole idea into one clause.
+
+> **Source:** The vendor shipped the fix in March — nobody on staff had updated the extension by June.
+> **Wrong:** The vendor shipped the fix in March, but nobody on staff had updated the extension by June, so the bug kept showing up in classrooms.
+> **Right:** The vendor shipped the fix in March. Nobody on staff had updated the extension by June.
+
+Both halves of the source are full sentences, so the split test passes. The wrong version swapped the dash for a chain and then kept chaining.
 
 > **Source:** 45 minutes together. The last 20 belong to you — our first Admin Idea Slam.
 > **Wrong:** 45 minutes together. The last 20 belong to you — our first Admin Idea Slam.

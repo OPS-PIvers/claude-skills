@@ -1,85 +1,85 @@
 ---
 version: alpha
-name: OPS Technology Style — Instructional
-description: The instructional half of the OPS Technology Style system — a red, white, and blue district palette paired with Lexend headings and Roboto body, tuned for materials that need to be read across a room, understood at a glance, or printed. Use for slide decks, PD presentations, newsletters, landing pages, instructional websites, parent-facing reports, and printed handouts. For dense web-app UI (forms, dashboards, admin tools), see the companion Technical style.
+name: OPS Technology Style
+description: The Orono Technology (OPS Tech) design system. A red, white, and blue district palette with Lexend headings and Roboto body, flat surfaces, and hairline structure. Use it for slide decks, PD presentations, newsletters, handouts, parent-facing reports, websites, and web tools.
 
 colors:
   # ========================================================================
-  # BRAND COLORS — these are the canonical OPS Tech values.
+  # BRAND COLORS: these are the canonical OPS Tech values.
   # Do not alter. Every other color token below is derived from these.
   # ========================================================================
 
   # Canonical blues (from the official OPS Tech stylesheet)
-  blue-lighter: "#eaecf5"   # canonical — maps to blue-100 in the ramp
-  blue-light: "#4356a9"     # canonical — maps to blue-600 in the ramp
-  blue: "#2d3f89"           # canonical — maps to blue-700 (the brand blue)
-  blue-dark: "#1d2a5d"      # canonical — maps to blue-900
+  blue-lighter: "#eaecf5"   # canonical: maps to blue-100 in the ramp
+  blue-light: "#4356a0"     # canonical: maps to blue-600 in the ramp
+  blue: "#2d3f89"           # canonical: maps to blue-700 (the brand blue)
+  blue-dark: "#1d2a5d"      # canonical: maps to blue-900
 
   # Canonical reds
-  red-lighter: "#e5c7c7"    # canonical — maps to red-100
-  red-light: "#c13435"      # canonical — maps to red-600
-  red: "#ad2122"            # canonical — maps to red-700 (the brand red)
-  red-dark: "#7a1718"       # canonical — maps to red-900
+  red-lighter: "#e5c7c7"    # canonical: maps to red-100
+  red-light: "#c13435"      # canonical: maps to red-600
+  red: "#ad2122"            # canonical: maps to red-700 (the brand red)
+  red-dark: "#7a1718"       # canonical: maps to red-900
 
   # Canonical grays
-  gray-lightest: "#f3f3f3"  # canonical — maps to gray-100
-  gray-lighter: "#cccccc"   # canonical — maps to gray-300
-  gray-light: "#999999"     # canonical — maps to gray-500
-  gray: "#666666"           # canonical — maps to gray-700
-  gray-dark: "#333333"      # canonical — maps to gray-900
-  gray-darkest: "#1a1a1a"   # canonical — maps to gray-950
+  gray-lightest: "#f3f3f3"  # canonical: maps to gray-100
+  gray-lighter: "#cccccc"   # canonical: maps to gray-300
+  gray-light: "#999999"     # canonical: maps to gray-500
+  gray: "#666666"           # canonical: maps to gray-700
+  gray-dark: "#333333"      # canonical: maps to gray-900
+  gray-darkest: "#1a1a1a"   # canonical: maps to gray-950
 
   # Base neutrals
   white: "#ffffff"
   black: "#000000"
 
   # ========================================================================
-  # TINT RAMPS — computed from canonical values for UI utility.
+  # TINT RAMPS: computed from canonical values for UI utility.
   # Use these for hover states, borders, disabled states, subtle backgrounds.
   # The canonical values above remain the brand-identity values.
   # ========================================================================
 
   # Blue ramp (11 steps)
-  blue-50:  "#f4f6fa"       # computed — subtlest tint, barely-there surface
+  blue-50:  "#f4f6fa"       # computed: subtlest tint, barely-there surface
   blue-100: "#eaecf5"       # CANONICAL (blue-lighter)
-  blue-200: "#c0c7e0"       # computed — disabled bg, subtle borders
-  blue-300: "#97a1cb"       # computed — muted text on light, 3rd-tier elements
-  blue-400: "#6d7cb5"       # computed — icons, muted actions
-  blue-500: "#5869aa"       # computed — supporting elements
-  blue-600: "#4356a9"       # CANONICAL (blue-light)
-  blue-700: "#2d3f89"       # CANONICAL (blue — the brand blue)
-  blue-800: "#253473"       # computed — active/pressed primary button
+  blue-200: "#c0c7e0"       # computed: disabled bg, subtle borders
+  blue-300: "#97a1cb"       # computed: muted text on light, 3rd-tier elements
+  blue-400: "#6d7cb5"       # computed: icons, muted actions
+  blue-500: "#5869aa"       # computed: supporting elements
+  blue-600: "#4356a0"       # CANONICAL (blue-light)
+  blue-700: "#2d3f89"       # CANONICAL (blue, the brand blue)
+  blue-800: "#253473"       # computed: active/pressed primary button
   blue-900: "#1d2a5d"       # CANONICAL (blue-dark)
-  blue-950: "#0e152f"       # computed — deepest emphasis, near-black blue
+  blue-950: "#0e152f"       # computed: deepest emphasis, near-black blue
 
   # Red ramp (11 steps)
-  red-50:  "#f5e3e3"        # computed — subtlest pink tint
+  red-50:  "#f5e3e3"        # computed: subtlest pink tint
   red-100: "#e5c7c7"        # CANONICAL (red-lighter)
-  red-200: "#deaaaa"        # computed — soft pink surface
-  red-300: "#d78c8d"        # computed — muted warning text
-  red-400: "#d06f70"        # computed — softer accent
-  red-500: "#c85252"        # computed — mid red
+  red-200: "#deaaaa"        # computed: soft pink surface
+  red-300: "#d78c8d"        # computed: muted warning text
+  red-400: "#d06f70"        # computed: softer accent
+  red-500: "#c85252"        # computed: mid red
   red-600: "#c13435"        # CANONICAL (red-light)
-  red-700: "#ad2122"        # CANONICAL (red — the brand red)
-  red-800: "#941c1d"        # computed — active/pressed destructive button
+  red-700: "#ad2122"        # CANONICAL (red, the brand red)
+  red-800: "#941c1d"        # computed: active/pressed destructive button
   red-900: "#7a1718"        # CANONICAL (red-dark)
-  red-950: "#3d0c0c"        # computed — deepest red, near-black red
+  red-950: "#3d0c0c"        # computed: deepest red, near-black red
 
   # Gray ramp (11 steps)
-  gray-50:  "#fafafa"       # computed — off-white, page background
+  gray-50:  "#fafafa"       # computed: off-white, page background
   gray-100: "#f3f3f3"       # CANONICAL (gray-lightest)
-  gray-200: "#e0e0e0"       # computed — light border, disabled surface
+  gray-200: "#e0e0e0"       # computed: light border, disabled surface
   gray-300: "#cccccc"       # CANONICAL (gray-lighter)
-  gray-400: "#b3b3b3"       # computed — medium-light divider
+  gray-400: "#b3b3b3"       # computed: medium-light divider
   gray-500: "#999999"       # CANONICAL (gray-light)
-  gray-600: "#808080"       # computed — placeholder text, muted label
+  gray-600: "#808080"       # computed: placeholder text, muted label
   gray-700: "#666666"       # CANONICAL (gray)
-  gray-800: "#4d4d4d"       # computed — strong secondary text
-  gray-900: "#333333"       # CANONICAL (gray-dark — default body text)
+  gray-800: "#4d4d4d"       # computed: strong secondary text
+  gray-900: "#333333"       # CANONICAL (gray-dark, default body text)
   gray-950: "#1a1a1a"       # CANONICAL (gray-darkest)
 
   # ========================================================================
-  # SEMANTIC ROLES — the agent-facing vocabulary.
+  # SEMANTIC ROLES: the agent-facing vocabulary.
   # Prefer these over raw ramp values when building.
   # ========================================================================
 
@@ -99,7 +99,7 @@ colors:
   surface-subtle: "{colors.gray-50}"
   surface-alt: "{colors.gray-100}"
   surface-inverted: "{colors.blue-900}"
-  surface-raised: "{colors.blue-700}"
+  surface-raised: "{colors.blue-700}"   # dark slides: one featured item only
 
   # Text on surfaces
   on-surface: "{colors.gray-900}"
@@ -108,6 +108,7 @@ colors:
   on-surface-disabled: "{colors.gray-500}"
   on-surface-inverted: "{colors.white}"
   on-surface-inverted-muted: "{colors.blue-100}"
+  accent-on-inverted: "{colors.red-400}"   # large text only (24pt+). red-600 fails on blue-900.
 
   # Borders
   border-subtle: "{colors.gray-200}"
@@ -115,9 +116,11 @@ colors:
   border-strong: "{colors.gray-500}"
   border-accent: "{colors.blue-700}"
   border-focus: "{colors.blue-600}"
+  divider: "{colors.gray-200}"            # hairline between list items and rows
+  divider-strong: "{colors.gray-700}"     # rule under a table header
+  divider-inverted: "{colors.blue-600}"   # hairline on blue-900 slides
 
-  # Focus ring — adopted from the Technical companion system for
-  # accessibility. Applied as a 3px box-shadow on focused inputs.
+  # Focus ring for accessibility. Applied as a 3px ring on focused inputs.
   focus-ring: "rgba(45,63,137,0.1)"   # blue-700 at 10% opacity
 
   # States
@@ -206,13 +209,6 @@ typography:
     fontWeight: 500
     lineHeight: 1.3
     letterSpacing: 0.03em
-  overline:
-    fontFamily: Roboto
-    fontSize: 11px
-    fontWeight: 500
-    lineHeight: 1.3
-    letterSpacing: 0.1em
-    textTransform: uppercase
   caption:
     fontFamily: Roboto
     fontSize: 12px
@@ -236,19 +232,10 @@ spacing:
 rounded:
   none: 0px
   sm: 4px
-  md: 8px           # aligned with Technical companion (was 6px prior to 2026-04-24)
+  md: 8px
   lg: 12px
   xl: 16px
   full: 9999px
-
-# Non-standard group — the DESIGN.md spec describes elevation in prose,
-# but tokenizing it here makes implementation consistent.
-shadow:
-  none: "none"
-  subtle: "0 1px 2px rgba(29, 42, 93, 0.08)"
-  soft: "0 2px 8px rgba(29, 42, 93, 0.10)"
-  medium: "0 4px 12px rgba(29, 42, 93, 0.12)"
-  strong: "0 8px 24px rgba(29, 42, 93, 0.16)"
 
 components:
   # === Buttons ===
@@ -307,7 +294,7 @@ components:
   button-destructive-hover:
     backgroundColor: "{colors.secondary-hover}"
 
-  # Commit action — use for form submissions on web-based instructional
+  # Commit action. Use for form submissions on web-based instructional
   # materials (sign-up forms, RSVPs, contact forms). Red signals finality,
   # not destruction. Distinct from button-destructive only in semantics;
   # visually they share the same red treatment.
@@ -362,63 +349,62 @@ components:
     textColor: "{colors.red-600}"
 
   # === Callouts ===
+  # A tinted block with no border. Content opens with a bold lead word
+  # ("Heads up:", "Due Friday:") so the meaning does not depend on color.
   callout-info:
     backgroundColor: "{colors.info-bg}"
     textColor: "{colors.on-surface}"
-    borderLeftColor: "{colors.info}"
-    borderLeftWidth: 3px
+    leadTextColor: "{colors.blue-900}"
     rounded: "{rounded.md}"
-    padding: 20px
+    padding: 16px 20px
   callout-warning:
     backgroundColor: "{colors.warning-bg}"
     textColor: "{colors.red-900}"
-    borderLeftColor: "{colors.warning}"
-    borderLeftWidth: 3px
+    leadTextColor: "{colors.red-900}"
     rounded: "{rounded.md}"
-    padding: 20px
-  callout-neutral:
-    backgroundColor: "{colors.gray-100}"
-    textColor: "{colors.on-surface}"
-    borderLeftColor: "{colors.gray-700}"
-    borderLeftWidth: 3px
-    rounded: "{rounded.md}"
-    padding: 20px
+    padding: 16px 20px
 
-  # === Cards ===
+  # === Lists and sections ===
+  # The default way to separate items. Use these before reaching for a card.
+  list-row:
+    borderBottomColor: "{colors.divider}"
+    borderBottomWidth: 1px
+    paddingY: 12px
+  section-divider:
+    borderTopColor: "{colors.divider}"
+    borderTopWidth: 1px
+    marginY: "{spacing.xl}"
+
+  # === Card ===
+  # Only for a discrete object a person picks, opens, drags, or compares.
+  # Never for grouping text. Never nested. No shadow.
   card:
     backgroundColor: "{colors.surface}"
-    borderColor: "{colors.border-subtle}"
+    borderColor: "{colors.border}"
     borderWidth: 1px
     rounded: "{rounded.lg}"
-    padding: 24px
-    shadow: "{shadow.subtle}"
-  card-raised:
-    backgroundColor: "{colors.surface-raised}"
-    textColor: "{colors.white}"
-    rounded: "{rounded.lg}"
-    padding: 24px
-    shadow: "{shadow.soft}"
-  card-subtle:
-    backgroundColor: "{colors.surface-alt}"
-    rounded: "{rounded.lg}"
-    padding: 24px
+    padding: 20px
+  card-selected:
+    borderColor: "{colors.primary}"
+    borderWidth: 2px
 
   # === Tables ===
   table-header:
-    backgroundColor: "{colors.primary}"
-    textColor: "{colors.white}"
+    textColor: "{colors.on-surface}"
     typography: "{typography.label-lg}"
-    paddingX: 16px
-    paddingY: 12px
+    fontWeight: 700
+    borderBottomColor: "{colors.divider-strong}"
+    borderBottomWidth: 2px
+    paddingX: 12px
+    paddingY: 10px
   table-row:
     backgroundColor: "{colors.white}"
     textColor: "{colors.on-surface}"
-    typography: "{typography.body-md}"
-    borderBottomColor: "{colors.border-subtle}"
-    paddingX: 16px
-    paddingY: 12px
-  table-row-alt:
-    backgroundColor: "{colors.surface-alt}"
+    typography: "{typography.body-sm}"
+    borderBottomColor: "{colors.divider}"
+    borderBottomWidth: 1px
+    paddingX: 12px
+    paddingY: 10px
   table-row-action-required:
     backgroundColor: "{colors.red-100}"
     textColor: "{colors.red-900}"
@@ -434,24 +420,36 @@ components:
     textColor: "{colors.white}"
     typography: "{typography.label-lg}"
   nav-link-active:
-    textColor: "{colors.blue-100}"
-    borderBottomColor: "{colors.secondary}"
+    textColor: "{colors.white}"
+    borderBottomColor: "{colors.white}"
     borderBottomWidth: 2px
 
-  # === Badge / chip ===
-  badge:
-    backgroundColor: "{colors.blue-100}"
-    textColor: "{colors.blue-900}"
-    typography: "{typography.label-sm}"
+  # === Status ===
+  # Status is plain text, not a pill. Color supports the word; the word
+  # carries the meaning.
+  status-text:
+    typography: "{typography.label-lg}"
+    textColor: "{colors.on-surface-muted}"
+  status-text-active:
+    textColor: "{colors.primary}"
+  status-text-action:
+    textColor: "{colors.red-700}"
+
+  # === Filter chip ===
+  # The only pill shape. For filters a person taps on and off.
+  chip:
+    backgroundColor: "{colors.white}"
+    textColor: "{colors.on-surface}"
+    borderColor: "{colors.border}"
+    borderWidth: 1px
+    typography: "{typography.label-md}"
     rounded: "{rounded.full}"
-    paddingX: 10px
-    paddingY: 4px
-  badge-accent:
-    backgroundColor: "{colors.red-100}"
-    textColor: "{colors.red-900}"
-  badge-neutral:
-    backgroundColor: "{colors.gray-200}"
-    textColor: "{colors.gray-900}"
+    paddingX: 12px
+    paddingY: 6px
+  chip-selected:
+    backgroundColor: "{colors.primary}"
+    textColor: "{colors.white}"
+    borderColor: "{colors.primary}"
 
   # === Charts ===
   chart-series-1:
@@ -476,147 +474,136 @@ components:
     color: "{colors.gray-200}"
 ---
 
-# OPS Technology Style — Instructional
+# OPS Technology Style
 
 ## Overview
 
-Orono Technology's visual identity is built on the district's red, white, and blue tradition — grounded in civic trust, softened by warm neutrals and human typography. The system should feel **confident, trustworthy, and legible** across every medium: a parent reading a report on their phone, a teacher glancing at a PD slide from the back of the room, a student tapping through a web tool.
+Orono Technology's visual identity comes from the district's red, white, and blue tradition. It should read as **confident, plain, and legible** in every medium: a parent reading a report on a phone, a teacher glancing at a PD slide from the back of the room, a student tapping through a web tool.
 
-This is the **instructional** half of the OPS Technology Style system. Use this file for materials that need to be read across a room, understood at a glance, or printed: slide decks, PD presentations, newsletters, landing pages, instructional websites, parent-facing reports, and printed handouts. The type scale is generous, the neutrals are warm true-gray, the shadow language is restrained, and the cards rest on borders rather than floating on shadows.
+The personality sits between institutional and human. Lexend's wide letterforms do the warming. Brand blue carries trust. Brand red marks emphasis, and only sparingly.
 
-The personality lands between *institutional* and *human*. Not corporate, not cold — but not playful or whimsical either. Lexend's slightly wide letterforms do the warming work; the brand blue does the trust work; the brand red does the emphasis work, sparingly.
+Structure comes from type, space, and hairline rules. Decoration that doesn't carry meaning is left out: no side stripes on boxes, no accent lines under titles, no letter-spaced caps labels, no decorative icons, no shadows. Most content sits directly on the page. Cards are the exception.
+
+One system covers slides, documents, newsletters, websites, and web tools. Dense tools use the smaller type tokens (`body-sm`, `label-*`) rather than a different system.
 
 Two modes:
 
-- **Official / district-facing** (PD presentations, staff communications, parent-facing reports, dashboards, policy documents, newsletters): the full palette and typography system applies. Blue dominates, red accents, Lexend + Roboto strictly.
-- **Playful / student-facing** (classroom games, fun interactives, holiday pieces): agents may choose a topic-appropriate palette while keeping Orono colors present as accents and preserving the logo lockups. The tokens in this file define the *official* mode; playful mode is a deliberate departure.
-
-## The companion Technical system
-
-A sibling spec — **OPS Technology Style — Technical** — exists for dense web-application UI (workflow tools, admin dashboards, form-heavy interfaces). Both systems live under the same OPS Technology Style umbrella and share every canonical brand color, but diverge on typography, neutrals, and shadow philosophy because their use cases demand different optical tuning.
-
-Route decisions by medium:
-
-- **This file (Instructional):** slides, docs, newsletters, landing pages, instructional websites, printed materials. Anything where a reader is sitting still and consuming content.
-- **Companion file (Technical):** workflow apps, admin dashboards, forms, data entry, submission review. Anything where a user is completing a task.
-
-When an agent is uncertain which system applies, the question to ask is: *is this material being read, or is it being operated?* Read → Instructional. Operated → Technical.
-
-Shared across both systems: the canonical blue ramp (`blue-lighter`, `blue-light`, `blue`, `blue-dark`), the canonical brand red (`#ad2122`), the semantic-role vocabulary (`primary`, `surface`, `on-surface`, `border-focus`), the 12px card radius, the `focus-ring` accessibility pattern, and `button-submit` as a red commit action. Different between systems: type families (Lexend + Roboto here, Inter there), neutrals (true gray here, Tailwind slate there), canvas treatment (light surfaces or solid dark slides here, navy-gradient-with-white-cards there), and shadow philosophy (restrained + border-anchored here, two-layer shadow + borderless there).
+- **Official / district-facing** (PD presentations, staff and parent communications, reports, newsletters, dashboards): the full palette and type system applies. Blue dominates and red accents. Lexend and Roboto only.
+- **Playful / student-facing** (classroom games, fun interactives, holiday pieces): the palette may change to suit the topic, with Orono colors present as accents and the logos as issued. Nothing else changes. The structure rules, the decoration bans, and the copy rules apply in both modes.
 
 ## How this file is organized
 
-Two parts:
-
-1. **Canonical brand colors** — the 14 hex values defined by the OPS Tech stylesheet (4 blues, 4 reds, 6 grays). These are the brand. Never alter them.
-2. **Computed tint ramps** — 11-step ramps (50 → 950) per color family, derived from the canonical values. These exist to make modern UI work fluent: hover states, disabled states, subtle borders, muted text, surface layers. Every canonical value appears in its ramp at a specific position (e.g., `blue-100` has the same hex as `blue-lighter`).
-
-Agents should **prefer the semantic role tokens** (`primary`, `surface`, `on-surface`, `border`, `info`, etc.) when building — they express intent and adapt cleanly to both modes. Use raw ramp tokens (`blue-300`, `gray-600`) only when a semantic role doesn't fit.
+1. **Canonical brand colors.** The 14 hex values from the OPS Tech Stylesheet (4 blues, 4 reds, 6 grays). Never alter them.
+2. **Computed tint ramps.** 11-step ramps (50 to 950) for each family, derived from the canonical values for hover, disabled, border, and muted-text needs. Every canonical value sits in its ramp at a fixed position (`blue-100` is `blue-lighter`).
+3. **Semantic roles** (`primary`, `surface`, `on-surface`, `divider`). Prefer these when building. Use raw ramp tokens only when no role fits.
 
 ## Colors
 
-The palette is anchored by canonical brand values — deepened and lightened within each family for UI utility. **No new hues are introduced.** The only additions are mathematical tints and shades derived from the official hex values.
+No new hues. The only additions are tints and shades of the official values.
 
-- **Blue (primary)** — the trust voice. Brand blue is `#2d3f89` at `blue-700`. Goes darker toward `blue-900` (`#1d2a5d`) for headlines and full-bleed backgrounds, and lighter toward `blue-100` (`#eaecf5`) for subtle surfaces. The ramp fills in the middle for hover states, disabled states, muted icons, borders, and so on.
-- **Red (secondary)** — the emphasis voice. Brand red is `#ad2122` at `red-700`. Never dominant — used for accents, warnings, commit actions, and one key emphasis per view.
-- **Gray (neutral)** — the working voice. An 11-step ramp from near-white (`#fafafa`) to near-black (`#1a1a1a`). Body text defaults to `gray-900` (`#333333`), not pure black.
-- **White** — the resting surface. Primary canvas for documents, cards, and light-mode interfaces.
+- **Blue (primary).** Brand blue is `#2d3f89` at `blue-700`. It goes darker toward `blue-900` (`#1d2a5d`) for headings and full-bleed slide backgrounds, and lighter toward `blue-100` (`#eaecf5`) for tinted surfaces.
+- **Red (secondary).** Brand red is `#ad2122` at `red-700`. Use it for accents, warnings, commit actions, and one key emphasis per view. It never leads.
+- **Gray (neutral).** Body text is `gray-900` (`#333333`), not pure black. Hairlines are `gray-200`.
+- **White.** The resting surface for documents and light interfaces.
 
-### How to think about the ramp positions
+### Ramp positions
 
-- **50** — barely-there tint. Page backgrounds that still feel white.
-- **100** — subtle tint. Callout backgrounds, disabled surfaces, tag backgrounds. (Canonical `-lighter` values live here.)
-- **200–400** — light-to-medium. Borders, dividers, muted icons, disabled text.
-- **500** — true midtone. (Canonical `gray-light` lives here.)
-- **600** — deep supporting. Icon colors on light surfaces, secondary hover states. (Canonical `blue-light` and `red-light` live here.)
-- **700** — the **brand values**. Primary actions, nav bars, headings. (Canonical `blue`, `red`, and `gray` live here.)
-- **800** — pressed/active state for brand-colored interactive elements.
-- **900** — deepest brand color. Full-bleed title backgrounds, high-contrast headings. (Canonical `-dark` values live here.)
-- **950** — near-black deepest shade. Rarely needed; use for maximum contrast moments.
+- **50:** barely-there tint.
+- **100:** tinted surfaces such as callouts and the action-required row. The canonical `-lighter` values live here.
+- **200–400:** hairlines, borders, muted icons, disabled text.
+- **500:** midtone. Canonical `gray-light`.
+- **600:** supporting color, and hairlines on dark slides. Canonical `blue-light` and `red-light`.
+- **700:** the brand values. Primary actions, nav bars, headings.
+- **800:** pressed state for brand-colored controls.
+- **900:** deepest brand color. Full-bleed slide backgrounds and high-contrast headings.
+- **950:** near-black. Rarely needed.
 
 ### Dominance
 
-Official pieces should land near **60% blue, 15% red, 25% neutral**. If red is reading as a co-lead, pull it back to accent-only.
+Official pieces land near **60% blue, 15% red, 25% neutral**. If red reads as a co-lead, pull it back.
 
 ### Chart sequencing
 
-Multi-series charts order as: `blue-700` → `red-700` → `blue-600` → `red-600` → `blue-400` → `red-400`. Sequential gradients run `blue-100` → `blue-900`. Do not introduce off-palette hues unless the data semantically requires categorical meaning the brand palette cannot express.
+Multi-series charts go `blue-700`, `red-700`, `blue-600`, `red-600`, `blue-400`, `red-400`. Sequential gradients run `blue-100` to `blue-900`. Add an off-palette hue only when the data needs a category the palette can't express.
 
 ## Typography
 
-Two families do all the work:
+- **Lexend** for headings, titles, and nav. Weights 600 for titles, 700 for display and headlines.
+- **Roboto** for body, captions, labels, table cells, and buttons. Weights 400 and 500.
 
-- **Lexend** — all headings, all titles, all button and nav labels. Lexend's slightly wide, readability-focused construction keeps the voice confident without tipping into corporate. Weights used: 600 for titles, 700 for display and headlines.
-- **Roboto** — all body copy, all captions, all helper text, all table cells, all labels. Weights: 400 regular, 500 for labels.
+**Fallbacks** (PowerPoint without Lexend, offline contexts): Calibri, then Arial. Never Times New Roman, Comic Sans, or a decorative display font.
 
-**Fallbacks** (PowerPoint without Lexend installed, offline contexts): Calibri, then Arial. Never Times New Roman. Never Comic Sans. Never a decorative display font for body.
+The scale runs from `display` (72px) to `label-sm` (11px). Headings use tight line height (1.05–1.2). Body runs at 1.5–1.6 for reading.
 
-The typography scale spans 72px display down to 11px overline, across 15 levels. Headings (`display`, `headline-*`) use tight line-height (1.05–1.2) and slight negative letter-spacing for density. Body (`body-*`) runs at 1.5–1.6 line-height for long-form readability. Labels (`label-*`) use positive letter-spacing for the slight small-caps effect common in UI chrome. The `overline` token is for uppercase section markers.
+**Sentence case** for every heading, title, button, label, and table header. Capitalize only the first word and proper nouns.
 
-**This type system does not cross over to the Technical system.** If you're working on a workflow app or admin UI, use Inter (via the Technical sibling). Mixing Lexend into a PaperPal-style form will make fields feel disproportionately loud; mixing Inter into a slide deck will make headings feel underweight from the back of a classroom. The two families serve distinct optical problems.
-
-### On adding a third font family
-
-Some modern design systems use a distinct font for UI labels and metadata — typically a geometric sans like Space Grotesk or a monospace like JetBrains Mono — to create a clear visual boundary between *content* and *UI chrome*. OPS Tech uses Roboto for both, which is the more common approach and works well.
-
-If OPS ever wanted to explore this, candidates that pair well with Lexend include **Space Grotesk** (geometric, slightly quirky), **IBM Plex Mono** (legible, serious), or **Lexend Deca** (same family, tighter letterforms). This would be a brand decision — not something agents should introduce on their own.
+**Section labels are not uppercase.** A section is marked by a heading at the right size and weight with space above it. Don't add a small letter-spaced caps label over it, and don't add a colored rule before or under it.
 
 ## Layout
 
-A **fluid grid** on small screens, **fixed max-width (1200px)** on desktop. Content breathes inside a consistent 8px spacing rhythm — micro-adjustments use `xs` (4px), related groups use `sm` (8px) or `md` (16px), section separation uses `lg` (24px) or `xl` (32px), major page regions use `2xl` (48px) or `3xl` (64px).
+A fluid grid on small screens and a 1200px max width on desktop. Spacing follows an 8px rhythm: `xs` (4px) for tight adjustments, `sm` and `md` (8–16px) inside related groups, `lg` and `xl` (24–32px) between sections, `2xl` and `3xl` (48–64px) between page regions.
 
-Card internal padding defaults to 24px. Form inputs use 10px vertical / 12px horizontal padding. Buttons use 10px / 20px. These consistent rhythms are what make the composition read as a system rather than a collection.
+**Separate with hairlines and space, not containers.** Lists, settings, link lists, schedules, FAQs, and text sections sit on the page with a 1px `divider` between items. A new section gets space and a heading. Most screens need no boxes at all.
 
-## Elevation & Depth
+## Elevation
 
-The system is **functionally flat** — hierarchy is conveyed through color contrast and thin borders rather than heavy shadows. Cards sit on surfaces via a 1px `border-subtle` at `gray-200`, often with a `shadow.subtle` for the slightest lift. Higher elevation levels (`shadow.soft`, `shadow.medium`, `shadow.strong`) exist but should be used sparingly — the system reads as "paper on paper," not floating UI.
+The system is **flat**. There is no shadow scale. Hierarchy comes from type size, weight, tone, and space.
 
-In dark-mode contexts (`blue-900` backgrounds), hierarchy comes from **tonal layering**: content sits on a `blue-700` surface, which sits on a `blue-900` canvas. A thin `blue-600` border or red left-accent line defines edges.
+On light surfaces, a card is defined by a 1px `border` and nothing else. On dark slides (`blue-900`), content sits directly on the background and groups are separated by space and `divider-inverted` hairlines. A `blue-700` surface is for **one** featured item on a slide: a chart plate or a single key number.
 
 ## Shapes
 
-**Moderately rounded.** The default corner radius is `md: 8px` for buttons, inputs, badges, and small components. Cards and larger containers use `lg: 12px`. Pills and circular controls use `full`. Sharp 0px corners are avoided — the system reads as approachable, not rigid.
-
-Never mix radius scales within a single component cluster. A card with 12px corners should not contain buttons with 16px corners.
+`md` (8px) for buttons, inputs, and callouts. `lg` (12px) for cards and chart plates. `full` only for filter chips. Never mix radius scales inside one component cluster, and never go above 16px.
 
 ## Components
 
-Component tokens cover the most common atoms: buttons (7 variants with hover/active/disabled states), inputs (with hover/focus/error/disabled states, labels, helper text, and error messages), callouts (info/warning/neutral), cards (default, raised, subtle), tables (header, row, alt row, action-required row), nav (bar, link, active link), badges (default, accent, neutral), and chart series colors (6 series plus gradient and axis colors).
+**Buttons.** Primary for the one most important action on a screen. Secondary (gray) for supporting actions. Outlined for a lighter alternative. Inverted on dark backgrounds. Destructive and Submit share the red treatment; Destructive means consequence, Submit means commit. Ghost for toolbar actions. Labels name what happens: "Save rubric," not "Submit."
 
-**Button hierarchy:**
-- **Primary** — one per screen, for the most important action.
-- **Secondary** — supporting actions. Gray, not red (red is for destructive and commit).
-- **Outlined** — alternative actions where visual weight should stay lighter than Primary.
-- **Inverted** — used on dark backgrounds.
-- **Destructive** — deletion, withdrawal, consequence. Never for routine actions.
-- **Submit** — commit action for form submissions (sign-ups, RSVPs, contact forms). Red signals finality rather than destruction. Visually identical to `button-destructive`; the distinction is semantic.
-- **Ghost** — tertiary actions, toolbar buttons.
+**Inputs** keep a 1.5px border in every state; only the color changes. Focus adds a 3px `focus-ring`. Helper text sits below in `caption`. Errors replace the helper text in `red-600` and say how to fix the problem.
 
-**Input states** always preserve the 1.5px border width; only the color changes across default/hover/focus/error states. On focus, a 3px `focus-ring` box-shadow is added for accessibility — keyboard users and low-vision users depend on this. Helper text sits below the input in `caption` typography; error messages replace helper text in `red-600`.
+**Callouts** are a tinted block with no border: `blue-100` for info, `red-100` for warnings. Each one opens with a bold lead word ("Heads up:", "Due Friday:", "Action required:") so the meaning survives without color. One callout per view is the norm. If every section has one, none of them stand out.
 
-**Callouts** use a subtle tinted background with a 3px colored left border. Info uses blue tones, warning uses red tones, neutral uses gray. The left-border pattern is intentional — it scans as "aside" more reliably than a full bordered box.
+**Lists** are the default structure. Rows sit on the page separated by 1px `divider` hairlines.
 
-**Tables** put a brand blue header row with white text on top of alternating white / `gray-100` body rows. Rows flagged as "action required" use `red-100` backgrounds with `red-900` text.
+**Cards** are for a discrete object a person picks, opens, drags, or compares side by side: a choice in a picker, an item on a board, a resource with a thumbnail. A card is never a way to group text, never sits inside another card, and never appears three across just to fill a row. Cards size to their content.
 
-## Do's and Don'ts
+**Tables** have no header fill and no zebra stripes. The header row is bold text over a 2px `divider-strong` rule. Body rows are separated by 1px `divider` hairlines. A row that needs action gets the `red-100` tint and `red-900` text, plus a word in the row that says why.
 
-- **Do** use the semantic role tokens (`primary`, `surface`, `on-surface`, `border`) over raw ramp values. They express intent and adapt cleanly.
-- **Do** use brand blue as the dominant color in official pieces — roughly 60% of the color weight.
-- **Do** use brand red as accents and for a single key emphasis per view, not as a co-lead.
-- **Do** use `gray-900` (`#333333`) for body text on light backgrounds, not pure black.
-- **Do** use white text on `blue-900` backgrounds, with `blue-100` for muted secondary text.
-- **Do** pair Lexend (headings) with Roboto (body, labels) — only these two families.
-- **Do** keep all callouts, cards, and inputs on the 8px / 12px radius scale consistently within a piece.
-- **Do** order chart series blue-700 → red-700 → blue-600 → red-600 → blue-400 → red-400.
-- **Do** route to the Technical companion system for workflow apps, admin dashboards, and form-heavy interfaces. Don't force this file's type scale into a dense admin UI.
+**Status** is plain text ("Active," "Pending," "Action required") in `status-text` colors. No pills or badges. The only pill shape is the **filter chip** a person taps on and off.
 
-- **Don't** invent new hues for UI needs — everything you need is in the computed ramps.
-- **Don't** use more than two font families. Lexend + Roboto, full stop.
-- **Don't** use brand red as a primary surface color or let it equal brand blue in visual weight.
-- **Don't** use pure black (`#000000`) for body text.
-- **Don't** use Times New Roman, Comic Sans, or decorative display fonts anywhere.
-- **Don't** place the Primary Logo directly on `blue-900` — the blue wordmark disappears. Use the Torch Icon, Secondary Logo, or a white plate.
-- **Don't** center body text — left-align. Center headlines and titles only.
-- **Don't** mix radius scales inside a single component cluster.
-- **Don't** use heavy drop shadows. Hierarchy comes from color and thin borders; `shadow.subtle` is the default lift.
-- **Don't** import Inter, Tailwind slate, or the two-layer card shadow from the Technical system — those belong to a different optical problem.
+**Icons** appear only when they help tell items apart or name an action. No icon before every heading, and no icon in a colored rounded square at the top of a card. Use one icon set throughout a piece.
+
+## Voice & copy
+
+Copy follows the OPS voice: how district materials read, whoever builds them. The full rules live in `references/voice-and-copy.md` beside this file. The essentials:
+
+- **One thought per sentence.** When two halves of a sentence could each stand alone, split them. Watch for two full clauses glued with ", and", ", so", or ", but".
+- **Lead with the point.** Background comes after, if at all.
+- **Sentence case** for headings, titles, buttons, and labels. No colon subtitles.
+- **Claim titles on content slides.** The title states the slide's point ("Exit tickets take 3 minutes"). Title, section, agenda, and closing slides keep short labels.
+- **Buttons name what happens.** Errors say how to fix it. Empty states say what to do next.
+- **No em dashes, no "not X but Y," no groups of three added for rhythm, no AI vocabulary** (delve, leverage, robust, seamless, empower, unlock, elevate).
+
+## Do's and don'ts
+
+- **Do** use semantic role tokens over raw ramp values.
+- **Do** let brand blue carry about 60% of the color weight in official pieces.
+- **Do** separate list items, table rows, and sections with hairlines and space.
+- **Do** use `gray-900` for body text on light surfaces, and white on `blue-900`.
+- **Do** use `accent-on-inverted` (`red-400`) for red emphasis on `blue-900`, and only on large text. `red-600` and `red-700` fail contrast there.
+- **Do** write headings, titles, buttons, and labels in sentence case.
+- **Do** state status in words.
+
+- **Don't** put a colored stripe on one side of any box (left, top, or otherwise).
+- **Don't** add an accent rule under a title or before a section label.
+- **Don't** use uppercase letter-spaced labels as section markers.
+- **Don't** wrap lists, settings, or text sections in cards, and never nest cards.
+- **Don't** use shadows or glows.
+- **Don't** use pills or badges for status.
+- **Don't** add icons for decoration.
+- **Don't** stripe tables or fill the header row.
+- **Don't** invent new hues. Everything you need is in the ramps.
+- **Don't** use more than two font families.
+- **Don't** let brand red equal brand blue in weight.
+- **Don't** place the Primary Logo directly on `blue-900`. Its blue wordmark disappears. Use the Secondary Logo, the Torch Icon, or a white plate.
+- **Don't** center body text. Center only titles.
