@@ -16,16 +16,7 @@
           "plugins/pauls-skills/skills/ops-brand-guidelines/Resources/stylesheet.html"
         ],
         "createdAt": "2026-11-12T15:54:35.143Z",
-        "reason": "Claude: only hit is the 26pt bold slide stat in #d06f70 on #1d2a5d (4.0:1), which passes WCAG AA large-text 3:1; DESIGN.md limits accent-on-inverted to large text"
-      },
-      {
-        "rule": "side-tab",
-        "value": "*",
-        "files": [
-          "plugins/pauls-skills/skills/ops-brand-guidelines/Resources/stylesheet.html"
-        ],
-        "createdAt": "2026-11-12T17:13:15.246Z",
-        "reason": "Claude: the side-stripe callout is the deliberate Don't example in the stylesheet's Do this, not that section (documentation of the banned pattern)"
+        "reason": "Claude: only hit is the 96pt slide stat in #d06f70 on #1d2a5d (4.0:1), which passes WCAG AA large-text 3:1; DESIGN.md limits accent-on-inverted to large text"
       }
     ]
   }
