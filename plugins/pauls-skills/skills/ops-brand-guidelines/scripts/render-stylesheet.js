@@ -413,7 +413,7 @@ function logoPage() {
       ${logo('Primary Logo.png', 'width:2.5in')}
       <div style="font:700 26pt/1.2 Lexend;color:${blue};margin-top:0.35in">Exit tickets</div>
       <div style="font:700 22pt/1.25 Lexend;color:${blueDark};margin-top:0.3in">Results from the fall pilot</div>
-      <p>Twelve teachers handed out three questions at the door each day for five weeks. Most students answered every day.</p>
+      <p>Twelve teachers handed out three questions at the door each day for five weeks. 84% of students answered every day.</p>
       <div style="font:700 18pt/1.3 Lexend;color:${redLight};margin-top:0.25in">Write your own</div>
       <p>Ask one question about today's lesson and one about the lesson before it. Sort the answers into piles before the next class.</p>
       <div class="c-callout-info" style="margin-top:0.18in"><b>Due Friday:</b> Submit your PD hours in Frontline.</div>
@@ -465,7 +465,7 @@ function slidePage() {
 
   const slides = [
     ['Title slide', 'blue-900 · Secondary Logo 1.75in · title 48pt · subtitle 24pt blue-100', bg, '#fff', cover('Exit tickets')],
-    ['Section divider', 'blue-700 · title 44pt', raised, '#fff', `<div style="height:100%;display:flex;align-items:center;padding:0 0.6in;font:700 44pt Lexend">Try it this week</div>`],
+    ['Section divider', 'blue-700 · title 44pt', raised, '#fff', `<div style="height:100%;display:flex;align-items:center;padding:0 0.6in;font:700 44pt Lexend">Write your own</div>`],
     [
       'Agenda',
       'blue-900 · title 32pt · rows 20pt · hairlines blue-600',
@@ -486,9 +486,9 @@ function slidePage() {
       bg,
       '#fff',
       title("Exit tickets take 3 minutes and show who's lost") +
-        `<div style="position:absolute;left:0.6in;top:1.8in;width:5.6in">${bullets(['Three questions at the door', 'Two minutes to sort the answers'])}</div>
+        `<div style="position:absolute;left:0.6in;top:1.8in;width:5.6in">${bullets(['Three questions at the door', 'Sort the answers into piles after class'])}</div>
          <div style="position:absolute;left:6.65in;top:1.8in;height:4.8in;border-left:1px solid ${line}"></div>
-         <div style="position:absolute;left:7.1in;top:1.8in;width:5.6in">${bullets(['Start the next class with the not-yet pile', 'Keep the questions for the unit review'])}</div>` +
+         <div style="position:absolute;left:7.1in;top:1.8in;width:5.6in">${bullets(['Start the next class with the question most students missed', 'Keep the questions for the unit review'])}</div>` +
         source('Source: OMS exit ticket pilot, fall 2026'),
     ],
     [
@@ -498,12 +498,12 @@ function slidePage() {
       '#fff',
       title('Most students answered every day') +
         `<div style="position:absolute;left:0.6in;top:2.1in;font:700 96pt/1 Lexend;color:${accent}">84%</div>
-         <div style="position:absolute;left:0.6in;top:3.9in;font:400 20pt Roboto;color:${muted}">of 212 students answered all five days</div>` +
+         <div style="position:absolute;left:0.6in;top:3.9in;font:400 20pt Roboto;color:${muted}">of 212 students answered every day for five weeks</div>` +
         source('Source: OMS exit ticket pilot, fall 2026'),
     ],
     [
       'Content, featured surface',
-      'blue-900 · one blue-700 surface · radius 12px',
+      'blue-900 · surface blue-700 · radius 12px',
       bg,
       '#fff',
       title('Chromebook repairs dropped 40% after the case swap') +
@@ -531,7 +531,7 @@ function slidePage() {
          </tbody>
        </table>` + source('Source: OPS device management console, February 2027', color('on-surface-subtle')),
     ],
-    ['Closing slide', 'Same layout as the title slide', bg, '#fff', cover('Try one this week')],
+    ['Closing slide', 'blue-900 · Secondary Logo 1.75in · title 48pt · subtitle 24pt blue-100', bg, '#fff', cover('Try one this week')],
   ];
 
   return `<h2>Slides</h2><div class="slides">${slides
