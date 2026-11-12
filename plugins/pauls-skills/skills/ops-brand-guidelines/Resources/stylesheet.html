@@ -6,253 +6,216 @@
 <title>OPS Tech stylesheet</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap">
 <style>
-  /* Source for OPS Tech Stylesheet.pdf. Values come from ../DESIGN.md.
-     Re-render: node scripts/render-stylesheet.js from the skill folder. */
+  /* Source for OPS Tech Stylesheet.pdf, a one-page sheet for staff.
+     Values come from ../DESIGN.md. Re-render: node scripts/render-stylesheet.js */
   :root {
     --blue-dark: #1d2a5d; --blue: #2d3f89; --blue-light: #4356a0; --blue-lighter: #eaecf5;
-    --red-dark: #7a1718; --red: #ad2122; --red-light: #c13435; --red-lighter: #e5c7c7;
-    --gray-darkest: #1a1a1a; --gray-dark: #333333; --gray: #666666; --gray-light: #999999;
-    --gray-lighter: #cccccc; --gray-lightest: #f3f3f3; --divider: #e0e0e0;
+    --red-dark: #7a1718; --red: #ad2122; --red-light: #c13435; --red-lighter: #e5c7c7; --red-on-dark: #d06f70;
+    --gray-dark: #333333; --gray: #666666; --gray-lighter: #cccccc; --gray-lightest: #f3f3f3;
+    --divider: #e0e0e0; --caption-on-dark: #8da0c7;
     --heading: "Lexend", "Segoe UI", sans-serif;
     --body: "Roboto", "Segoe UI", Arial, sans-serif;
   }
-  @page { size: letter; margin: 0.5in 0.6in; }
+  @page { size: letter; margin: 0; }
   * { box-sizing: border-box; }
-  html { background: #fff; }
-  body { margin: 0; font: 400 9.5pt/1.45 var(--body); color: var(--gray-dark); background: #fff; }
-  h1, h2, h3 { font-family: var(--heading); margin: 0; }
-  h1 { font-size: 24pt; font-weight: 700; color: var(--blue-dark); line-height: 1.1; }
-  h2 { font-size: 13.5pt; font-weight: 600; color: var(--blue-dark); margin: 0 0 6px; }
-  h3 { font-size: 9.5pt; font-weight: 600; color: var(--gray); margin: 10px 0 4px; }
-  p { margin: 0 0 8px; }
-  .lede { font-size: 10.5pt; color: var(--gray); max-width: 6in; margin-top: 8px; }
-  header { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; padding-bottom: 12px; }
-  header img { height: 44px; }
-  section { border-top: 1px solid var(--divider); padding: 12px 0 10px; }
-  .keep { break-inside: avoid; }
-  .page-break { break-before: page; }
-  .muted { color: var(--gray); }
-  .small { font-size: 9pt; }
-  code { font-family: var(--body); font-size: 8.5pt; font-variant-numeric: tabular-nums; color: var(--gray); }
+  html, body { margin: 0; background: #fff; }
+  body { font: 400 9pt/1.4 var(--body); color: var(--gray-dark); }
+  .sheet { width: 8.5in; height: 11in; overflow: hidden; display: flex; flex-direction: column; }
+  .inner { padding: 0 0.55in; }
+  h1, h2 { font-family: var(--heading); margin: 0; }
+  h2 { font-size: 14pt; font-weight: 700; color: var(--blue-dark); }
+  .lead { color: var(--gray); margin: 1px 0 9px; }
+  p { margin: 0; }
+  section { margin-top: 15px; }
+
+  /* Band */
+  .band { background: var(--blue-dark); color: #fff; padding: 0.26in 0.55in; display: flex; align-items: center; gap: 24px; }
+  .band img { width: 0.95in; height: 0.95in; }
+  .band h1 { font-size: 27pt; font-weight: 700; line-height: 1.1; }
+  .band p { color: var(--blue-lighter); font-size: 10.5pt; margin-top: 6px; }
 
   /* Color */
-  .families { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
-  .swatch { display: grid; grid-template-columns: 28px 1fr auto; align-items: center; gap: 10px; padding: 3px 0; border-bottom: 1px solid var(--divider); }
-  .swatch:last-child { border-bottom: 0; }
-  .chip-color { width: 28px; height: 16px; border-radius: 4px; }
-  .chip-color.light { box-shadow: inset 0 0 0 1px var(--gray-lighter); }
-  .swatch b { font-weight: 500; }
+  .swatches { display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; }
+  .sw .c { height: 0.46in; border-radius: 8px; }
+  .sw .c.edge { box-shadow: inset 0 0 0 1px var(--gray-lighter); }
+  .sw b { display: block; font-weight: 500; font-size: 8pt; margin-top: 4px; line-height: 1.2; }
+  .sw span { font-size: 7.5pt; color: var(--gray); font-variant-numeric: tabular-nums; }
+  .mix { display: grid; grid-template-columns: 60fr 15fr 25fr; margin-top: 10px; font-size: 8pt; }
+  .mix div { border-top: 6px solid; padding-top: 3px; }
+  .mix div:nth-child(1) { border-color: var(--blue); }
+  .mix div:nth-child(2) { border-color: var(--red); }
+  .mix div:nth-child(3) { border-color: var(--gray-lighter); }
 
-  /* Type */
-  .type-row { display: grid; grid-template-columns: 1.7in 1fr; gap: 16px; align-items: baseline; padding: 4px 0; border-bottom: 1px solid var(--divider); }
-  .type-row:last-child { border-bottom: 0; }
+  /* Type and logos */
+  .split { display: grid; grid-template-columns: 1.25fr 1fr; gap: 0.45in; }
+  .t-title { font: 700 26pt/1.1 var(--heading); color: var(--blue); }
+  .t-h2 { font: 700 18pt/1.2 var(--heading); color: var(--red-light); margin-top: 6px; }
+  .t-body { font: 400 11pt/1.45 var(--body); margin-top: 4px; }
+  .note { font-size: 8pt; color: var(--gray); margin-top: 8px; }
+  .logos { display: grid; grid-template-columns: 1.9in 1fr; gap: 20px; align-items: start; }
+  .logo-box { height: 0.72in; display: flex; align-items: center; }
+  .logos .primary { width: 1.9in; }
+  .dark-chip { background: var(--blue-dark); border-radius: 8px; padding: 8px; width: fit-content; }
+  .dark-chip img { width: 0.5in; height: 0.5in; display: block; }
 
-  /* Components */
-  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
-  .btn { display: inline-block; font: 500 10pt var(--body); padding: 7px 16px; border-radius: 8px; margin: 0 6px 6px 0; border: 1.5px solid transparent; }
-  .btn-primary { background: var(--blue); color: #fff; }
-  .btn-secondary { background: var(--gray); color: #fff; }
-  .btn-outlined { background: #fff; color: var(--blue); border-color: var(--blue); }
-  .btn-submit { background: var(--red); color: #fff; }
-  .field { margin-bottom: 8px; }
-  .field label { display: block; font: 500 8.5pt var(--body); margin-bottom: 3px; }
-  .input { border: 1.5px solid var(--gray-lighter); border-radius: 8px; padding: 6px 10px; color: var(--gray); }
-  .input.error { border-color: var(--red); color: var(--gray-dark); }
-  .error-msg { font-size: 8.5pt; color: var(--red-light); margin-top: 3px; }
-  .callout { border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; }
-  .callout.info { background: var(--blue-lighter); }
-  .callout.info b { color: var(--blue-dark); }
-  .callout.warn { background: var(--red-lighter); color: var(--red-dark); }
-  table { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
-  th:first-child, td:first-child { width: 45%; }
-  th { text-align: left; font-weight: 700; padding: 6px 10px 6px 0; border-bottom: 2px solid var(--gray); }
-  td { padding: 6px 10px 6px 0; border-bottom: 1px solid var(--divider); }
-  tr.action td { background: var(--red-lighter); color: var(--red-dark); }
-  tr.action td:first-child { padding-left: 8px; }
-  .status-active { color: var(--blue); font-weight: 500; }
-  .status-action { color: var(--red); font-weight: 500; }
-  .list-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid var(--divider); }
-  .filter { display: inline-block; font: 500 8.5pt var(--body); padding: 4px 11px; border-radius: 999px; border: 1px solid var(--gray-lighter); margin-right: 4px; }
-  .filter.on { background: var(--blue); border-color: var(--blue); color: #fff; }
-  .card { border: 1px solid var(--gray-lighter); border-radius: 12px; padding: 10px 12px; }
-  .card-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .card .thumb { height: 30px; border-radius: 8px; background: var(--blue-lighter); margin-bottom: 8px; }
-  .card.selected { border: 2px solid var(--blue); }
-
-  /* Slide */
-  .slide-wrap { display: grid; grid-template-columns: 1.35fr 1fr; gap: 24px; align-items: start; }
-  .slide-wrap p { font-size: 9pt; }
-  .slide { background: var(--blue-dark); color: #fff; aspect-ratio: 16 / 9; border-radius: 8px; padding: 24px 28px; display: flex; flex-direction: column; }
-  .slide .title { font: 700 17pt/1.15 var(--heading); }
-  .slide .cols { display: grid; grid-template-columns: 1fr 1px 1fr; gap: 20px; margin-top: 18px; flex: 1; }
+  /* Slides */
+  .slides { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .slide { aspect-ratio: 16 / 9; border-radius: 8px; color: #fff; padding: 12px 14px; display: flex; flex-direction: column; overflow: hidden; }
+  .slide.dark { background: var(--blue-dark); }
+  .slide.section { background: var(--blue); justify-content: center; }
+  .slide .st { font: 700 11pt/1.15 var(--heading); }
+  .slide .sub { color: var(--blue-lighter); font-size: 7pt; margin-top: 3px; }
+  .slide.title-slide { align-items: center; justify-content: center; text-align: center; }
+  .slide.title-slide img { width: 0.5in; height: 0.5in; margin-bottom: 6px; }
+  .slide .cols { display: grid; grid-template-columns: 1fr 1px 1.2fr; gap: 9px; margin-top: 8px; flex: 1; }
   .slide .rule { background: var(--blue-light); }
-  .slide .stat { font: 700 26pt var(--heading); color: #fff; }
-  .slide .stat em { font-style: normal; color: #d06f70; }
+  .slide .num { font: 700 17pt/1 var(--heading); color: var(--red-on-dark); }
+  .slide .small { font-size: 6.5pt; line-height: 1.35; }
   .slide .muted { color: var(--blue-lighter); }
-  .slide .source { font-size: 7.5pt; color: #8da0c7; margin-top: 8px; }
+  .slide .src { font-size: 5.5pt; color: var(--caption-on-dark); }
+  .cap { font-size: 8pt; color: var(--gray); margin-top: 4px; }
+  .cap b { color: var(--gray-dark); font-weight: 500; }
 
-  /* Rules */
-  .rules { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; font-size: 9pt; }
-  .rules ul { margin: 0; padding-left: 16px; }
-  .rules li { margin-bottom: 2px; }
-  .compare { display: grid; grid-template-columns: 0.8in 1fr; gap: 2px 12px; font-size: 9pt; padding: 4px 0; border-bottom: 1px solid var(--divider); }
-  .compare:last-child { border-bottom: 0; }
-  .compare .k { color: var(--gray); }
-  .compare s { color: var(--gray); }
-  footer { border-top: 1px solid var(--divider); padding-top: 10px; display: flex; justify-content: space-between; align-items: center; }
-  footer img { height: 34px; }
+  /* Do / don't */
+  .pairs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 0.45in; }
+  .pair h3 { font: 600 9.5pt var(--body); color: var(--gray-dark); margin: 0 0 5px; }
+  .pair .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .tag { font: 700 7.5pt var(--body); margin-bottom: 3px; }
+  .tag.do { color: var(--blue); }
+  .tag.dont { color: var(--red); }
+  .ex { font-size: 8pt; line-height: 1.35; }
+  .ex-callout { background: var(--blue-lighter); border-radius: 8px; padding: 7px 9px; }
+  .ex-callout b { color: var(--blue-dark); }
+  .ex-stripe { background: #fff; border: 1px solid var(--divider); border-left: 4px solid var(--blue); border-radius: 6px; padding: 7px 9px; box-shadow: 0 2px 6px rgba(0,0,0,.12); }
+  .ex-list div { padding: 3px 0; border-bottom: 1px solid var(--divider); display: flex; justify-content: space-between; }
+  .ex-list div:last-child { border-bottom: 0; }
+  .ex-cards div { border: 1px solid var(--divider); border-radius: 10px; padding: 3px 7px; margin-bottom: 3px; box-shadow: 0 2px 5px rgba(0,0,0,.12); display: flex; justify-content: space-between; }
+  .ex-title { font: 700 9pt/1.25 var(--heading); color: var(--blue-dark); }
+  .ex-title.bad { color: var(--gray); }
+
+  footer { margin-top: auto; padding: 0 0.55in 0.36in; font-size: 7.5pt; color: var(--gray); display: flex; justify-content: space-between; border-top: 0; }
+  footer .line { border-top: 1px solid var(--divider); padding-top: 7px; width: 100%; display: flex; justify-content: space-between; }
 </style>
 </head>
 <body>
+<div class="sheet">
 
-<header>
-  <div>
-    <h1>OPS Tech stylesheet</h1>
-    <p class="lede">Colors, type, structure, and copy for Orono Technology materials.</p>
-  </div>
-  <img src="Primary Logo.png" alt="Orono Technology">
-</header>
-
-<section class="keep">
-  <h2>Color</h2>
-  <div class="families">
+  <div class="band">
+    <img src="Secondary Logo.png" alt="Orono Technology">
     <div>
-      <h3>Blue (primary, about 60%)</h3>
-      <div class="swatch"><span class="chip-color" style="background:#1d2a5d"></span><b>Blue dark</b><code>#1d2a5d</code></div>
-      <div class="swatch"><span class="chip-color" style="background:#2d3f89"></span><b>Primary blue</b><code>#2d3f89</code></div>
-      <div class="swatch"><span class="chip-color" style="background:#4356a0"></span><b>Blue light</b><code>#4356a0</code></div>
-      <div class="swatch"><span class="chip-color light" style="background:#eaecf5"></span><b>Blue lighter</b><code>#eaecf5</code></div>
-    </div>
-    <div>
-      <h3>Red (accent, about 15%)</h3>
-      <div class="swatch"><span class="chip-color" style="background:#7a1718"></span><b>Red dark</b><code>#7a1718</code></div>
-      <div class="swatch"><span class="chip-color" style="background:#ad2122"></span><b>Primary red</b><code>#ad2122</code></div>
-      <div class="swatch"><span class="chip-color" style="background:#c13435"></span><b>Red light</b><code>#c13435</code></div>
-      <div class="swatch"><span class="chip-color light" style="background:#e5c7c7"></span><b>Red lighter</b><code>#e5c7c7</code></div>
-    </div>
-    <div>
-      <h3>Gray (neutral, about 25%)</h3>
-      <div class="swatch"><span class="chip-color" style="background:#1a1a1a"></span><b>Darkest</b><code>#1a1a1a</code></div>
-      <div class="swatch"><span class="chip-color" style="background:#333333"></span><b>Dark (body text)</b><code>#333333</code></div>
-      <div class="swatch"><span class="chip-color" style="background:#666666"></span><b>Primary gray</b><code>#666666</code></div>
-      <div class="swatch"><span class="chip-color" style="background:#999999"></span><b>Light</b><code>#999999</code></div>
-      <div class="swatch"><span class="chip-color light" style="background:#cccccc"></span><b>Lighter</b><code>#cccccc</code></div>
-      <div class="swatch"><span class="chip-color light" style="background:#f3f3f3"></span><b>Lightest</b><code>#f3f3f3</code></div>
+      <h1>The Orono Technology look</h1>
+      <p>For anything you make for staff, families, or students: slides, newsletters, handouts, and tools.</p>
     </div>
   </div>
-  <p class="small muted" style="margin-top:10px">Chart series go primary blue, primary red, blue light, red light. Sequential scales run blue lighter to blue dark.</p>
-</section>
 
-<section>
-  <h2>Type</h2>
-  <div class="type-row"><span class="muted small">Title, Lexend Bold 26pt</span><span style="font:700 19pt var(--heading);color:var(--blue)">Exit tickets in five minutes</span></div>
-  <div class="type-row"><span class="muted small">Heading 1, Lexend Bold 22pt</span><span style="font:700 15pt var(--heading);color:var(--blue-dark)">What students told us</span></div>
-  <div class="type-row"><span class="muted small">Heading 2, Lexend Bold 18pt</span><span style="font:700 12.5pt var(--heading);color:var(--red-light)">Try it this week</span></div>
-  <div class="type-row"><span class="muted small">Heading 3, Lexend Bold 14pt</span><span style="font:700 11.5pt var(--heading);color:var(--gray)">Grade 7 science</span></div>
-  <div class="type-row"><span class="muted small">Body, Roboto 11–12pt</span><span>Body text is Roboto in dark gray, left-aligned. Headings, titles, buttons, and labels use sentence case.</span></div>
-</section>
-
-<section class="keep">
-  <h2>Structure</h2>
-  <div class="two-col">
-    <div>
-      <h3>Lists use hairlines, not boxes</h3>
-      <div class="list-row"><span>PD hours due</span><span class="muted">Friday, March 6</span></div>
-      <div class="list-row"><span>Chromebook re-enrollment</span><span class="muted">Before March 1</span></div>
-      <div class="list-row" style="border-bottom:0"><span>Spring tech survey</span><span class="muted">Opens April 2</span></div>
-      <h3>Tables: bold header, hairline rows</h3>
-      <table>
-        <thead><tr><th>Building</th><th>Devices</th><th>Status</th></tr></thead>
-        <tbody>
-          <tr><td>Orono Middle School</td><td>612</td><td class="status-active">Active</td></tr>
-          <tr><td>Schumann Elementary</td><td>488</td><td>Pending</td></tr>
-          <tr class="action"><td>Orono High School</td><td>731</td><td class="status-action">Action required: 42 not enrolled</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <div>
-      <h3>Callouts: tint and a bold lead word</h3>
-      <div class="callout info"><b>Heads up:</b> The staff Wi-Fi password changes Monday.</div>
-      <div class="callout warn"><b>Action required:</b> Re-enroll your devices before March 1.</div>
-      <h3>Cards: only for things people pick</h3>
-      <div class="card-row">
-        <div class="card selected"><div class="thumb"></div><b>Exit ticket</b><div class="small muted">3 questions</div></div>
-        <div class="card"><div class="thumb"></div><b>Quick poll</b><div class="small muted">1 question</div></div>
+  <div class="inner">
+    <section>
+      <h2>Color</h2>
+      <p class="lead">Blue leads. Red marks the one thing that matters most. Gray carries the text.</p>
+      <div class="swatches">
+        <div class="sw"><div class="c" style="background:#1d2a5d"></div><b>Blue dark</b><span>#1d2a5d</span></div>
+        <div class="sw"><div class="c" style="background:#2d3f89"></div><b>Primary blue</b><span>#2d3f89</span></div>
+        <div class="sw"><div class="c" style="background:#4356a0"></div><b>Blue light</b><span>#4356a0</span></div>
+        <div class="sw"><div class="c edge" style="background:#eaecf5"></div><b>Blue lighter</b><span>#eaecf5</span></div>
+        <div class="sw"><div class="c" style="background:#ad2122"></div><b>Primary red</b><span>#ad2122</span></div>
+        <div class="sw"><div class="c" style="background:#c13435"></div><b>Red light</b><span>#c13435</span></div>
+        <div class="sw"><div class="c edge" style="background:#e5c7c7"></div><b>Red lighter</b><span>#e5c7c7</span></div>
+        <div class="sw"><div class="c" style="background:#333333"></div><b>Dark gray</b><span>#333333</span></div>
+        <div class="sw"><div class="c" style="background:#666666"></div><b>Gray</b><span>#666666</span></div>
+        <div class="sw"><div class="c edge" style="background:#f3f3f3"></div><b>Light gray</b><span>#f3f3f3</span></div>
       </div>
-    </div>
-  </div>
-</section>
+      <div class="mix"><div>Blue, about 60%</div><div>Red, 15%</div><div>Gray and white, 25%</div></div>
+    </section>
 
-<section class="keep page-break">
-  <h2>Controls</h2>
-  <div class="two-col">
-    <div>
-      <h3>Buttons say what happens</h3>
-      <span class="btn btn-primary">Save rubric</span><span class="btn btn-secondary">Preview</span><span class="btn btn-outlined">Duplicate</span><span class="btn btn-submit">Send to class</span>
-      <h3>Status is a word. Pills are only for filters.</h3>
-      <span class="filter on">Grade 7</span><span class="filter">Grade 8</span><span class="filter">Science</span>
-    </div>
-    <div>
-      <h3>Inputs and errors</h3>
-      <div class="field"><label>Due date</label><div class="input">mm/dd/yyyy</div></div>
-      <div class="field"><label>Attachment</label><div class="input error">unit-4-slides.pptx</div><div class="error-msg">The file is over 10 MB. Choose a smaller file or compress it.</div></div>
-    </div>
-  </div>
-</section>
-
-<section class="keep">
-  <h2>Slides</h2>
-  <div class="slide-wrap">
-    <div class="slide">
-      <div class="title">Exit tickets take 3 minutes and show who's lost</div>
-      <div class="cols">
-        <div><div class="stat"><em>84%</em></div><div class="muted small">of students answered every day of the pilot</div></div>
-        <div class="rule"></div>
-        <div class="small">Three questions at the door. Sort the stack into got it, almost, and not yet. Start tomorrow with the not-yet pile.</div>
+    <section class="split">
+      <div>
+        <h2>Type</h2>
+        <p class="lead">Lexend for headings, Roboto for everything else. Sentence case.</p>
+        <div class="t-title">Exit tickets</div>
+        <div class="t-h2">Try one this week</div>
+        <p class="t-body">Hand out three questions at the door. Sort the answers into got it, almost, and not yet.</p>
+        <p class="note">Shown at real size: title 26pt, heading 18pt, body 11pt. If Lexend isn't installed, use Calibri, then Arial.</p>
       </div>
-      <div class="source">Source: OMS exit ticket pilot, Fall 2026</div>
-    </div>
-    <div>
-      <p>Dark (blue dark) is the default for slides. Content sits on the background. Columns are separated by space and blue light hairlines.</p>
-      <p>Content slides get claim titles that state the point. Title, section, agenda, and closing slides keep short labels.</p>
-      <p>One large number or title word per slide may be red (#d06f70, the tint that passes contrast on blue dark). Every statistic gets a source line.</p>
-      <p class="muted small">Primary Logo can't sit directly on blue dark. Use the Secondary Logo, the Torch Icon at 1.5 to 2.5 inches, or the Primary Logo on a white plate.</p>
-    </div>
+      <div>
+        <h2>Logos</h2>
+        <p class="lead">Use the files as they are. Never recolor, stretch, or redraw them.</p>
+        <div class="logos">
+          <div><div class="logo-box"><img class="primary" src="Primary Logo.png" alt="Orono Technology primary logo"></div><p class="note">On white.</p></div>
+          <div><div class="logo-box"><div class="dark-chip"><img src="Secondary Logo.png" alt="Orono Technology square logo"></div></div><p class="note">On dark blue. The wide logo's blue lettering disappears there.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Slides</h2>
+      <p class="lead">Dark blue by default. A content slide's title says its point, so the titles alone tell the story.</p>
+      <div class="slides">
+        <div>
+          <div class="slide dark title-slide">
+            <img src="Secondary Logo.png" alt="">
+            <div class="st">Exit tickets</div>
+            <div class="sub">OMS staff PD · March 4</div>
+          </div>
+          <p class="cap"><b>Title slide.</b> Square logo, short title.</p>
+        </div>
+        <div>
+          <div class="slide dark">
+            <div class="st">Exit tickets take 3 minutes and show who's lost</div>
+            <div class="cols">
+              <div><div class="num">84%</div><div class="small muted">answered every day</div></div>
+              <div class="rule"></div>
+              <div class="small">Three questions at the door. Start tomorrow with the not-yet pile.</div>
+            </div>
+            <div class="src">Source: OMS exit ticket pilot, fall 2026</div>
+          </div>
+          <p class="cap"><b>Content slide.</b> One red number at most, and a source line.</p>
+        </div>
+        <div>
+          <div class="slide section">
+            <div class="st" style="font-size:13pt">Try it this week</div>
+          </div>
+          <p class="cap"><b>Section divider.</b> Primary blue, short title.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Do this, not that</h2>
+      <p class="lead">Separate things with space and thin lines. Say it in plain words.</p>
+      <div class="pairs">
+        <div class="pair">
+          <h3>Notes that matter</h3>
+          <div class="row">
+            <div><div class="tag do">Do</div><div class="ex ex-callout"><b>Heads up:</b> Wi-Fi password changes Monday.</div></div>
+            <div><div class="tag dont">Don't</div><div class="ex ex-stripe">Wi-Fi password changes Monday.</div></div>
+          </div>
+        </div>
+        <div class="pair">
+          <h3>Lists</h3>
+          <div class="row">
+            <div><div class="tag do">Do</div><div class="ex ex-list"><div><span>PD hours</span><span>Mar 6</span></div><div><span>Survey</span><span>Apr 2</span></div></div></div>
+            <div><div class="tag dont">Don't</div><div class="ex ex-cards"><div><span>PD hours</span><span>Mar 6</span></div><div><span>Survey</span><span>Apr 2</span></div></div></div>
+          </div>
+        </div>
+        <div class="pair">
+          <h3>Slide titles</h3>
+          <div class="row">
+            <div><div class="tag do">Do</div><div class="ex-title">Exit tickets take 3 minutes and show who's lost</div></div>
+            <div><div class="tag dont">Don't</div><div class="ex-title bad">Exit Tickets: A Practical Guide</div></div>
+          </div>
+        </div>
+        <div class="pair">
+          <h3>Sentences</h3>
+          <div class="row">
+            <div><div class="tag do">Do</div><div class="ex">The form closes Friday. Email the tech office with questions.</div></div>
+            <div><div class="tag dont">Don't</div><div class="ex">The form closes Friday, so submit before then, and reach out with any questions.</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
-</section>
 
-<section>
-  <h2>Copy</h2>
-  <div class="compare"><span class="k">Split</span><span><s>The form closes Friday, so make sure your team submits before then, and reach out with questions.</s><br>The form closes Friday. Email Paul with questions.</span></div>
-  <div class="compare"><span class="k">Claim</span><span><s>Exit Tickets: A Practical Guide</s><br>Exit tickets take 3 minutes and show who's lost</span></div>
-  <div class="compare"><span class="k">Buttons</span><span><s>Submit</s> <s>Learn more</s><br>Save rubric · Send to class · Download CSV</span></div>
-  <div class="compare"><span class="k">Errors</span><span><s>Oops! Something went wrong.</s><br>The file is over 10 MB. Choose a smaller file or compress it.</span></div>
-</section>
-
-<section>
-  <h2>Leave these out</h2>
-  <div class="rules">
-    <ul>
-      <li>A colored stripe on one side of any box</li>
-      <li>Accent lines under titles or before section labels</li>
-      <li>Uppercase letter-spaced section labels</li>
-      <li>Decorative icons, and icons in colored squares</li>
-      <li>Shadows and glows</li>
-    </ul>
-    <ul>
-      <li>Cards around lists or text, and cards inside cards</li>
-      <li>Status pills and badges</li>
-      <li>Zebra-striped tables and filled header rows</li>
-      <li>Em dashes, "not X but Y," and groups of three for rhythm</li>
-      <li>Delve, leverage, robust, seamless, empower, unlock</li>
-    </ul>
-  </div>
-</section>
-
-<footer>
-  <span class="small muted">Lexend and Roboto only. Fallbacks: Calibri, then Arial.</span>
-  <img src="Torch Icon.png" alt="">
-</footer>
-
+  <footer><div class="line"><span>Orono Technology · Orono Public Schools</span><span>Full spec for builders: DESIGN.md in the ops-brand-guidelines skill</span></div></footer>
+</div>
 </body>
 </html>
