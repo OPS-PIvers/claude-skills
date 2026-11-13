@@ -1,6 +1,6 @@
 ---
 name: ops-figures
-description: Build an on-brand Orono (OPS) interactive figure of an everyday object or machine (3D printer, washing machine, vending machine, toaster, kettle, projector, pump, lock, bike gear…) as one self-contained HTML page for teaching. Hand-inked isometric 3D drawing in OPS blue, red and gray, with buttons that really work, a plain-language caption for every step, part labels, a Take apart (exploded) view of the hidden parts, Predict questions, a step-by-step Walk through, and a Present mode for projecting. Use whenever someone wants a "how does X work" figure, an interactive diagram or model of a machine or process for a class, a PD session or staff training, a clickable object illustration, or an "OPS figure" or "Colorfigure", even if they don't name the skill. Can also be saved to SpartBoard as a mini-app.
+description: Build an on-brand Orono (OPS) interactive figure of an everyday object or machine (3D printer, washing machine, toaster, pump, lock, bike gear) as one self-contained HTML page for teaching, hand-inked in OPS colors with working buttons, captions, a Take apart view and a Present mode. Use whenever someone wants a "how does X work" figure, an interactive diagram or model of a machine or process for a class, PD session or staff training, or an "OPS figure" or "Colorfigure", even if they don't name the skill. For a photo of a textbook figure use figure-to-3d.
 ---
 
 # OPS Figures

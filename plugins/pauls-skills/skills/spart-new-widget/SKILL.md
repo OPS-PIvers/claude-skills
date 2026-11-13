@@ -1,14 +1,12 @@
 ---
 name: spart-new-widget
 description: >-
-  Use this skill whenever building a new widget for the SPART Board or making
-  significant structural changes to an existing widget. Covers the complete
-  widget creation workflow including type registration, file structure,
-  component architecture, CSS container query scaling rules, settings panels,
-  appearance panels, admin config wiring, and all required config file updates.
-  Triggers include: build a new widget, create a widget, add a widget, scaffold
-  a widget, new widget for the dashboard, or any request involving a widget
-  that does not yet exist as a component file.
+  Build a new widget for the SPART Board or make significant structural changes
+  to an existing one. Covers type registration, file structure, component
+  architecture, CSS container query scaling, settings and appearance panels,
+  admin config wiring and the required config file updates. Use for "build a
+  new widget", "create a widget", "add a widget", "scaffold a widget", or any
+  request involving a widget that does not yet exist as a component file.
 ---
 
 # SPART Board — New Widget Skill

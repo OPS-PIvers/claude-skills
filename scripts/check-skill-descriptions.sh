@@ -1,5 +1,6 @@
 #!/bin/sh
-# Fails if any SKILL.md frontmatter description contains "<" or is over 1024 characters.
+# Fails if any SKILL.md frontmatter description contains "<", is over 1024 characters,
+# or is unquoted and contains ": " or " #" (which breaks the YAML).
 # claude.ai rejects XML-like tags in skill descriptions and drops the skill on sync.
 # Usage: check-skill-descriptions.sh [--staged] [files...]
 #   --staged  read file contents from the git index (used by the pre-commit hook)
@@ -29,6 +30,20 @@ for f in "$@"; do
   if [ -n "$hits" ]; then
     echo "error: $f: description contains '<' (claude.ai rejects XML tags in skill descriptions):" >&2
     printf '%s\n' "$hits" | sed 's/^/  line /' >&2
+    status=1
+  fi
+  # An unquoted description with ": " or " #" in it is invalid YAML. The skill still
+  # loads, but with every frontmatter field dropped, so it has no description.
+  bad=$(printf '%s\n' "$content" | tr -d '\r' | awk '
+    NR == 1 && $0 == "---" { fm = 1; next }
+    !fm { exit }
+    $0 == "---" { exit }
+    /^description:/ { indesc = 1; sub(/^description:[ \t]*/, ""); if ($0 ~ /^["'\''>|]/) exit; if ($0 ~ /: | #|:$/) print NR; next }
+    indesc && /^[ \t]/ { if ($0 ~ /: | #|:$/) print NR; next }
+    { indesc = 0 }
+  ')
+  if [ -n "$bad" ]; then
+    echo "error: $f: unquoted description contains ': ' or ' #' (line $(echo $bad | tr ' ' ',')). The frontmatter fails to parse and the skill loads with no description. Reword it or wrap the description in double quotes." >&2
     status=1
   fi
   # claude.ai cuts descriptions longer than 1024 characters and warns on sync.

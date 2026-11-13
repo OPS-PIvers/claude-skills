@@ -1,6 +1,6 @@
 ---
 name: figure-to-3d
-description: Turn a photo of a figure from a textbook, lab manual or instruction manual (a heart, a cell, the eye, a skull, an engine, a gear train, a cone cut by a plane, a furniture assembly step) into an interactive 3D model on one self-contained HTML page for teaching. Real anatomical meshes where the subject is organic, exact geometry where it is a machine or a shape; the page keeps the book's own colors, labels and look, and adds spin and zoom, tap a part to name it, Take apart, a Cut slider to look inside, layers, moving flow dots, a step-by-step Walk through with Predict questions, and Present mode for projecting. Use whenever someone shares a picture of a diagram or figure and wants it in 3D, interactive, "brought to life", or "something students can turn around", or asks for a 3D model of a body part, organ, specimen, mechanism or solid for a class or a training, even if they don't name the skill. Not for drawn OPS-style figures of everyday machines: that is ops-figures.
+description: Turn a photo of a figure from a textbook, lab manual or instruction manual (a heart, a cell, an engine, a gear train) into an interactive 3D model on one self-contained HTML page for teaching. Use whenever someone shares a picture of a diagram or figure and wants it in 3D, interactive or "brought to life", or asks for a 3D model of a body part, mechanism or solid for a class, even if they don't name the skill. For drawn OPS-style figures of everyday machines use ops-figures.
 ---
 
 # Figure to 3D
