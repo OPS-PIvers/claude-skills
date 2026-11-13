@@ -1,13 +1,18 @@
 # "How did my class do?"
 
-Tools: `get_quiz_results_summary(quiz_id)`, `get_video_activity_results_summary(activity_id)` and `get_mini_app_results_summary(app_id)` (listed only when mini-app results are on for the teacher; without it, say mini-app results aren't available for them yet). Find the id with `list_quizzes`, `list_video_activities` or `list_mini_apps` and `search`. Results cover the teacher's own newest 5 assignments, or one assignment by `assignment_id`.
+Tools: `get_quiz_results_summary(quiz_id)`, `get_video_activity_results_summary(activity_id)` and `get_mini_app_results_summary(app_id)` (listed only when mini-app results are on for the teacher; without it, say mini-app results aren't available for them yet). Find the id with `list_quizzes`, `list_video_activities` or `list_mini_apps` and `search`. Results cover the teacher's own newest 5 assignments, or one assignment by `assignment_id`. A PLC teammate's classes aren't included.
 
 ## What you get
 
-- **Class-level numbers only:** completed responses, average percent, score bands, and for each question the percent correct and how many students picked each choice.
-- **Mini-apps** report each student's best attempt: average, score bands, average attempts and percent correct per question. Questions marked `scored_by: app` were scored by the app itself, not SpartBoard. Assignments made before results scoring have no summary.
+- **One summary per assignment,** each with its `class_periods`, `status` and dates. Report them separately rather than averaging them together.
+- **Class-level numbers only:** completed responses, `average_percent`, score bands, and for each question its `percent_correct` and how many students picked each choice.
+- **`percent_correct: null`** means nothing is graded yet, usually free response waiting for the teacher. Say it's ungraded; it isn't 0. `average_percent` is null when no response is scored.
+- **No standards rollup.** To answer "how did they do on 7.4.1.1", call `get_quiz` and match each question's `standards` to its `percent_correct` by `question_id`.
+- **Video activities** run live (`pacing: live`) cover only the questions the class was asked; `questions_not_asked` counts the rest.
+- **Mini-apps** report each student's best attempt: average, score bands, `average_attempts` and percent correct per question. Questions marked `scored_by: app` were scored by the app itself, not SpartBoard. Assignments made before results scoring have no summary.
+- **A `warning`** means per-question counts may be incomplete; mention it.
 - **Hidden under 5 finishers.** Say so kindly if a summary is hidden.
-- **You never see a student's name, answers or score.** Don't guess at individuals.
+- **You never see a student's name, answers or score.** Don't guess at individuals. A choice like `Picture 7KQ` is a picture answer you can't see; call it by its label.
 
 ## Answer in this shape (short)
 

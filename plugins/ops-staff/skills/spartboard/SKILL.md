@@ -1,6 +1,6 @@
 ---
 name: spartboard
-description: "Make and edit classroom materials in a teacher's SpartBoard library through the SpartBoard connector: quizzes, question banks, video activities, flashcard sets, rubrics, Activity Walls, mini-apps, Guided Learning hotspot activities and library folders; build, change and tidy classroom boards (AI boards); read class-level results; draft PLC meeting notes; and (for admins) write live tours and polish Help Center web tours. Use whenever a teacher asks to create, write, generate, revise or fix a quiz, test, exit ticket, flashcards, vocab set, video questions, rubric, discussion wall, classroom app, hotspot activity or board for SpartBoard, asks to lay out or tidy a board, organize their library into folders, or tag Minnesota standards or learning targets, asks how a class did on a quiz, video activity or mini-app, wants notes or action items from a PLC meeting, or an admin asks for a live tour, web tour, walkthrough or Help Center guide."
+description: "Make and edit classroom materials in a teacher's SpartBoard library through the SpartBoard connector: quizzes, question banks, video activities, flashcard sets, rubrics, Activity Walls, mini-apps, Guided Learning hotspot activities and library folders; build, change and tidy classroom boards (AI boards); read class-level results; draft PLC meeting notes; and (for admins) write Help Center live tours and edit web tours. Use whenever a teacher asks to create, write, generate, revise or fix a quiz, test, exit ticket, flashcards, vocab set, video questions, rubric, discussion wall, classroom app, hotspot activity or board for SpartBoard, asks to lay out or tidy a board, organize their library into folders, or tag Minnesota standards or learning targets, asks how a class did on a quiz, video activity or mini-app, wants notes or action items from a PLC meeting, or an admin asks for a live tour, web tour, walkthrough or Help Center guide."
 ---
 
 # SpartBoard
@@ -29,7 +29,9 @@ Help a teacher make materials that are accurate, grounded in their own content, 
    - the 2–3 items most worth a second look: anything inferred rather than stated in the source, a close distractor, a subjective key, or a timestamp you estimated
    - a reminder to review it in SpartBoard before assigning it, and that you can undo any edit for 30 days
 
-**Edits:** a specific fix the teacher asked for ("make question 4 easier") needs no plan; just do it and report it in one line. A broad rewrite gets the plan step first.
+**Edits:** a specific fix the teacher asked for ("make question 4 easier", or a "From the preview card:" message) needs no plan; just do it and report it in one line. A broad rewrite gets the plan step first.
+
+**Starter prompts:** a SpartBoard starter prompt ("Use the SpartBoard skill if you have it") follows this skill. Fill in the standards line yourself instead of asking "Align to MN standards?".
 
 **Lighter plans:** boards get a one-line plan and then build (`references/boards.md`). Live tours skip the plan (`references/live-tours.md`). Meeting notes are already a draft an editor reviews, so they skip it too (`references/meeting-notes.md`).
 
@@ -40,34 +42,38 @@ Help a teacher make materials that are accurate, grounded in their own content, 
 - Put every change to an item into one `update_*` call. `update_*` replaces whole lists, so send every question, card, criterion or step you want to keep, each with its `id`.
 - Use `list_*` with `search` to find an item. Don't page through the whole library.
 - Read only the reference file for the type you're making.
+- Call `get_my_account` only when the teacher asks what they can do or about their limits. It returns `content_types`, `can`, `cannot` and the daily limits.
 
 ## What this teacher can use
 
-Some tools appear only when they're turned on for the account, so the tool list differs from teacher to teacher:
+Some tools are hidden unless they're on for the account; others are listed for everyone but refuse with "not turned on for this account yet":
 
-| Tools | Shown when |
+| Tools | Available when |
 |---|---|
-| Boards (`list_boards`, `get_board_guide`, `create_board`, `edit_board`, `tidy_board`, …) | the AI boards preview is on for them |
-| Guided Learning (`*_guided_learning*`) | Guided Learning through Claude is on for them |
-| Meeting notes (`list_group_meetings`, `get_meeting_transcript`, `write_meeting_notes_draft`) | PLC meeting notes are on for them |
-| `get_mini_app_results_summary` (and, on older connectors, `get_mini_app_spec`) | mini-app results are on for them |
-| Live tours and web tours | they're a SpartBoard admin |
+| Guided Learning (`*_guided_learning*`, `list_tour_anchors`) | Guided Learning through Claude is on for them; otherwise listed but refused |
+| Meeting notes (`list_group_meetings`, `get_meeting_transcript`, `write_meeting_notes_draft`) | PLC meeting notes are on for them; otherwise listed but refused |
+| `get_mini_app_results_summary` | mini-app results are on for them; hidden otherwise |
+| Live tours (`*_live_tour*`, `get_live_tour_guide`, `list_help_center_categories`, `start_live_tour_picture_upload`) | they're a SpartBoard admin (hidden otherwise) and Guided Learning through Claude is on |
+| Web tours (`*_web_tour*`) | they're an admin (hidden otherwise), with Guided Learning through Claude and web tours both on |
+| Quiz and rubric preview cards in the chat | the connector previews are on for them; otherwise results have no `preview_shown` |
+
+Boards and everything else work for every teacher with the connector; `get_board_guide` lists only the widgets this teacher can add.
 
 If the tools for a request aren't in your list, or a tool says "not turned on for this account yet", tell the teacher plainly that this isn't available for them yet and stop. Don't work around it with another tool.
 
 ## Limits you can't change (say so plainly if asked)
 
 - **No delete, assign or share.** The teacher does those in SpartBoard. That includes boards: Claude never deletes one.
-- **PLC-shared quizzes, banks and video activities are read-only here.** Edit them in SpartBoard.
+- **PLC-shared and District library quizzes, banks and video activities are read-only here.** Edit them in SpartBoard.
 - **Results are class-level only.** They're hidden under 5 finishers, and there are no student names or answers.
-- **Plain text only** in quiz, bank, video and flashcard questions and cards, with no images. Guided Learning takes slide images by public link; nothing else uploads files.
-- **300 library changes a day** per teacher. Boards have their own 500.
+- **Plain text only** in what you write for quiz, bank, video and flashcard questions and cards, with no images, math or formatting. Pictures, passages, explanations and math the teacher already added in SpartBoard survive your edits (`references/quizzes.md`). Guided Learning takes slide images by public link; live tours upload step pictures (`references/live-tours.md`); nothing else uploads files.
+- **300 library changes a day** per teacher (new folders and meeting-notes drafts count). Boards have their own 500 calls a day. Both reset at midnight UTC; "Daily SpartBoard request limit reached" means stop until tomorrow.
 - **Quizzes, banks and video activities save to the teacher's Google Drive.** If a tool says Drive isn't connected, send them to the SpartBoard connect page to reconnect.
 
 ## Folders and undo
 
-- **Folders:** every create tool for quizzes, banks, video activities, flashcards, mini-apps and Guided Learning takes `folder_id`, and their `update_*` tools (all but Guided Learning) move an item with `folder_id` (`null` for the top level). Find ids with `list_folders(content_type)`. When the teacher names a folder that doesn't exist, `create_folder` makes it; `parent_path` (`["Unit 3", "Week 2"]`) builds nested folders, reusing ones that exist. Put the folder in the plan's "Saves to" line.
-- **Undo:** every Claude edit keeps the previous version for 30 days, for every type including boards, Guided Learning and tours. `list_revisions` (pass `item_id`), then `restore_revision`. Restoring saves the current version first, so a restore can itself be undone.
+- **Folders:** every create tool for quizzes, banks, video activities, flashcards, mini-apps and Guided Learning takes `folder_id`, and their `update_*` tools (all but Guided Learning) move an item with `folder_id` (`null` for the top level). Find ids with `list_folders(content_type)`. When the teacher names a folder that doesn't exist, `create_folder` makes it; `parent_path` (`["Unit 3", "Week 2"]`) builds nested folders, reusing ones that exist. Put the folder in the plan's "Saves to" line. `list_folders` content types: `flashcards`, `quizzes`, `question_banks`, `video_activities`, `mini_apps`, `guided_learning`. Rubrics and Activity Walls have no folders.
+- **Undo:** every Claude edit to an existing item keeps the previous version for 30 days, for every type including boards, Guided Learning and live and web tours. Folders and meeting-notes drafts have none. `list_revisions` (pass `item_id`; it searches the 100 most recent saves), then `restore_revision`. Restoring saves the current version first, so a restore can itself be undone.
 
 ## Best practice that applies to everything
 
@@ -92,5 +98,5 @@ If the tools for a request aren't in your list, or a tool says "not turned on fo
 | Standards and learning targets | `references/standards.md` |
 | Board, AI boards (build, change or tidy; one-line plan) | `references/boards.md` |
 | PLC meeting notes from a recording (no plan step) | `references/meeting-notes.md` |
-| Live tour of SpartBoard (admins only, no plan step) | `references/live-tours.md` |
+| Live tour of SpartBoard, filed in the Help Center (admins only, no plan step) | `references/live-tours.md` |
 | Web tour recorded with the Chrome extension (admins only) | `references/web-tours.md` |
