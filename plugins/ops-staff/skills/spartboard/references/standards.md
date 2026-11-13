@@ -17,16 +17,16 @@ Never put a standard or target in the question text. Flashcards, rubrics, Activi
 
 ## Finding the standard
 
-1. **Use `search_standards` first.** It searches the exact list SpartBoard saves, so every code it returns will save. Give `subject` and `grade` plus 1–3 topic words (`"central idea"`, `"fractions"`), or look up one code with `query`. Keep `limit` small (about 10); a call costs a few hundred tokens. If it says more match, add a word rather than raising the limit.
+1. **Use `search_standards` first.** It searches the exact list SpartBoard saves, so every code it returns will save. Give `subject` and `grade` plus 1–3 topic words (`"central idea"`, `"fractions"`), or look up one code with `query` alone (no subject needed). Keep `limit` small (about 10); a call costs a few hundred tokens. If it says more match, add a word rather than raising the limit.
 2. **Use the Learning Commons connector** when you need more than the code and wording: what a benchmark breaks into (`find_learning_components_from_standard`) or how it builds across grades (`find_standards_progression_from_standard`). It's usually connected; check your tools rather than asking. A code from Learning Commons still has to be in SpartBoard's list, so confirm it with `search_standards` before saving.
 3. **If neither tool is available,** use codes the teacher gives you. If they give none, say once that you can't look codes up and continue without standards.
 
-- **Choose the 1–3 benchmarks** each question really assesses. Don't pick every benchmark that's loosely related.
+- **Choose the 1–3 benchmarks** each question really assesses (the cap is 10). Don't pick every benchmark that's loosely related.
 - Subjects: `ela`, `social-studies`, `math`, `science`, `pe-health`, `art`, `music`, `world-language`. World Language uses Can-Do codes like `WL.3.2.1`.
 - **A code in more than one set** comes back as a full id, e.g. `mn-math-2022:6.1.2.1`. Save it exactly as returned.
 - **Science codes** use the 2019 format with a domain letter, e.g. `6E.3.1.1.1` (grade 6, Earth and space). Search `science` by grade and topic words rather than guessing codes.
 - **If `search_standards` says a subject has no standards loaded,** SpartBoard can't tag that subject yet. Save without standards and tell the teacher in one line that an admin loads them in Admin Settings > Standards. Don't offer learning targets as a substitute.
-- **If a save rejects a code,** it isn't in SpartBoard's list. Check it with `search_standards`, then tell the teacher and save without it.
+- **If a save rejects a code,** it isn't in SpartBoard's list. Check it with `search_standards`, then tell the teacher and save without it. If it says a code matches two sets, resend the full id it names.
 
 ## Learning targets (only when the teacher gives them)
 
