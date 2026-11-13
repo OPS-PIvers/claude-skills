@@ -1,6 +1,6 @@
 ---
 name: ops-brand-guidelines
-description: "Apply the Orono Technology (OPS Tech) brand identity — colors, typography, and logos — to slide decks, PD presentations, documents, newsletters, dashboards, and web apps built for the Orono district. Use this skill whenever the user asks for slides, a deck, a PD presentation, a teacher handout, a newsletter, a report, an HTML tool, a dashboard, or any school-facing material, even if they don't explicitly say 'on-brand' or 'OPS style' — the default for Paul's work is Orono Middle School, and the default should be on-brand. Also use when the user mentions Orono, OPS, OMS, Spartan, brand colors, the torch logo, Lexend, or Roboto. Primary focus: professional development slide decks. Also covers docx, HTML, CSS, React. Includes a portable DESIGN.md token spec for handing off to other agents."
+description: "Apply the Orono Technology (OPS Tech) brand (colors, typography, logos) to slide decks, PD presentations, documents, newsletters, dashboards and web apps for the Orono district. Use whenever the user asks for slides, a deck, a teacher handout, a newsletter, a report, an HTML tool, a dashboard or any school-facing material, even if they don't say on-brand, because on-brand is the default for Paul's work. Also use when they mention Orono, OPS, OMS, Spartan, brand colors, the torch logo, Lexend or Roboto."
 license: MIT License
 ---
 

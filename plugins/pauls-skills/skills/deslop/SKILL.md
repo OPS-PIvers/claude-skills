@@ -1,6 +1,6 @@
 ---
 name: deslop
-description: "Strip the machine-generated tells out of prose or out of an interface. Runs in two modes. `--writing` rewrites text against a zero-tolerance ban list and a saved per-person style profile, judged by whether a competent person would say the sentence out loud. `--ui` audits and fixes an interface against a UI ban list and a saved per-project design profile, judged by whether a competent designer would be embarrassed to ship it. Bare `/deslop` detects the mode from the target and says which one it picked. Use when the user says deslop or de-slop, says something reads like AI wrote it or looks AI-generated, says it sounds like ChatGPT or looks like a v0 or Lovable app, asks to remove the AI tells, or asks for a cleanup of slide copy, a memo, a newsletter, an email, a component, a screen, a landing page, or a dashboard. Also run it as a final pass on prose or UI you just produced."
+description: "Strip the machine-generated tells out of prose (`--writing`) or an interface (`--ui`), using a zero-tolerance ban list and a saved style or design profile. Bare `/deslop` picks the mode from the target. Use when the user says deslop or de-slop, says something reads like AI wrote it, sounds like ChatGPT or looks like a v0 or Lovable app, or asks to remove the AI tells from slide copy, an email, a newsletter, a component or a screen. Also run it as a final pass on prose or UI you just produced."
 ---
 
 # Deslop
