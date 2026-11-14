@@ -13,7 +13,7 @@ Tools: `list_quizzes`, `get_quiz`, `create_quiz`, `update_quiz`, and the same fo
 | `ordering` | sequences, steps, timelines | 2–12 `items_in_order` |
 | `free_response` | explanation or argument | `placeholder`, `min_words`, `max_words`, `rubric_id`, with no key |
 
-Every type also takes `standards` and `learning_targets`, which fill the question's Learning Targets field (`references/standards.md`). Quiz and bank questions also take `dok` (1 to 4), the editor's DOK dropdown: give every question a level as you tag its standards, rating the thinking it asks for, not how hard it is. Send `null` to clear one; leave `dok` out to keep the saved level. If a result has `dok_not_saved`, DOK levels aren't on for this teacher: stop sending `dok` and don't mention it. Other fields: `points` defaults to 1, and `time_limit_seconds` of 0 means no limit. `create_quiz` takes `language` (BCP 47, e.g. `es-MX`) for a quiz in another language; `update_quiz` can't change it. `folder_id` files it. Up to 200 questions. `choose_all`, matching and ordering items can't contain `|`, and matching terms can't contain `:`.
+Every type also takes `standards` and `learning_targets`, which fill the question's Learning Targets field (`references/standards.md`). Quiz and bank questions also take `dok` (1 to 4), the editor's DOK dropdown: give every question a level as you tag its standards, rating the thinking it asks for, not how hard it is. Send `null` to clear one; leave `dok` out to keep the saved level. Write an `explanation` for every question (why the answer is right, a sentence or two students read after results are published) and `option_explanations` for every `multiple_choice` and `choose_all` choice (`{option, explanation}`, the option text exactly as saved; for a wrong choice, name the mistake that leads there), unless the teacher says not to. `null` clears them; leaving them out keeps the saved ones. If a result has `not_saved`, that feature isn't on for this teacher: stop sending those fields and don't mention them. Other fields: `points` defaults to 1, and `time_limit_seconds` of 0 means no limit. `create_quiz` takes `language` (BCP 47, e.g. `es-MX`) for a quiz in another language; `update_quiz` can't change it. `folder_id` files it. Up to 200 questions. `choose_all`, matching and ordering items can't contain `|`, and matching terms can't contain `:`.
 
 ## Rubrics on free response
 
@@ -41,7 +41,7 @@ Every type also takes `standards` and `learning_targets`, which fill the questio
 - If `get_quiz` shows `sections`, new questions land in the last section; say so.
 - Existing assignments keep the version they were given.
 - `needs_answer_key: true` marks an imported question with no key. Fill the key; the mark clears itself. `questions_missing_answer_key` in the result should then be 0.
-- **Keep what you can't see.** Pictures, passages, explanations and dropdown or drag blanks stay on a question you edit, as long as its type stays the same. Pictures and per-choice explanations belong to a choice's exact text, so reword a choice only when asked. A choice like `Picture 7KQ` is a picture answer: keep that label exactly. Keep `**bold**`, `*italic*`, `++underline++` and `⟦…⟧` equation marks already in the text. A dropdown or drag blank keeps its old choices, so if the teacher calls a blank a dropdown or word bank, change its answer in SpartBoard.
+- **Keep what you can't see.** Pictures, passages and dropdown or drag blanks stay on a question you edit, as long as its type stays the same. Pictures and per-choice explanations belong to a choice's exact text, so reword a choice only when asked. A choice like `Picture 7KQ` is a picture answer: keep that label exactly. Keep `**bold**`, `*italic*`, `++underline++` and `⟦…⟧` equation marks already in the text. A dropdown or drag blank keeps its old choices, so if the teacher calls a blank a dropdown or word bank, change its answer in SpartBoard.
 - **Read-only items:** `shared_with_plc: true` means PLC-shared or a District library copy. Saves are refused; the teacher edits in SpartBoard or makes their own copy there.
 
 ## Preview card
@@ -53,7 +53,7 @@ When a result includes `preview_shown`, the teacher sees the quiz as a card in t
 
 ## Do in SpartBoard (not here)
 
-Say so in one line instead of trying: pictures on questions or answers, reading passages and media, math equations and text formatting, explanations, dropdown or drag blanks (MCA practice), recorded responses, sections, pulling from a bank into a quiz, quiz settings, translations, and assigning.
+Say so in one line instead of trying: pictures on questions or answers, reading passages and media, math equations and text formatting, dropdown or drag blanks (MCA practice), recorded responses, sections, pulling from a bank into a quiz, quiz settings, translations, and assigning.
 
 ## Hand-back checks to name
 
