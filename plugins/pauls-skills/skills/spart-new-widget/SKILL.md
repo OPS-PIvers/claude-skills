@@ -14,7 +14,7 @@ description: >-
 ## The Complete Checklist (do these in order)
 
 Every new widget touches **10 locations**, and a lifecycle widget adds an 11th
-(see Step 0). Missing any one causes TypeScript errors, broken dock entries,
+(see Step 0) and an assignment widget a 12th. Missing any one causes TypeScript errors, broken dock entries,
 invisible gear buttons, scaling failures, a red CI run, or student data in a
 tour recording.
 
@@ -31,6 +31,7 @@ tour recording.
 | 9 | `config/tourAnchors.ts` | Tag primary actions with `tourAttr` and register each id in `TOUR_ANCHORS` (Step 8) |
 | 10 | `components/widgets/YourWidget/` | `data-pii` on elements showing student faces, photos or free-form content (Step 8) |
 | 11 | `components/widgets/YourWidget/yourWidgetState.ts` + test | **Lifecycle widgets only:** state union, reducer, derive function and transition tests (Step 9) |
+| 12 | `tests/assignmentShells.static.test.ts` | **Assignment widgets only:** add the new `AssignmentKind` to `ASSIGNMENT_WIDGETS`, and build the monitor, Live view, results and grader from the Quiz shared pieces (Step 9, "Assignment widgets reuse the Quiz shells") |
 
 ---
 
@@ -379,6 +380,22 @@ tests before (or with) the component.
 | Assigned session run state (active, paused, ended), assignment-to-session status mirror, end patch, "does this session accept student work" | `utils/sessionLifecycle.ts` (`deriveRunState`, `transition`, `endSessionPatch`, `assignmentLifecyclePatches`, `acceptsStudents`) |
 | A countdown or stopwatch (start, pause, reset, expired) | `utils/timeToolClock.ts` (`clockStateOf`, `secondsAt`, `timeToolClockReducer`, `startFreshClock`). Never hand-roll `isRunning` + `startTime` math |
 | A student screen built from a session doc plus local UI state | Copy the shape of `utils/quizStudentPhase.ts` or `components/miniApp/miniAppViewState.ts` |
+
+### Assignment widgets reuse the Quiz shells
+
+A widget students turn work in on (Quiz, Writing, Video Activity, Flashcards,
+Mini Apps, Guided Learning, any new `AssignmentKind`) never builds its own
+monitor, Live view, results page or grader. Compose them from the Quiz pieces
+in `components/widgets/QuizWidget/components/`: `monitor/PeriodBar`
+(`ClassPicker`, `PeriodBar`), `monitor/StatusBuckets`, `monitor/RosterList` or
+`monitor/RosterParts`, `monitor/QuestionResults`, `monitor/LiveViewPanel`,
+`results/ResultsHome`, `results/StudentAnswerLine`,
+`results/StudentResultsControl`, `FreeResponseGrader`, `RubricScoringPanel` and
+`ResultsPrintModal`. Flashcards (`components/widgets/Flashcards/results/`) is
+the worked example. When a piece can't do what the widget needs, add a prop or
+slot to it and keep Quiz working. The full table is in the repo's
+`.claude/rules/assignment-shells.md`; `tests/assignmentShells.static.test.ts`
+fails CI on a local copy and names the shared component to use.
 
 ### The state module (`yourWidgetState.ts`)
 
