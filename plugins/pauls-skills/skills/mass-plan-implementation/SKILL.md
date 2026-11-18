@@ -48,6 +48,16 @@ Agents chronically underestimate what they can handle, self-selecting ~25% of a 
 ### 4. Batch only if necessary
 Batching is a mechanical constraint, not a scoping decision — the slice never shrinks because of it. One workflow per domain/area keeps prompts focused; within a workflow, chunks of ~3 concurrent implementers (more saturates the machine and hangs test runs). Sequence batches only where real dependencies exist (item B builds on item A's schema).
 
+### 4a. Speed rules: everything starts at once — REQUIRED
+When the user asks to slice a plan "in parallel" or "as fast as possible", the measure is visible work landing early, not a tidy dependency graph. A run that delivered one visible tab after three hours, with seven PRs still queued behind a foundation PR, a dev-check gate and a string of follow-up PRs, was rated the worst slicing ever. Never repeat it:
+
+- **Start every slice in the first dispatch.** No waves. A dependency is not a reason to wait: dependent slices branch from the foundation's branch the moment it is pushed and merge the base once it lands.
+- **Keep any shared foundation tiny** (types, flag, one helper signature). If it needs more than one review round, the slices are already running on its branch while it does.
+- **No human-check gates between slices**, even if the plan doc names one ("user OKs slice 2 before 3-6"). Speed overrides it; the flag keeps everything hidden until the user checks. Ask in one line only if the gate guards something irreversible.
+- **Review findings are fixed in the same PR.** Never open a follow-up PR for a finding from that PR's review; small leftovers ride the next slice that touches the same files.
+- **Batch every wording OK into one message up front**, not one per slice.
+- **Report remaining PR count** at each checkpoint, so the user can see the end.
+
 ### 5. Implement — [implement-batch.js](implement-batch.js)
 One agent per item, `isolation: 'worktree'`. Each agent: read conventions doc → read its item's brief → branch → implement per repo conventions → verify (lint + tests) → commit → push → open PR (never merge) → return structured result.
 
