@@ -51,7 +51,7 @@ Gather:
 Sort each item:
 
 - **Ready:** complete, CI green, no conflict, no unresolved blocking comment. It still gets reviewed (section 4).
-- **Fixable:** red CI, a conflict, or review comments to address.
+- **Fixable:** red CI, a conflict, or review comments to address. A PR with no checks at all after its last push usually conflicts: GitHub runs no `pull_request` checks while it does, and shows no error. Check its mergeability before calling it in progress.
 - **In progress:** a session or routine is still working on it. Message it with the cutoff (default 1 hour attended, 3 hours unattended): "A PR sweep is merging into <target>. Finish, get CI green, push, and reply with your PR number by <time>. Don't merge; the sweep merges."
 - **Leave open:** only for a named reason: a product decision only Paul can make, a draft its own description calls exploratory, an unresolved disagreement on the PR, an outside author, the release hold. "Big" or "risky" is not a reason; review handles risk.
 
@@ -70,7 +70,7 @@ Work runs in background `Agent`s, `isolation: 'worktree'`, `model: sonnet`. Each
 - **Tests:** a PR that changes behavior adds or updates a test that would fail without it. Missing coverage on a fix or a data path is a blocking finding.
 - **UI:** a PR that changes what a user sees gets driven in the real app (the repo's `run`/`verify-*` skill, or the `run` skill) before it merges. If that's not possible, it's a named gap in the record.
 - **Adjudicate** before fixing: reviewers are wrong sometimes. Check each finding against the code, drop nitpicks, and send one fix agent per PR with only the confirmed findings. The fix agent addresses them, gets CI green, and pushes. Re-review after the fix. After two fix rounds still finding blocking issues, read the disputed code yourself and decide.
-- **Conflicts:** sibling PRs usually conflict because both added an import, a field or a list entry. Keep both sides. If two PRs really implement the same thing, keep the merged version and adapt the other onto it.
+- **Conflicts:** sibling PRs usually conflict because both added an import, a field or a list entry. Keep both sides. Merge the target into the branch and push; don't wait for the author session to notice. If two PRs really implement the same thing, keep the merged version and adapt the other onto it.
 
 ## 5. Merge train
 
@@ -131,5 +131,6 @@ A completion ping that never arrives looks just like work in progress, so check 
 
 - Schedule a check-in every 20 minutes while anything runs in the background (`send_later` in a cloud session; `CronCreate` locally). Never end a turn with work in flight and no check-in scheduled.
 - At each check-in, look for progress: new commits or pushes (`git fetch`, then `git for-each-ref --sort=-committerdate refs/remotes`), task status, a session's newest event, CI step progress.
+- A PR whose CI never started after a push is not stalled CI, it is a conflict. Check mergeability and fix it as in section 4.
 - **Stalled** means no new evidence for two check-ins, or 15 minutes for something quick (a push, a merge, a rebase). Stop a stalled agent, save any work in its worktree, and relaunch it once with a narrower brief. Interrupt a stalled session and ask it to push what it has. Cancel and rerun a stuck CI run once, never with an empty commit.
 - Every Bash wait has a timeout (`timeout 20m gh run watch <id> --exit-status`). Agents run lint and targeted tests only; full suites hang under load, so CI is the full gate.
