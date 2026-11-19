@@ -35,13 +35,13 @@ The body starts as the change list (section 2) and gains the flag table (section
 
 **Change list.** Hand the range to a cheap model (an `Agent` with `model: haiku`): `git log --no-merges --format='%h %s%n%b' origin/main..origin/dev-paul` plus `git diff --stat`. Ask for plain bullets, one per change, grouped as New features, Changes, Fixes, Internal. No file paths, no PR numbers in the text. Check its bullets against the log yourself; a cheap model drops and invents items.
 
-**Release notes** go in `public/changelog.json` and follow `docs/DEV_WORKFLOW.md` "How to write a release note" exactly (teacher's words, never name a flag, no "admin-only", no em dashes, colons or semicolons inside a sentence).
+**Release notes** go in one new fragment file, `changelog.d/release-YYYY-MM-DD.json` (see `changelog.d/README.md`), never as an edit to `public/changelog.json`, and follow `docs/DEV_WORKFLOW.md` "How to write a release note" exactly (teacher's words, never name a flag, no "admin-only", no em dashes, colons or semicolons inside a sentence).
 
 - Write notes only for **new teacher-facing features**. No notes for fix-only items, internal work, or retired features.
 - Check each claim against what the admin settings actually enable, not what exists in code. A curated list is the menu an admin picks from, not the live setting. Describe the capability ("any language your school has turned on") unless you have confirmed the setting.
 - A feature still behind an admin or beta flag gets **no `entries` item** yet; its What's New entry ships when the flag opens to everyone. It can get a widget note with `feature: '<flag id>'`, which waits until the teacher can use the flag.
 - A feature whose flag is already Public, or that this release graduates, gets its `entries` item now.
-- Run `pnpm changelog:draft` for placeholders, rewrite every line, then `/deslop --writing public/changelog.json`.
+- Run `pnpm changelog:draft` for placeholders, rewrite every line, then `/deslop --writing` on the fragment file.
 - Ship the notes as a `release fix:` PR into `dev-paul`. Every new note goes on `PAUL_TODO.md` for Paul's wording OK (section 7).
 
 ## 3. Flag audit
@@ -83,7 +83,7 @@ All of these pass before you merge.
 - **Rules tests.** For every `firestore.rules` or `storage.rules` match the range adds or changes, `tests/rules/` covers both reads and writes: the allowed case and the denied cases (wrong user, student on teacher-only fields, writes after a session ends). Missing coverage is a `release fix:`. `pnpm run test:rules` passes.
 - **Live Tour Anchors** and **Release Widget Notes** checks are green on the release PR. For a changed widget that teachers won't notice, add a line to the PR body: `no-widget-note: <widget> <why>` (for example `no-widget-note: quiz internal refactor`), one per widget.
 - **Backfills.** Look for anything prod data needs before or after the deploy: new `scripts/backfill-*` or migration scripts, a field the new code or rules require on existing docs, a changed stored shape, a new composite index a query depends on, a renamed collection. List each with what it does and when it must run. **Ask Paul before running anything against prod data**, dry runs included, and run only what he names.
-- **CI** is green on the release PR head, and there is no merge conflict with `main`.
+- **CI** is green on the release PR head, and there is no merge conflict with `main`. No checks at all on the release PR means a conflict: GitHub runs none while it conflicts, and the PR Conflicts workflow labels it `merge-conflict`. Merge `origin/main` into the release branch, resolve, and push.
 
 ## 6. Merge and deploy
 
@@ -115,9 +115,11 @@ Record only the human steps in SpartBoard's root `PAUL_TODO.md`, as `PT-n` items
 - **Flags to open once Paul has tested on prod**: a row in the flags table: what to test, then the prompt an agent runs once it's Public (retire or graduate the gate, add the changelog entry).
 - **Prod steps Paul approved but hasn't run** (backfills, scripts): a "🤖 With an agent" item with the exact paste-ready prompt, saying when it needs the PC with the prod key. Secrets to create and console clicks are "You" items.
 
+In the same PR, run `pnpm changelog:collect` to fold the `changelog.d/` fragments into `public/changelog.json`. What teachers see doesn't change; it keeps the fragment folder small.
+
 Agent-only leftovers the release surfaced go in `AGENT_BACKLOG.md` as `AB-n` briefs in the same PR. If the repo isn't writable from this session, put the same list in the report.
 
-**Branches.** Delete the `release fix:` branches this promotion merged, if `/ship` didn't already. Never delete `dev-paul` or `main`. If deletion is blocked, give Paul one line: `git push origin --delete <branch> [<branch> ...]`.
+**Branches.** Delete the `release fix:` branches this promotion merged, if `/ship` didn't already. In SpartBoard a cloud session can't, so add each as a file in `docs/branch-cleanup/` in the follow-ups PR. Never delete `dev-paul` or `main`. If deletion is blocked, give Paul one line: `git push origin --delete <branch> [<branch> ...]`.
 
 ## 8. Report
 

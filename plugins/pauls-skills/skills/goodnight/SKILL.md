@@ -54,7 +54,7 @@ Agents and sessions hang. A completion ping that never arrives looks exactly lik
 
 - Background agent: task status, new commits or pushes on its branch (`git fetch` then `git for-each-ref --sort=-committerdate refs/remotes`), files changing in its worktree.
 - Other session: `get_session` and the timestamp of its newest event in `list_events`; pushes on its branch.
-- CI or deploy run: `gh run list` / `gh run view` status and step progress.
+- CI or deploy run: `gh run list` / `gh run view` status and step progress. A PR with no CI run since its last push is a merge conflict, not a slow run: GitHub runs no checks while a PR conflicts. Check `gh pr view <n> --json mergeable`, then merge the base into the branch, resolve and push.
 
 **Stalled** means no new evidence for two check-ins (about 40 minutes), or 15 minutes for something that should be quick (a commit-and-push, a merge, a rebase).
 
@@ -86,7 +86,7 @@ If the sweep's verdict is **not ready**, fix what it names while time allows, th
 Invoke the `promote` skill with the Skill tool and follow it, with these changes:
 
 - **Section 1 hold:** from here on only `release fix:` PRs merge into `dev-paul`. Sessions still pushing to open PRs keep their PRs open.
-- **Section 2 release notes:** write them in your best teacher wording and ship them. Each one goes on `PAUL_TODO.md` for Paul's wording OK, as `promote` already says.
+- **Section 2 release notes:** write them in your best teacher wording and ship them, in a `changelog.d/` fragment file. Each one goes on `PAUL_TODO.md` for Paul's wording OK, as `promote` already says.
 - **Section 5 backfills and secrets:** never run or create them (ground rules). Decide per change: off behind a flag and not needed until it opens, ship it and add it to `PAUL_TODO.md`. Needed for the deploy to work, hold that change back.
 - **Section 6 go:** you have it. When sections 3 to 5 pass and the review rounds have converged, merge. Don't send the "say go" message.
 - **A deploy that fails for a real reason** (not a CPU quota retry): diagnose it from the logs. If the fix is clear and small, ship it as a `release fix:` PR into `dev-paul` and run one more `promote` pass on that range under the same go. Do this once. Hosting rolls back by itself on a failed smoke test, so prod stays on the previous build; if the second try fails too, stop and report.
