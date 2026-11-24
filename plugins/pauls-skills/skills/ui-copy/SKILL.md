@@ -1,6 +1,6 @@
 ---
 name: ui-copy
-description: "Write or fix the words in an interface so Paul doesn't reject them. Covers labels, menu items, hints, tooltips, toasts, errors, empty states, status words, dialog text and teacher-facing release notes. Use before adding or changing any on-screen string, when asked to write copy for something, when asked what a button or menu should say, or when Paul says a string is bad, confusing, slop or too technical. Built from 25 real strings Paul rejected and the versions he approved. For long prose use deslop."
+description: "Write or fix the words in an interface so Paul doesn't reject them. Covers labels, menu items, hints, tooltips, toasts, errors, empty states, status words, dialog text and teacher-facing release notes. Use before adding or changing any on-screen string, when asked to write copy for something, when asked what a button or menu should say, or when Paul says a string is bad, confusing, slop or too technical. Built from real strings Paul rejected and the versions he approved. For long prose use deslop."
 ---
 
 # UI copy
