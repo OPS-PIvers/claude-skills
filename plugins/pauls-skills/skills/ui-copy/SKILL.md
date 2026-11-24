@@ -24,12 +24,16 @@ This is Paul's most repeated rejection. He calls it AI slop.
 - No "X, so Y". No "X, and Y, so Z". No "X because Y" where two sentences would do.
 - Split it into short sentences, or cut the half the reader doesn't need.
 - Three short sentences beat one long one.
+- When a second fact has to follow the first, start a new sentence. "Additionally," is fine as the opener.
 
 > **No:** Not shared by district staff, so you can only import a copy.
 > **Yes:** Only a copy can be imported.
 
 > **No:** You left the page too many times, so it was submitted.
 > **Yes:** You left the page too many times. Your assignment has been submitted. Ask your teacher if you think this was a mistake.
+
+> **No:** Level labels and descriptions are removed, and parts become whole points up to 5, so the total changes from 12 to 9.
+> **Yes:** This change will remove level names and descriptions. Additionally, the total score will change from 12 to 9.
 
 `deslop --writing` tells you to rejoin clauses with a conjunction. That is right for prose and wrong here. For on-screen strings this rule wins.
 
@@ -52,10 +56,15 @@ Short is not the goal. Clear is.
 
 - A fragment with "it", "its", "this" or "that" pointing at something off-screen fails. Name the noun.
 - A menu hint is 3 to 6 specific words that name where the thing goes or what happens.
-- A longer full sentence beats a short riddle.
+- A longer full sentence beats a short riddle. When Paul rewrites a draft, his version is often longer and more explicit.
+- Don't overcorrect into telegraphic stubs. "Each part is worth up to 5 points. The total changes from 12 to 9." was also rejected. A confirmation says what the action will do to the reader's work, in a complete sentence: "This change will remove level names and descriptions."
+- A setting label says exactly what it affects and where. Its hint names the side effect and when it applies.
 
 > **No:** Uses its settings.
 > **Yes:** The settings for the existing assignment will be applied.
+
+> **No:** Block new tabs / Links inside the page stop working.
+> **Yes:** Block embedded content from opening new tabs / URLs to other sites stop working when enabled.
 
 ### 4. Use the reader's word
 
@@ -65,6 +74,8 @@ The code's word, the designer's word and the reader's word are often three diffe
 - The standard term they already know: "Final score", not "Score that counts". "Category", not "criterion".
 - A plain noun for a heading: "Import options", not "Ways in". Nothing cute, nothing metaphorical.
 - One noun per concept across the whole app, in every locale. Once Paul picks it, never vary it for style.
+- The same action gets the same label on every screen that has it. Before naming a button, check what the sibling feature calls it. A library row's main button was "Edit" where every other assignment type says "Assign".
+- The product's own nouns, in a neutral register: "Form" and "images", not "pictures". Nothing chatty: not "came over", not "a poll can ask".
 - Never turn a feature name into a place or a thing. A student is on "the page" doing "your assignment", not in "the check".
 
 ### 5. A status word is a promise
@@ -75,10 +86,12 @@ Check what the word implies against the actual state.
 - A neutral fact gets a neutral label and a neutral color. A second screen alone is "Device details", not "Unusual input".
 - If two states need different actions from the reader, they need different words.
 
-### 6. Show the specifics, not a count
+### 6. Show the specifics, or a plain count that opens them
 
 - Don't make the reader do math or go looking. "2 scheduled students keep their times" becomes the list of students with their dates and times.
 - Name the reassurance in plain words: "is saved".
+- Where the full list won't fit, use a plain count as a button that opens it: "5 classes", then each class in full, one per line. Never a partial list with "+4 more". Never a compressed format that merges names the reader already knows.
+- A message about a limit states the limit, then the result, as two sentences: "20 question limit reached. Additional questions were skipped."
 - A warning that doesn't say what to do is noise. Put the signal on the control that fixes it, such as the button changing color with a tooltip, instead of adding a chip that only reports a problem.
 
 ### 7. Labels are bare
@@ -94,11 +107,26 @@ Check what the word implies against the actual state.
 
 - A count, caption or helper line that restates the list or control beside it goes.
 - A heading that only announces the section ("AI Configuration") goes.
+- A new heading is new copy. If the list can show the grouping, skip the heading.
+- Don't describe state in words when a control can show it. Settings a student inherits from a group appear switched on in the list, not as a "From [group]: …" line above it.
 - Never draw explanatory notes on a mockup. Anything on a mockup reads as planned copy. Notes to Paul go in the message.
 
 ### 9. When Paul is confused, rewrite
 
 If Paul says he doesn't understand a string, that is the verdict on the string. Don't explain what it meant. Reply with the rewritten string and nothing about the mechanism behind it. A second explanation makes it worse.
+
+## The register that passes
+
+These were approved with no edits. Aim for this.
+
+- Status: "Not opened", "Opened", "Idle 6 min", "3 of 6 turned in"
+- Detail line: "412 words · Saved 3 min ago · Away 1:12, 2 times"
+- Empty state: "No students yet" then "Students appear here once they open it."
+- Error: "Couldn't return this. Try again."
+- Notice to a student: "Your teacher is viewing your writing"
+- Toggle: "3 more" / "Show less"
+
+Status words are one or two words. Each sentence holds one fact. An error says what failed and the next step.
 
 ## Standing rules
 
@@ -118,7 +146,7 @@ Release notes are UI copy. Teachers read them, developers don't.
 
 - Describe what the teacher sees or can now do.
 - No flag names, access levels, "admin-only" lines, paths, "renders", "hashes" or any internal name.
-- Check every claim against what the settings actually enable, not what the code defines.
+- Check every claim against what the settings actually enable, not what the code defines. Don't promise what a setting can switch off: "published scores go to Classroom when your account allows."
 - Rule 1 applies here too.
 
 > **No:** Translations ride the public question through the same shuffle.
@@ -135,8 +163,10 @@ Run every new or changed string through this list. Fix it yourself. Don't ask Pa
 5. Does the status word promise something that isn't true in this state?
 6. Is there a count where names would fit?
 7. Does a label have an example, an ellipsis, a vendor name or more than one idea?
-8. Would the screen lose anything if this string were gone?
-9. Read it out loud as the teacher, mid-class. Would a person say it?
+8. Does the same action or thing have a different name on a sibling screen? Use that name.
+9. Could a control, a switch or the list itself show this instead of a sentence or heading?
+10. Would the screen lose anything if this string were gone?
+11. Read it out loud as the teacher, mid-class. Would a person say it?
 
 Then show the strings as plain before and after pairs, with where each one appears on screen. No commentary on why the new one is better.
 
