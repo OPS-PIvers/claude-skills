@@ -60,15 +60,17 @@ Real strings from SpartBoard that Paul rejected before they shipped, with the ve
 | That form couldn't be read. Open it in Google Forms and send it again. | Form couldn't be read. Open it in Google Forms and try sending it again. |
 | Left out 3 choices | Maximum answer options is N. Additional options are skipped. |
 | Something not right? Try again with AI | Not what you expected? Try again with AI |
+| Work turns in when Ended | Quiz is submitted when the quiz ends. |
+| Turn in / Turned in / Turning in (Writing) | Submit / Submitted / Submitting |
 | Live tours of district websites | Live tours of websites |
 
-**Why:** "picked" was the code's word for how targeting works. Teachers assign. "Tries" was rejected three times before a guard test blocked it. The button "Try again" stays.
+**Why:** "picked" was the code's word for how targeting works. Teachers assign. "Tries" was rejected three times before a guard test blocked it. The button "Try again" stays. "Turn in" in any form was banned on 2026-11-25: "No one talks like that." Name the assignment type as the subject instead.
 
 ## 5. A status word is a promise
 
 | Before | After |
 |---|---|
-| "Missing" in red, on work that can no longer be turned in | "Not submitted" in muted gray |
+| "Missing" in red, on work that can no longer be submitted | "Not submitted" in muted gray |
 | "Unusual input", for a second screen alone | "Device details" in gray |
 
 **Why:** "Missing" tells the reader the work can still be done, so it stays as "Missing · still open" for work that can. "Unusual input" reads as an accusation, so it stays only for real signs.
@@ -118,8 +120,8 @@ The recording error in rule 2 was rejected twice. The first time Paul said he wa
 
 ## Approved with no edits
 
-- Writing monitor: "Not opened", "Opened", "412 words · Saved 3 min ago · Away 1:12, 2 times", "Idle 6 min", "No writing yet.", "This student is no longer writing" then "Their work was turned in or has not started.", "Your teacher is viewing your writing"
-- Writing grading: "3 of 6 turned in", "Return for revision", "Maya took this work back.", "Couldn't return this. Try again.", "No students yet" then "Students appear here once they open it."
+- Writing monitor: "Not opened", "Opened", "412 words · Saved 3 min ago · Away 1:12, 2 times", "Idle 6 min", "No writing yet.", "This student is no longer writing" then "Their work was submitted or has not started.", "Your teacher is viewing your writing"
+- Writing grading: "3 of 6 submitted", "Return for revision", "Maya took this work back.", "Couldn't return this. Try again.", "No students yet" then "Students appear here once they open it."
 - Groups: "A group can show up in widgets that pick students. It can also share accommodations.", "Show in widgets", "Students can see the group name on the board."
 - What's New: "Widget updates", "3 more" / "Show less", "Widget update notes are listed in What's New instead of under each widget."
 
