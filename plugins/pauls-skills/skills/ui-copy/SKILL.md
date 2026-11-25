@@ -77,12 +77,14 @@ The code's word, the designer's word and the reader's word are often three diffe
 - The same action gets the same label on every screen that has it. Before naming a button, check what the sibling feature calls it. A library row's main button was "Edit" where every other assignment type says "Assign".
 - The product's own nouns, in a neutral register: "Form" and "images", not "pictures". Nothing chatty: not "came over", not "a poll can ask".
 - Never turn a feature name into a place or a thing. A student is on "the page" doing "your assignment", not in "the check".
+- Work is submitted. Never write "turn in", "turns in", "turned in", "turning in" or "turn-in" anywhere, Writing included. Say "Submit", "Submitted", "Submitting".
+- When a sentence says what happens to work, name the assignment type as the subject. "Quiz is submitted when the quiz ends." Never "Work turns in when Ended" or "Open work is turned in".
 
 ### 5. A status word is a promise
 
 Check what the word implies against the actual state.
 
-- "Missing" says the work can still be turned in. Work that can no longer be turned in is "Not submitted".
+- "Missing" says the work can still be submitted. Work that can no longer be submitted is "Not submitted".
 - A neutral fact gets a neutral label and a neutral color. A second screen alone is "Device details", not "Unusual input".
 - If two states need different actions from the reader, they need different words.
 
@@ -119,7 +121,7 @@ If Paul says he doesn't understand a string, that is the verdict on the string. 
 
 These were approved with no edits. Aim for this.
 
-- Status: "Not opened", "Opened", "Idle 6 min", "3 of 6 turned in"
+- Status: "Not opened", "Opened", "Idle 6 min", "3 of 6 submitted"
 - Detail line: "412 words · Saved 3 min ago · Away 1:12, 2 times"
 - Empty state: "No students yet" then "Students appear here once they open it."
 - Error: "Couldn't return this. Try again."
@@ -136,6 +138,7 @@ These apply everywhere without discussion.
 - No em dash. No semicolon. No "Tip:" or "Note:" prefixes.
 - No marketing words and no exclamation marks.
 - "Select", not "Choose".
+- "Submit" / "Submitted", never "turn in" in any form.
 - People's names in lists are "Last, First".
 - Never tell a user to contact or visit the school office.
 - A verb button can reuse a banned noun's root when it is the natural verb. "Try again" is fine where "tries" is banned.
@@ -159,7 +162,7 @@ Run every new or changed string through this list. Fix it yourself. Don't ask Pa
 1. Is there a comma followed by "so", "and", "but", "which" or "because"? Split or cut.
 2. Does it mention how anything works? Cut that part.
 3. Does "it", "its", "this" or "that" point at something the reader can't see in the same string? Name it.
-4. Is every noun the one the project already uses for that thing?
+4. Is every noun the one the project already uses for that thing? Does it say "turn in" anywhere? Use "submit".
 5. Does the status word promise something that isn't true in this state?
 6. Is there a count where names would fit?
 7. Does a label have an example, an ellipsis, a vendor name or more than one idea?
