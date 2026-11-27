@@ -23,6 +23,7 @@ Invoking this skill authorizes merging PRs that pass the gates into the target b
 - Leave PRs by people other than Paul or Claude (including dependabot) open, and list them. Don't merge them.
 - **Release hold.** If a release PR (target into production) is open, merge only PRs that fix that release's own contents. Leave everything else open and say why.
 - Use the repo's own merge flow and conventions (`CLAUDE.md`, its docs, its skills such as `/ship`). They win over this file.
+- **Back-merges keep their merge commit.** A PR that brings production commits into the target (a `main` into `dev-paul` sync, a hotfix carry-back) is merged with a merge commit, never squashed or rebased, even when the repo's usual flow squashes. Squashing it cuts production's ancestry from the target, so the next release ships a tree its PR never tested and the deploy reruns every check. Never rebase its branch either, and update it by merging the target in. Section 5 says how to spot one.
 
 ## 1. Repo profile
 
@@ -76,8 +77,9 @@ Work runs in background `Agent`s, `isolation: 'worktree'`, `model: sonnet`. Each
 
 Merge one at a time, in this order: protected-file and shared-infrastructure PRs first, then small fixes, then features; within a group, oldest first.
 
-- **No stale green.** A PR's CI must have run against the target's current head. After every merge, the next PR is updated (rebase or merge the target in, the repo's way) and its CI runs again before it merges. A green check from before the last merge doesn't count.
-- Merge with the repo's flow. Record each merge's resulting SHA in the ledger: it's what bisecting uses in section 6.
+- **No stale green.** A PR's CI must have run against the target's current head. After every merge, the next PR is updated (rebase or merge the target in, the repo's way; a back-merge is only ever updated by merging the target in) and its CI runs again before it merges. A green check from before the last merge doesn't count.
+- **Spot back-merges before merging anything.** A PR is a back-merge when its head is the production branch, or its head holds production commits the target lacks. Check with `git fetch origin <target> <production> pull/<n>/head:pr-<n>`, then `git rev-list --count origin/<production> ^origin/<target>` and `git rev-list --count origin/<production> ^origin/<target> ^pr-<n>`. If the first is above 0 and the second is smaller, it's a back-merge. Mark it in the ledger. A feature branch that was only cut from production, with no merge of it, also matches: rebase that one onto the target the repo's way instead (`git log --merges origin/<target>..pr-<n>` shows no merge of production), and treat it as an ordinary PR.
+- Merge with the repo's flow, except a back-merge, which always gets a merge commit (`gh pr merge <n> --merge`, or `merge_method=merge` on the merge or auto-merge call, never `squash` or `rebase`). Record each merge's resulting SHA in the ledger: it's what bisecting uses in section 6. After a back-merge lands, confirm `git merge-base --is-ancestor origin/<production> origin/<target>` succeeds; if it fails, the merge was squashed, so stop and tell Paul.
 - After each merge, recheck the rest for new conflicts and send them back to section 4.
 - When the last few PRs keep conflicting with each other, switch to one agent at a time: it owns a PR from resolution through merge, then takes the next.
 
